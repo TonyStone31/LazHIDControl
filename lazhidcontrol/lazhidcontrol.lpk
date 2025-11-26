@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <PathDelim Value="\"/>
+    <Name Value="LazHIDControl"/>
+    <AddToProjectUsesSection Value="True"/>
+    <Author Value="Tony Stone - Extended from Tom Gregorovic's LazMouseAndKeyInput with hotkey support from Codebot"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)\$(LCLWidgetType)"/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <AllowLabel Value="False"/>
+          <UseAnsiStrings Value="False"/>
+        </SyntaxOptions>
+      </Parsing>
+    </CompilerOptions>
+    <Description Value="Cross-platform HID automation with mouse, keyboard, and global hotkey support for Windows, X11, and Wayland.
+"/>
+    <License Value="GPL
+"/>
+    <Version Major="1" Minor="0"/>
+    <Files>
+      <Item>
+        <Filename Value="carbonkeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CarbonKeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="carbonmouseinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CarbonMouseInput"/>
+      </Item>
+      <Item>
+        <Filename Value="cocoakeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CocoaKeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="cocoamouseinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CocoaMouseInput"/>
+      </Item>
+      <Item>
+        <Filename Value="keyinputintf.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="KeyInputIntf"/>
+      </Item>
+      <Item>
+        <Filename Value="mouseandkeyinput.pas"/>
+        <UnitName Value="MouseAndKeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="mouseinputintf.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="MouseInputIntf"/>
+      </Item>
+      <Item>
+        <Filename Value="waylandmouseandkeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WaylandMouseAndKeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="winkeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WinKeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="winmouseinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WinMouseInput"/>
+      </Item>
+      <Item>
+        <Filename Value="xkeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="XKeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="xmouseinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="XMouseInput"/>
+      </Item>
+      <Item>
+        <Filename Value="hotkeyinputintf.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="HotkeyInputIntf"/>
+      </Item>
+      <Item>
+        <Filename Value="winhotkeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WinHotkeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="xhotkeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="XHotkeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="waylandhotkeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WaylandHotkeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="cocoahotkeyinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CocoaHotkeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="hotkeyinput.pas"/>
+        <UnitName Value="HotkeyInput"/>
+      </Item>
+      <Item>
+        <Filename Value="globalkeymonitorintf.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="GlobalKeyMonitorIntf"/>
+      </Item>
+      <Item>
+        <Filename Value="winglobalkeymonitor.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WinGlobalKeyMonitor"/>
+      </Item>
+      <Item>
+        <Filename Value="xglobalkeymonitor.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="XGlobalKeyMonitor"/>
+      </Item>
+      <Item>
+        <Filename Value="cocoaglobalkeymonitor.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CocoaGlobalKeyMonitor"/>
+      </Item>
+      <Item>
+        <Filename Value="globalkeymonitor.pas"/>
+        <UnitName Value="GlobalKeyMonitor"/>
+      </Item>
+      <Item>
+        <Filename Value="windowmanagerintf.pas"/>
+        <UnitName Value="WindowManagerIntf"/>
+      </Item>
+    </Files>
+    <RequiredPkgs>
+      <Item>
+        <PackageName Value="LCL"/>
+      </Item>
+      <Item>
+        <PackageName Value="FCL"/>
+        <MinVersion Major="1" Valid="True"/>
+      </Item>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

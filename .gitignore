@@ -1,0 +1,52 @@
+# Lazarus/FreePascal compiled output
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.ppu
+*.compiled
+*.rst
+*.rsj
+*.a
+*.or
+
+# Lazarus project session files
+*.lps
+
+# Backup directories
+backup/
+**/backup/
+
+# Library directories
+lib/
+**/lib/
+
+# Lazarus auto-generated files
+*.res
+
+# IDE local settings
+*.local
+
+# Debug symbols
+*.dbg
+
+# Package compiled library
+*.lpk.bak
+
+# Temporary files
+*.~*
+*~
+*.bak
+*.tmp
+*.temp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build artifacts
+*.compiled
+*.link.res
+*.lrt

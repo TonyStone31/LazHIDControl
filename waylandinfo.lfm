@@ -1,0 +1,73 @@
+object frmWaylandInfo: TfrmWaylandInfo
+  Left = 500
+  Height = 599
+  Top = 300
+  Width = 839
+  Caption = 'Wayland Implementation Info'
+  ClientHeight = 599
+  ClientWidth = 839
+  DesignTimePPI = 115
+  Position = poScreenCenter
+  LCLVersion = '4.99.0.0'
+  OnCreate = FormCreate
+  OnShow = FormShow
+  object pnlTop: TPanel
+    Left = 0
+    Height = 72
+    Top = 0
+    Width = 839
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 72
+    ClientWidth = 839
+    Color = clNavy
+    ParentBackground = False
+    ParentColor = False
+    TabOrder = 0
+    object lblTitle: TLabel
+      Left = 19
+      Height = 27
+      Top = 22
+      Width = 360
+      Caption = 'Wayland Support Implementation'
+      Font.Color = clWhite
+      Font.Height = -23
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+  end
+  object memoInfo: TMemo
+    Left = 0
+    Height = 463
+    Top = 72
+    Width = 839
+    Align = alClient
+    Font.Name = 'Monospace'
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 1
+  end
+  object pnlBottom: TPanel
+    Left = 0
+    Height = 64
+    Top = 535
+    Width = 839
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 64
+    ClientWidth = 839
+    TabOrder = 2
+    object btnClose: TButton
+      Left = 709
+      Height = 42
+      Top = 11
+      Width = 120
+      Anchors = [akTop, akRight]
+      Caption = 'Close'
+      Default = True
+      TabOrder = 0
+      OnClick = btnCloseClick
+    end
+  end
+end
