@@ -32,36 +32,26 @@ type
 
   TKeyInput = class
   private
-    FCtrlKeyCode: word;
-    FShiftKeyCode: word;
-    FUKeyCode: word;
-    FHexKeyCodes: array[0..15] of word;
     procedure UnapplyAllKeys;
   protected
+    CapsLockStateAtStringStart: Boolean;
     procedure DoDown(Key: word); dynamic; abstract;
     procedure DoUp(Key: word); dynamic; abstract;
     procedure capsLockGetSaveState; dynamic; abstract;
     procedure capsLockRestoreState; dynamic; abstract;
     function CharToKeySym(ch: char): word;
     function NeedsShift(ch: char): boolean;
-    procedure PressStringUCchar(CharValue: string);
+    function NeedsShiftWithCapsLock(ch: char): boolean;
   public
     procedure Down(Key: word);
     procedure Up(Key: word);
-
     procedure Press(Key: word);
     procedure PressString(StringValue: string);
-    procedure PressStringUC(StringValue: string);
-
     procedure Apply(Shift: TShiftState);
     procedure Unapply(Shift: TShiftState);
     procedure PressUnicodeChar(unicode: cardinal); virtual;
     procedure PressASCIIChar(ch: char); virtual;
-
-    procedure SetHexKeyCode(Index: integer; Value: word);
-    function GetHexKeyCode(Index: integer): word;
-    property HexKeyCodes[Index: integer]: word read GetHexKeyCode write SetHexKeyCode;
-
+    function GetCapsLockState: Boolean; dynamic; abstract;
   end;
 
 implementation
@@ -78,8 +68,6 @@ procedure TKeyInput.Up(Key: word);
 begin
   DoUp(Key);
   Application.ProcessMessages;
-  // Small delay to ensure the key up event is processed
-  // This is especially important for applications with slower input processing
   sleep(8);
 end;
 
@@ -89,23 +77,31 @@ begin
   Up(Key);
 end;
 
-procedure TKeyInput.SetHexKeyCode(Index: integer; Value: word);
-begin
-  if (Index >= 0) and (Index < 16) then
-    FHexKeyCodes[Index] := Value;
-end;
-
-function TKeyInput.GetHexKeyCode(Index: integer): word;
-begin
-  if (Index >= 0) and (Index < 16) then
-    Result := FHexKeyCodes[Index]
-  else
-    Result := 0;
-end;
-
 function TKeyInput.NeedsShift(ch: char): boolean;
 begin
   Result := ch in ['A'..'Z', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '{', '}', '|', ':', '"', '<', '>', '?'];
+end;
+
+function TKeyInput.NeedsShiftWithCapsLock(ch: char): boolean;
+var
+  isUpperCase: boolean;
+  normallyNeedsShift: boolean;
+begin
+  isUpperCase := ch in ['A'..'Z'];
+
+  if isUpperCase or (ch in ['a'..'z']) then
+  begin
+    // For letters: CapsLock inverts the shift requirement
+    if CapsLockStateAtStringStart then
+      Result := not isUpperCase  // Shift needed for lowercase when CapsLock ON
+    else
+      Result := isUpperCase;     // Shift needed for uppercase when CapsLock OFF
+  end
+  else
+  begin
+    normallyNeedsShift := ch in ['~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '{', '}', '|', ':', '"', '<', '>', '?'];
+    Result := normallyNeedsShift;
+  end;
 end;
 
 function TKeyInput.CharToKeySym(ch: char): word;
@@ -137,59 +133,21 @@ begin
     '?', '/': Result := VK_LCL_SLASH;
     #32: Result := VK_SPACE;
     #9: Result := VK_TAB;
-    #10, #13: Result := VK_RETURN;  // Handle both LF and CR as RETURN on all platforms
+    #10, #13: Result := VK_RETURN;
     else
-      Result := VK_SPACE; // Default fallback
+      Result := VK_SPACE;
   end;
 end;
 
 procedure TKeyInput.PressUnicodeChar(unicode: cardinal);
-var
-  unicodestring: string;
-  j: integer;
-  keyCode: word;
 begin
-  unicodestring := IntToHex(unicode, 4); // Convert to hex string
-  capsLockGetSaveState;  // Better way to handle a Caps Lock key on may be to toogle Shift Key requirement.
-  {$IFDEF Linux}
-  // Linux implementation using Ctrl+Shift+U
-  Apply([ssCtrl, ssShift]);
-  Press(VK_U); // Press 'U' after Ctrl+Shift
-  //4(5);
-  for j := 1 to Length(unicodeString) do begin
-    if unicodeString[j] in ['0'..'9'] then
-      keyCode := VK_0 + Ord(unicodeString[j]) - Ord('0')
-    else if unicodeString[j] in ['A'..'F'] then
-      keyCode := VK_A + Ord(unicodeString[j]) - Ord('A');
-    Press(keyCode);
-  end;
-  Unapply([ssCtrl, ssShift]);
-  {$ENDIF}
-
-  {$IFDEF Windows}
-  // Windows implementation using Alt + Numpad
-  Apply([ssAlt]);
-  for j := 1 to Length(unicodeString) do begin
-    keyCode := Ord(unicodeString[j]);
-    Press(keyCode); // Simulate key press for each digit
-  end;
-  Unapply([ssAlt]);
-  {$ENDIF}
-
-  {$IFDEF Darwin}
- // macOS
-  // Need a Mac to test this on.
-  Apply([ssAlt]);
-  for j := 1 to Length(unicodeString) do begin
-    if unicodeString[j] in ['0'..'9'] then
-      keyCode := VK_0 + Ord(unicodeString[j]) - Ord('0')
-    else if unicodeString[j] in ['A'..'F'] then
-      keyCode := VK_A + Ord(unicodeString[j]) - Ord('A');
-    Press(keyCode);
-  end;
-  Unapply([ssAlt]);
-  {$ENDIF}
-  capsLockRestoreState;
+  // Base class fallback implementation
+  // Platform-specific implementations should override this method:
+  //   - TXKeyInput (Linux): Uses Ctrl+Shift+U + hex digits
+  //   - TWinKeyInput (Windows): Uses KEYEVENTF_UNICODE with SendInput
+  //   - TCarbonKeyInput (macOS): Uses Option key combinations
+  //
+  // This fallback does nothing - Unicode input requires platform-specific handling
 end;
 
 procedure TKeyInput.PressString(StringValue: string);
@@ -198,36 +156,33 @@ var
   unicode: cardinal;
   CPLen: integer;
 begin
-  capsLockGetSaveState;  // Better way to handle a Caps Lock key on may be to toogle Shift Key requirement.
+  try
+    CapsLockStateAtStringStart := GetCapsLockState;
+  except
+    CapsLockStateAtStringStart := False;
+  end;
+
   UnapplyAllKeys;
 
-  // Process the string character by character
   p := PChar(StringValue);
   while p^ <> #0 do
   begin
     unicode := UTF8CodepointToUnicode(p, CPLen);
 
-    // Handle line endings: CRLF, CR, or LF should all result in single character press
-    if (unicode = 13) then  // CR
+    // Normalize line endings: CR, LF, or CRLF all become single RETURN
+    if (unicode = 13) then
     begin
-      // Move past the CR
       Inc(p, CPLen);
-
-      // Check if next char is LF - if so, skip it (CRLF pair)
       if (p^ = #10) then
         Inc(p, 1);
-
-      // Press RETURN using platform-specific ASCII handler
-      PressASCIIChar(#10);  // Send LF, platform will convert to VK_RETURN
+      PressASCIIChar(#10);
       Sleep(5);
       Continue;
     end;
 
     if (CPLen = 1) and (unicode < 128) then
     begin
-      // Use platform-specific smart character handling for ASCII
       PressASCIIChar(char(unicode));
-      // Small delay between characters for slower applications
       Sleep(5);
     end else if unicode > 0 then
     begin
@@ -236,7 +191,6 @@ begin
 
     Inc(p, CPLen);
   end;
-  capsLockRestoreState;
 end;
 
 procedure TKeyInput.UnapplyAllKeys;
@@ -245,7 +199,7 @@ var
 begin
   Up(VK_SHIFT);
   Up(VK_CONTROL);
-  Up(VK_MENU); // Alt key
+  Up(VK_MENU);
 
   for keyCode := VK_0 to VK_9 do
     Up(keyCode);
@@ -255,29 +209,6 @@ begin
 
   for keyCode := VK_F1 to VK_F12 do
     Up(keyCode);
-end;
-
-procedure TKeyInput.PressStringUC(StringValue: string);
-var
-  p: PChar;
-  unicode: cardinal;
-  CPLen: integer;
-begin
-  p := PChar(StringValue);
-  repeat
-    unicode := UTF8CodepointToUnicode(p, CPLen);
-    if unicode > 0 then PressUnicodeChar(unicode);
-    Inc(p, CPLen);
-  until (CPLen = 0) or (unicode = 0);
-end;
-
-procedure TKeyInput.PressStringUCchar(CharValue: string);
-var
-  unicode: cardinal;
-  CPLen: integer;
-begin
-  unicode := UTF8CodepointToUnicode(PChar(CharValue), CPLen);
-  if unicode > 0 then PressUnicodeChar(unicode);
 end;
 
 procedure TKeyInput.Apply(Shift: TShiftState);
@@ -298,17 +229,9 @@ procedure TKeyInput.PressASCIIChar(ch: char);
 var
   keySym: word;
 begin
-  // Default implementation uses simple shift detection
-  // Platform-specific implementations can override with VkKeyScan
   keySym := CharToKeySym(ch);
-
-  // Apply necessary control keys for this character
   if NeedsShift(ch) then Apply([ssShift]);
-
-  // Simulate the key press
   Press(keySym);
-
-  // Unapply the control keys
   if NeedsShift(ch) then Unapply([ssShift]);
 end;
 

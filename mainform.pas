@@ -31,6 +31,7 @@ type
     Bevel1: TBevel;
     btnAltTab: TButton;
     btnMoveMouseClick: TButton;
+    btnToggleCapsLock: TToggleBox;
     btnWaylandInfo: TButton;
     btnToggleGlobalKeys: TButton;
     lblHotKeyCombo: TLabel;
@@ -42,11 +43,13 @@ type
     Timer1: TTimer;
     procedure btnAltTabClick(Sender: TObject);
     procedure btnMoveMouseClickClick(Sender: TObject);
+    procedure btnToggleCapsLockChange(Sender: TObject);
+    procedure btnToggleCapsLockClick(Sender: TObject);
     procedure btnWaylandInfoClick(Sender: TObject);
     procedure btnToggleGlobalKeysClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure FormKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure FormResize(Sender: TObject);
     procedure memTestDestinationChange(Sender: TObject);
     procedure PaintBox1MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
@@ -60,12 +63,13 @@ type
     BitmapCanvasDemo: TBitmap;
     GlobalKeyListener: TGlobalKeyListener;
     ReplayHotkey: THotkey;
+    UpdatingCapsLock: boolean;  // Prevent recursive CapsLock updates
 
     procedure RunMouseDemo(Data: PtrInt);
     procedure RunReplayHotkey(Data: PtrInt);
-    procedure UpdateKeyDisplay(Key: Word; Shift: TShiftState);
-    procedure OnGlobalKeyPress(Key: Word; Shift: TShiftState);
-    procedure OnReplayHotkey(Sender: TObject; Key: Word; Shift: TShiftState);
+    procedure UpdateKeyDisplay(Key: word; Shift: TShiftState);
+    procedure OnGlobalKeyPress(Key: word; Shift: TShiftState);
+    procedure OnReplayHotkey(Sender: TObject; Key: word; Shift: TShiftState);
   public
 
   end;
@@ -99,7 +103,6 @@ begin
     end;
   end;
 
-  // Update the label based on match status
   if memTestDestination.Lines.Count = 0 then
   begin
     lblMatchStatus.Caption := 'Ready to test...';
@@ -127,14 +130,12 @@ begin
   // Hold down Alt key
   KeyInput.Down(VK_MENU);
 
-  // Press Tab multiple times while Alt is held
   for i := 0 to 5 do
   begin
     KeyInput.Press(VK_TAB);
     Sleep(400);
   end;
 
-  // Release Alt key
   KeyInput.Up(VK_MENU);
   StatusBar1.Panels[2].Text := 'Alt+Tab complete';
 end;
@@ -142,6 +143,41 @@ end;
 procedure TMainForm.btnMoveMouseClickClick(Sender: TObject);
 begin
   Application.QueueAsyncCall(@RunMouseDemo, 0);
+end;
+
+procedure TMainForm.btnToggleCapsLockChange(Sender: TObject);
+begin
+  if UpdatingCapsLock then Exit;  // Prevent recursive updates
+
+  if btnToggleCapsLock.Checked then
+    btnToggleCapsLock.Caption := '🔒 CAPS Lock ON'
+  else
+    btnToggleCapsLock.Caption := '🔓 CAPS Lock OFF';
+end;
+
+procedure TMainForm.btnToggleCapsLockClick(Sender: TObject);
+var
+  newState: boolean;
+begin
+  if UpdatingCapsLock then Exit;  // Prevent recursive calls
+
+  UpdatingCapsLock := True;
+  try
+    // Toggle CapsLock by simulating key press
+    KeyInput.Press(VK_CAPITAL);
+
+    Sleep(100);
+
+    newState := KeyInput.GetCapsLockState;
+    btnToggleCapsLock.Checked := newState;
+
+    if newState then
+      StatusBar1.Panels[2].Text := 'CapsLock is ON'
+    else
+      StatusBar1.Panels[2].Text := 'CapsLock is OFF';
+  finally
+    UpdatingCapsLock := False;
+  end;
 end;
 
 procedure TMainForm.RunMouseDemo(Data: PtrInt);
@@ -219,6 +255,9 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  // Initialize flags
+  UpdatingCapsLock := False;
+
   // Initialize the drawing canvas for the PaintBox demo
   BitmapCanvasDemo := TBitmap.Create;
   BitmapCanvasDemo.SetSize(PaintBox1.Width, PaintBox1.Height);
@@ -244,6 +283,14 @@ begin
     lblHotKeyCombo.Caption := 'Hotkey: Press Ctrl+Shift+F9 anywhere to replay text';
     lblHotKeyCombo.Font.Color := clGreen;
     StatusBar1.Panels[2].Text := 'Hotkey registered successfully';
+  end;
+
+  // Initialize CapsLock button state from actual system state
+  try
+    btnToggleCapsLock.Checked := KeyInput.GetCapsLockState;
+  except
+    // If we can't read state at startup, default to unchecked
+    btnToggleCapsLock.Checked := False;
   end;
 end;
 
@@ -287,13 +334,13 @@ begin
   end;
 end;
 
-procedure TMainForm.OnGlobalKeyPress(Key: Word; Shift: TShiftState);
+procedure TMainForm.OnGlobalKeyPress(Key: word; Shift: TShiftState);
 begin
   UpdateKeyDisplay(Key, Shift);
 end;
 
 // Capture all keypresses in the form (KeyPreview must be True)
-procedure TMainForm.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+procedure TMainForm.FormKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
 begin
   UpdateKeyDisplay(Key, Shift);
 end;
@@ -311,7 +358,7 @@ begin
 end;
 
 
-procedure TMainForm.OnReplayHotkey(Sender: TObject; Key: Word; Shift: TShiftState);
+procedure TMainForm.OnReplayHotkey(Sender: TObject; Key: word; Shift: TShiftState);
 begin
   // Queue the actual typing to happen after event processing
   // This ensures modifier keys are released and target app is ready
@@ -323,7 +370,7 @@ var
   startTime: QWord;
   timeout: boolean;
 begin
-  StatusBar1.Panels[2].Text := 'Hotkey triggered - typing text...';
+  StatusBar1.Panels[2].Text := 'Hotkey triggered - waiting for key release...';
   Application.ProcessMessages;
 
   // Wait for all modifier keys to be released before typing
@@ -334,29 +381,31 @@ begin
   while not timeout do
   begin
     // Check if all modifier keys are released
-    if (GetKeyState(VK_CONTROL) >= 0) and
-       (GetKeyState(VK_SHIFT) >= 0) and
-       (GetKeyState(VK_MENU) >= 0) then
+    if (GetKeyState(VK_CONTROL) >= 0) and (GetKeyState(VK_SHIFT) >= 0) and (GetKeyState(VK_MENU) >= 0) then
       Break;  // All modifiers released
 
     Sleep(10);
     Application.ProcessMessages;
 
-    // Timeout after 2 seconds to prevent infinite loop
-    if GetTickCount64 - startTime > 2000 then
+    // Timeout after 500ms to prevent long delays
+    if GetTickCount64 - startTime > 500 then
       timeout := True;
   end;
 
-  // Extra delay to ensure target application is ready to receive input
-  Sleep(100);
+  if timeout then
+    StatusBar1.Panels[2].Text := 'Timeout waiting for keys - typing anyway...'
+  else
+    StatusBar1.Panels[2].Text := 'Keys released - typing...';
+  Application.ProcessMessages;
 
-  // Use GetTextStr to avoid automatic trailing line ending that Lines.Text adds
-  // This prevents an extra blank line from being typed at the end
+  // Extra delay to ensure target application is ready to receive input
+  Sleep(50);
+
   KeyInput.PressString(memTestSource.Text);
   StatusBar1.Panels[2].Text := 'Text replay complete';
 end;
 
-procedure TMainForm.UpdateKeyDisplay(Key: Word; Shift: TShiftState);
+procedure TMainForm.UpdateKeyDisplay(Key: word; Shift: TShiftState);
 var
   modifiers: string;
   keyName: string;
@@ -389,8 +438,7 @@ begin
         keyName := 'VK_' + IntToStr(Key);
   end;
 
-  StatusBar1.Panels[1].Text := Format('Last Key: %s%s (0x%s)',
-    [modifiers, keyName, IntToHex(Key, 2)]);
+  StatusBar1.Panels[1].Text := Format('Last Key: %s%s (0x%s)', [modifiers, keyName, IntToHex(Key, 2)]);
 end;
 
 procedure TMainForm.PaintBox1MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
@@ -431,10 +479,35 @@ end;
 procedure TMainForm.Timer1Timer(Sender: TObject);
 var
   mouseX, mouseY: integer;
+  capsState: boolean;
 begin
   mouseX := Mouse.CursorPos.X;
   mouseY := Mouse.CursorPos.Y;
   StatusBar1.Panels[0].Text := Format('Mouse: (%d, %d)', [mouseX, mouseY]);
+
+  // Update CapsLock button state to reflect actual system state
+  if not UpdatingCapsLock then
+  begin
+    try
+      capsState := KeyInput.GetCapsLockState;
+      if btnToggleCapsLock.Checked <> capsState then
+      begin
+        UpdatingCapsLock := True;
+        try
+          btnToggleCapsLock.Checked := capsState;
+          // Manually update caption since OnChange is blocked by UpdatingCapsLock flag
+          if capsState then
+            btnToggleCapsLock.Caption := '🔒 CAPS Lock ON'
+          else
+            btnToggleCapsLock.Caption := '🔓 CAPS Lock OFF';
+        finally
+          UpdatingCapsLock := False;
+        end;
+      end;
+    except
+      // Ignore errors during CapsLock state check (e.g., X11 not ready)
+    end;
+  end;
 end;
 
 end.

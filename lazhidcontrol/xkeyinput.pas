@@ -23,8 +23,6 @@ interface
 
 uses
   Classes,
-  Controls,
-  Forms,
   KeyInputIntf, KeySym,
   SysUtils,
   X,
@@ -46,6 +44,9 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    function GetCapsLockState: Boolean; override;
+    procedure PressASCIIChar(ch: char); override;
+    procedure PressUnicodeChar(unicode: cardinal); override;
   end;
 
 function InitializeKeyInput: TKeyInput;
@@ -70,9 +71,9 @@ begin
 
   if capsLockBeginState then
   begin
-    XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, XK_Caps_Lock), True, 0);
-    XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, XK_Caps_Lock), False, 0);
-    Sleep(200);
+    Down(VK_CAPITAL);
+    Up(VK_CAPITAL);
+    Sleep(10);
   end;
 end;
 
@@ -85,9 +86,9 @@ begin
     XGetKeyboardControl(xDisplayConnection, @keyboardState);
     if (keyboardState.led_mask and 1) = 0 then
     begin
-      XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, XK_Caps_Lock), True, 0);
-      XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, XK_Caps_Lock), False, 0);
-      Sleep(200);
+      Down(VK_CAPITAL);
+      Up(VK_CAPITAL);
+      Sleep(10);
     end;
   end;
 end;
@@ -252,10 +253,101 @@ var
 begin
   KeySym := VirtualKeyToXKeySym(Key);
   if (KeySym = XK_VoidSymbol) or (xDisplayConnection = nil) then Exit;
-  // key release
   XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, KeySym), False, 0);
   XFlush(xDisplayConnection);
 end;
 
+function TXKeyInput.GetCapsLockState: Boolean;
+var
+  keyboardState: TXKeyboardState;
+begin
+  Result := False;
+  if xDisplayConnection = nil then Exit;
+  XGetKeyboardControl(xDisplayConnection, @keyboardState);
+  Result := (keyboardState.led_mask and 1) <> 0;  // Bit 0 is CapsLock LED
+end;
+
+procedure TXKeyInput.PressASCIIChar(ch: char);
+var
+  keySym: TKeySym;
+  keyCode: cardinal;
+  requiresShift: Boolean;
+  upperCh: char;
+  vk: word;
+begin
+  requiresShift := NeedsShiftWithCapsLock(ch);
+  upperCh := UpCase(ch);
+  vk := CharToKeySym(upperCh);
+  keySym := VirtualKeyToXKeySym(vk);
+
+  if keySym = XK_VoidSymbol then
+  begin
+    PressUnicodeChar(Ord(ch));
+    Exit;
+  end;
+
+  keyCode := XKeysymToKeycode(xDisplayConnection, keySym);
+
+  if keyCode = 0 then
+  begin
+    PressUnicodeChar(Ord(ch));
+    Exit;
+  end;
+
+  if requiresShift then
+    XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, XK_Shift_L), True, 0);
+
+  XTestFakeKeyEvent(xDisplayConnection, keyCode, True, 0);
+  XTestFakeKeyEvent(xDisplayConnection, keyCode, False, 0);
+
+  if requiresShift then
+    XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, XK_Shift_L), False, 0);
+
+  XFlush(xDisplayConnection);
+  Sleep(5);
+end;
+
+procedure TXKeyInput.PressUnicodeChar(unicode: cardinal);
+var
+  unicodestring: string;
+  j: integer;
+  keyCode: word;
+  savedCapsLockState: Boolean;
+  actualCapsLockWasOn: Boolean;
+begin
+  // IMPORTANT: Ctrl+Shift+U does NOT work when CapsLock is ON
+  // We must temporarily toggle CapsLock OFF, then restore it
+  savedCapsLockState := CapsLockStateAtStringStart;
+  CapsLockStateAtStringStart := False;
+
+  actualCapsLockWasOn := False;
+  try
+    actualCapsLockWasOn := GetCapsLockState;
+  except
+    actualCapsLockWasOn := False;
+  end;
+
+  if actualCapsLockWasOn then
+    capsLockGetSaveState;
+
+  try
+    unicodestring := IntToHex(unicode, 4);
+    Apply([ssCtrl, ssShift]);
+    Press(VK_U);
+
+    for j := 1 to Length(unicodeString) do begin
+      if unicodeString[j] in ['0'..'9'] then
+        keyCode := VK_0 + Ord(unicodeString[j]) - Ord('0')
+      else if unicodeString[j] in ['A'..'F'] then
+        keyCode := VK_A + Ord(unicodeString[j]) - Ord('A');
+      Press(keyCode);
+    end;
+    Unapply([ssCtrl, ssShift]);
+  finally
+    CapsLockStateAtStringStart := savedCapsLockState;
+    if actualCapsLockWasOn then
+      capsLockRestoreState;
+  end;
+end;
 
 end.

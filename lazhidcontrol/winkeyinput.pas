@@ -21,7 +21,7 @@ unit WinKeyInput;
 interface
 
 uses
-  Classes, SysUtils, Controls, Forms,
+  Classes, SysUtils, Forms,
   Windows, JwaWinUser,
   KeyInputIntf;
   
@@ -41,6 +41,7 @@ type
   public
     procedure PressUnicodeChar(unicode: cardinal); override;
     procedure PressASCIIChar(ch: char); override;
+    function GetCapsLockState: Boolean; override;
   end;
   
 function InitializeKeyInput: TKeyInput;
@@ -56,18 +57,13 @@ function MakeScanCodeInput(Scan: Word; KeyUp: Boolean): TInput;
 begin
   FillChar(Result, SizeOf(Result), 0);
   Result.type_ := INPUT_KEYBOARD;
-
-  // Scan-code only — don't use VK for compatibility with Notepad
-  // Notepad requires proper WM_CHAR events from TranslateMessage
-  Result.ki.wVk := 0;
+  Result.ki.wVk := 0;  // Using scan code only for better WM_CHAR generation
   Result.ki.wScan := Scan;
   Result.ki.dwFlags := KEYEVENTF_SCANCODE;
 
-  // Add extended bit if needed (numpad, arrows, etc.)
   if (Scan and $E000) <> 0 then
     Result.ki.dwFlags := Result.ki.dwFlags or KEYEVENTF_EXTENDEDKEY;
 
-  // Handle key release
   if KeyUp then
     Result.ki.dwFlags := Result.ki.dwFlags or KEYEVENTF_KEYUP;
 end;
@@ -80,9 +76,10 @@ var
   Sc: Word;
   Inp: TInput;
 begin
-  Sc := MapVirtualKey(Key, 0);  // MAPVK_VK_TO_VSC = 0
+  Sc := MapVirtualKey(Key, 0);
   Inp := MakeScanCodeInput(Sc, False);
   SendInput(1, @Inp, SizeOf(Inp));
+  Application.ProcessMessages;
   Sleep(1);
 end;
 
@@ -91,9 +88,10 @@ var
   Sc: Word;
   Inp: TInput;
 begin
-  Sc := MapVirtualKey(Key, 0);  // MAPVK_VK_TO_VSC = 0
+  Sc := MapVirtualKey(Key, 0);
   Inp := MakeScanCodeInput(Sc, True);
   SendInput(1, @Inp, SizeOf(Inp));
+  Application.ProcessMessages;
   Sleep(1);
 end;
 
@@ -128,37 +126,29 @@ var
   InputCount: Integer;
   HighSurrogate, LowSurrogate: Word;
 begin
-  // Initialize input array
   FillChar(Inputs, SizeOf(Inputs), 0);
 
-  // Check if this is a character that needs surrogate pairs (emoji, etc.)
+  // Characters outside BMP (emoji, etc.) need UTF-16 surrogate pairs
   if unicode > $FFFF then
   begin
-    // Calculate surrogate pair for characters outside BMP (Basic Multilingual Plane)
-    // Formula: High = ((codepoint - 0x10000) shr 10) + 0xD800
-    //          Low  = ((codepoint - 0x10000) and 0x3FF) + 0xDC00
     HighSurrogate := ((unicode - $10000) shr 10) + $D800;
     LowSurrogate := ((unicode - $10000) and $3FF) + $DC00;
 
-    // High surrogate key down
     Inputs[0].type_ := INPUT_KEYBOARD;
     Inputs[0].ki.dwFlags := KEYEVENTF_UNICODE;
     Inputs[0].ki.wScan := HighSurrogate;
     Inputs[0].ki.wVk := 0;
 
-    // High surrogate key up
     Inputs[1].type_ := INPUT_KEYBOARD;
     Inputs[1].ki.dwFlags := KEYEVENTF_UNICODE or KEYEVENTF_KEYUP;
     Inputs[1].ki.wScan := HighSurrogate;
     Inputs[1].ki.wVk := 0;
 
-    // Low surrogate key down
     Inputs[2].type_ := INPUT_KEYBOARD;
     Inputs[2].ki.dwFlags := KEYEVENTF_UNICODE;
     Inputs[2].ki.wScan := LowSurrogate;
     Inputs[2].ki.wVk := 0;
 
-    // Low surrogate key up
     Inputs[3].type_ := INPUT_KEYBOARD;
     Inputs[3].ki.dwFlags := KEYEVENTF_UNICODE or KEYEVENTF_KEYUP;
     Inputs[3].ki.wScan := LowSurrogate;
@@ -168,13 +158,11 @@ begin
   end
   else
   begin
-    // BMP character - send directly
     Inputs[0].type_ := INPUT_KEYBOARD;
     Inputs[0].ki.dwFlags := KEYEVENTF_UNICODE;
     Inputs[0].ki.wScan := unicode;
     Inputs[0].ki.wVk := 0;
 
-    // Key up event
     Inputs[1].type_ := INPUT_KEYBOARD;
     Inputs[1].ki.dwFlags := KEYEVENTF_UNICODE or KEYEVENTF_KEYUP;
     Inputs[1].ki.wScan := unicode;
@@ -183,11 +171,9 @@ begin
     InputCount := 2;
   end;
 
-  // Send all inputs atomically to avoid timing issues
   SendInput(InputCount, @Inputs[0], SizeOf(TInput));
-  // Delay to ensure the Unicode character is processed
-  // Some applications need more time to process complex Unicode (emoji, etc.)
-  Sleep(35);
+  Application.ProcessMessages;
+  Sleep(35);  // Keep original timing for Unicode
 end;
 
 procedure TWinKeyInput.PressASCIIChar(ch: char);
@@ -198,25 +184,33 @@ var
   Inputs: array[0..7] of TInput;
   InputCount: Integer;
   Sc: Word;
+  requiresShift: Boolean;
 begin
-  // Use VkKeyScan to determine the correct VK and shift state for this character
   VkResult := VkKeyScan(ch);
 
   if VkResult = -1 then
   begin
-    // Character not available on current keyboard layout - fall back to Unicode
     PressUnicodeChar(Ord(ch));
     Exit;
   end;
 
   VK := LoByte(VkResult);
   ShiftState := HiByte(VkResult);
+
+  // Override VkKeyScan shift state for letters when CapsLock is active
+  if (ch in ['A'..'Z', 'a'..'z']) then
+  begin
+    requiresShift := NeedsShiftWithCapsLock(ch);
+    if requiresShift then
+      ShiftState := ShiftState or 1
+    else
+      ShiftState := ShiftState and (not 1);
+  end;
+
   InputCount := 0;
 
-  // Build input sequence: modifiers down, key down, key up, modifiers up
-  // Bit 0: Shift, Bit 1: Ctrl, Bit 2: Alt
+  // Build input sequence: modifiers down, key down/up, modifiers up (reverse order)
 
-  // Modifiers DOWN
   if (ShiftState and 1) <> 0 then
   begin
     Inputs[InputCount] := MakeScanCodeInput(MapVirtualKey(VK_SHIFT, 0), False);
@@ -233,16 +227,13 @@ begin
     Inc(InputCount);
   end;
 
-  // Main key DOWN
   Sc := MapVirtualKey(VK, 0);
   Inputs[InputCount] := MakeScanCodeInput(Sc, False);
   Inc(InputCount);
 
-  // Main key UP
   Inputs[InputCount] := MakeScanCodeInput(Sc, True);
   Inc(InputCount);
 
-  // Modifiers UP (in reverse order)
   if (ShiftState and 4) <> 0 then
   begin
     Inputs[InputCount] := MakeScanCodeInput(MapVirtualKey(VK_MENU, 0), True);
@@ -259,9 +250,14 @@ begin
     Inc(InputCount);
   end;
 
-  // Send all inputs atomically
   SendInput(InputCount, @Inputs[0], SizeOf(TInput));
+  Application.ProcessMessages;
   Sleep(1);
+end;
+
+function TWinKeyInput.GetCapsLockState: Boolean;
+begin
+  Result := GetKeyStateVK(VK_CAPITAL);
 end;
 
 end.

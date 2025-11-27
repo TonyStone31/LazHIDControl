@@ -21,7 +21,7 @@ unit CarbonKeyInput;
 interface
 
 uses
-  Classes, SysUtils, Controls, Forms,
+  Classes, SysUtils,
   FPCMacOSAll, CarbonProc,
   KeyInputIntf;
 
@@ -38,6 +38,9 @@ type
     procedure DoUp(Key: Word); override;
     procedure capsLockGetSaveState; override;
     procedure capsLockRestoreState; override;
+  public
+    function GetCapsLockState: Boolean; override;
+    procedure PressUnicodeChar(unicode: cardinal); override;
   end;
 
 function InitializeKeyInput: TKeyInput;
@@ -107,6 +110,34 @@ begin
     SendKeyInput(VK_CAPITAL, True);
     SendKeyInput(VK_CAPITAL, False);
   end;
+end;
+
+function TCarbonKeyInput.GetCapsLockState: Boolean;
+begin
+  Result := IsCapsLockOn;
+end;
+
+procedure TCarbonKeyInput.PressUnicodeChar(unicode: cardinal);
+var
+  unicodestring: string;
+  j: integer;
+  keyCode: word;
+begin
+  // macOS Unicode input implementation
+  // NOTE: This code needs testing on an actual Mac
+  // macOS typically uses Option key combinations for Unicode input
+
+  unicodestring := IntToHex(unicode, 4); // Convert to hex string
+
+  Apply([ssAlt]);
+  for j := 1 to Length(unicodeString) do begin
+    if unicodeString[j] in ['0'..'9'] then
+      keyCode := VK_0 + Ord(unicodeString[j]) - Ord('0')
+    else if unicodeString[j] in ['A'..'F'] then
+      keyCode := VK_A + Ord(unicodeString[j]) - Ord('A');
+    Press(keyCode);
+  end;
+  Unapply([ssAlt]);
 end;
 
 end.
