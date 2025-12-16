@@ -40,6 +40,11 @@ type
     procedure capsLockRestoreState; override;
   public
     function GetCapsLockState: Boolean; override;
+    function GetNumLockState: Boolean; override;
+    function GetScrollLockState: Boolean; override;
+    procedure ToggleCapsLock; override;
+    procedure ToggleNumLock; override;
+    procedure ToggleScrollLock; override;
     procedure PressUnicodeChar(unicode: cardinal); override;
   end;
 
@@ -115,6 +120,38 @@ end;
 function TCarbonKeyInput.GetCapsLockState: Boolean;
 begin
   Result := IsCapsLockOn;
+end;
+
+function TCarbonKeyInput.GetNumLockState: Boolean;
+begin
+  // macOS keyboards typically don't have NumLock
+  // This always returns False
+  Result := False;
+end;
+
+function TCarbonKeyInput.GetScrollLockState: Boolean;
+begin
+  // macOS keyboards typically don't have ScrollLock
+  // This always returns False
+  Result := False;
+end;
+
+procedure TCarbonKeyInput.ToggleCapsLock;
+begin
+  SendKeyInput(VK_CAPITAL, True);
+  SendKeyInput(VK_CAPITAL, False);
+end;
+
+procedure TCarbonKeyInput.ToggleNumLock;
+begin
+  // macOS keyboards typically don't have NumLock
+  // This is a no-op
+end;
+
+procedure TCarbonKeyInput.ToggleScrollLock;
+begin
+  // macOS keyboards typically don't have ScrollLock
+  // This is a no-op
 end;
 
 procedure TCarbonKeyInput.PressUnicodeChar(unicode: cardinal);

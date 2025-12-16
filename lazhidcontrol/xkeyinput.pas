@@ -45,6 +45,11 @@ type
     constructor Create;
     destructor Destroy; override;
     function GetCapsLockState: Boolean; override;
+    function GetNumLockState: Boolean; override;
+    function GetScrollLockState: Boolean; override;
+    procedure ToggleCapsLock; override;
+    procedure ToggleNumLock; override;
+    procedure ToggleScrollLock; override;
     procedure PressASCIIChar(ch: char); override;
     procedure PressUnicodeChar(unicode: cardinal); override;
   end;
@@ -348,6 +353,44 @@ begin
     if actualCapsLockWasOn then
       capsLockRestoreState;
   end;
+end;
+
+function TXKeyInput.GetNumLockState: Boolean;
+var
+  keyboardState: TXKeyboardState;
+begin
+  Result := False;
+  if xDisplayConnection = nil then Exit;
+  XGetKeyboardControl(xDisplayConnection, @keyboardState);
+  Result := (keyboardState.led_mask and 2) <> 0;  // Bit 1 is NumLock LED
+end;
+
+function TXKeyInput.GetScrollLockState: Boolean;
+var
+  keyboardState: TXKeyboardState;
+begin
+  Result := False;
+  if xDisplayConnection = nil then Exit;
+  XGetKeyboardControl(xDisplayConnection, @keyboardState);
+  Result := (keyboardState.led_mask and 4) <> 0;  // Bit 2 is ScrollLock LED
+end;
+
+procedure TXKeyInput.ToggleCapsLock;
+begin
+  Down(VK_CAPITAL);
+  Up(VK_CAPITAL);
+end;
+
+procedure TXKeyInput.ToggleNumLock;
+begin
+  Down(VK_NUMLOCK);
+  Up(VK_NUMLOCK);
+end;
+
+procedure TXKeyInput.ToggleScrollLock;
+begin
+  Down(VK_SCROLL);
+  Up(VK_SCROLL);
 end;
 
 end.

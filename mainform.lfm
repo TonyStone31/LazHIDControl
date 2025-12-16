@@ -1,11 +1,11 @@
 object MainForm: TMainForm
-  Left = 332
-  Height = 748
-  Top = 792
-  Width = 1208
+  Left = 409
+  Height = 955
+  Top = 873
+  Width = 1342
   Caption = 'LazHIDControl Demo'
-  ClientHeight = 748
-  ClientWidth = 1208
+  ClientHeight = 955
+  ClientWidth = 1342
   DesignTimePPI = 115
   KeyPreview = True
   Position = poDesktopCenter
@@ -14,163 +14,15 @@ object MainForm: TMainForm
   OnDestroy = FormDestroy
   OnKeyDown = FormKeyDown
   OnResize = FormResize
-  object memTestSource: TMemo
-    AnchorSideLeft.Control = Owner
-    AnchorSideTop.Control = Bevel1
-    AnchorSideRight.Control = Bevel1
-    AnchorSideBottom.Control = Bevel1
-    AnchorSideBottom.Side = asrBottom
-    Left = 0
-    Height = 348
-    Top = 72
-    Width = 599
-    Anchors = [akTop, akLeft, akRight, akBottom]
-    BorderSpacing.Top = 8
-    Lines.Strings = (
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZ     abcdefghijklmnopqrstuvwxyz'
-      '1234567890'
-      '!@#$%^&*()~_+`-={}|[]\:";''<>?,./'
-      ''
-      '€ £ ¥ ¢ $ ₹ ₽'
-      ''
-      '½ ¼ ¾ ⅓ ⅔'
-      ''
-      '± × ÷ ≠ ≤ ≥ ∞ √ ∑'
-      ''
-      '← ↑ → ↓ ↔'
-      ''
-      '😀 😁 😂 🤔 🙃 😉  🌟'
-      '❤️ 💔 🔥 🌈 💡 📚  🎉'
-      ''
-      'LazHIDControl Test'
-    )
-    ScrollBars = ssAutoBoth
-    TabOrder = 0
-  end
-  object memTestDestination: TMemo
-    AnchorSideLeft.Control = Bevel1
-    AnchorSideLeft.Side = asrBottom
-    AnchorSideTop.Control = Bevel1
-    AnchorSideRight.Control = Owner
-    AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = Bevel1
-    AnchorSideBottom.Side = asrBottom
-    Left = 610
-    Height = 348
-    Top = 72
-    Width = 598
-    Anchors = [akTop, akLeft, akRight, akBottom]
-    BorderSpacing.Left = 1
-    BorderSpacing.Top = 8
-    ScrollBars = ssAutoBoth
-    TabOrder = 1
-    OnChange = memTestDestinationChange
-  end
-  object lblMatchStatus: TLabel
-    AnchorSideLeft.Control = memTestDestination
-    AnchorSideLeft.Side = asrCenter
-    AnchorSideTop.Control = memTestDestination
-    AnchorSideTop.Side = asrBottom
-    Left = 852
-    Height = 19
-    Top = 428
-    Width = 114
-    BorderSpacing.Top = 8
-    Caption = 'Ready to test...'
-    Font.Style = [fsBold]
-    ParentFont = False
-  end
-  object lblHotKeyCombo: TLabel
-    AnchorSideLeft.Control = memTestSource
-    AnchorSideLeft.Side = asrCenter
-    AnchorSideTop.Control = memTestSource
-    AnchorSideTop.Side = asrBottom
-    Left = 268
-    Height = 19
-    Top = 427
-    Width = 63
-    BorderSpacing.Top = 7
-    Caption = 'Hotkey: '
-    Font.Style = [fsBold]
-    ParentFont = False
-  end
-  object btnMoveMouseClick: TButton
-    AnchorSideLeft.Control = Owner
-    AnchorSideTop.Control = lblHotKeyCombo
-    AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = Owner
-    AnchorSideRight.Side = asrBottom
-    Left = 0
-    Height = 38
-    Top = 454
-    Width = 1208
-    Anchors = [akTop, akLeft, akRight]
-    BorderSpacing.Top = 8
-    Caption = 'Mouse Movement Demo'
-    TabOrder = 2
-    OnClick = btnMoveMouseClickClick
-  end
-  object btnAltTab: TButton
-    AnchorSideRight.Side = asrBottom
-    Left = 13
-    Height = 40
-    Top = 8
-    Width = 220
-    BorderSpacing.Left = 8
-    BorderSpacing.Top = 8
-    Caption = 'Alt + Tab Demo'
-    TabOrder = 3
-    OnClick = btnAltTabClick
-  end
-  object btnWaylandInfo: TButton
-    AnchorSideRight.Side = asrBottom
-    Left = 261
-    Height = 40
-    Top = 8
-    Width = 220
-    BorderSpacing.Left = 8
-    Caption = 'Wayland Info'
-    TabOrder = 5
-    OnClick = btnWaylandInfoClick
-  end
-  object btnToggleGlobalKeys: TButton
-    AnchorSideRight.Side = asrBottom
-    Left = 508
-    Height = 40
-    Top = 8
-    Width = 220
-    BorderSpacing.Left = 8
-    Caption = 'Enable Global Key Monitor'
-    TabOrder = 4
-    OnClick = btnToggleGlobalKeysClick
-  end
-  object PaintBox1: TPaintBox
-    AnchorSideLeft.Control = Owner
-    AnchorSideTop.Control = btnMoveMouseClick
-    AnchorSideTop.Side = asrBottom
-    AnchorSideRight.Control = Owner
-    AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = StatusBar1
-    Left = 0
-    Height = 228
-    Top = 497
-    Width = 1208
-    Anchors = [akTop, akLeft, akRight, akBottom]
-    BorderSpacing.Top = 5
-    OnMouseDown = PaintBox1MouseDown
-    OnMouseMove = PaintBox1MouseMove
-    OnMouseUp = PaintBox1MouseUp
-    OnPaint = PaintBox1Paint
-  end
   object StatusBar1: TStatusBar
     Left = 0
     Height = 23
-    Top = 725
-    Width = 1208
+    Top = 932
+    Width = 1342
     Panels = <    
       item
         Text = 'Mouse: (0, 0)'
-        Width = 200
+        Width = 350
       end    
       item
         Text = 'Last Key: None'
@@ -185,30 +37,960 @@ object MainForm: TMainForm
       end>
     SimplePanel = False
   end
-  object Bevel1: TBevel
-    AnchorSideLeft.Control = Owner
-    AnchorSideLeft.Side = asrCenter
-    Left = 599
-    Height = 356
-    Top = 64
-    Width = 10
+  object PageControl1: TPageControl
+    Left = 0
+    Height = 932
+    Top = 0
+    Width = 1342
+    ActivePage = TabSheet1
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 1
+    object TabSheet1: TTabSheet
+      Caption = 'Keyboard'
+      ClientHeight = 899
+      ClientWidth = 1338
+      object memTestSource: TMemo
+        AnchorSideLeft.Control = TabSheet1
+        AnchorSideTop.Control = Bevel1
+        AnchorSideRight.Control = Bevel1
+        AnchorSideBottom.Control = Bevel1
+        AnchorSideBottom.Side = asrBottom
+        Left = 0
+        Height = 752
+        Top = 100
+        Width = 664
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        Lines.Strings = (
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZ     abcdefghijklmnopqrstuvwxyz'
+          '1234567890 !@#$%^&*()~_+`-={}|[]\:";''<>?,./'
+          '€ £ ¥ ¢ $ ₹ ₽'
+          '½ ¼ ¾ ⅓ ⅔'
+          '± × ÷ ≠ ≤ ≥ ∞ √ ∑'
+          '← ↑ → ↓ ↔'
+          ''
+          '😀 😁 😂 🤔 🙃 😉  🌟'
+        )
+        ScrollBars = ssAutoBoth
+        TabOrder = 0
+        OnChange = memTestSourceChange
+      end
+      object memTestDestination: TMemo
+        AnchorSideLeft.Control = Bevel1
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideTop.Control = Bevel1
+        AnchorSideRight.Control = TabSheet1
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = Bevel1
+        AnchorSideBottom.Side = asrBottom
+        Left = 674
+        Height = 752
+        Top = 100
+        Width = 664
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        ScrollBars = ssAutoBoth
+        TabOrder = 1
+        OnChange = memTestDestinationChange
+      end
+      object lblMatchStatus: TLabel
+        AnchorSideLeft.Control = memTestDestination
+        AnchorSideLeft.Side = asrCenter
+        AnchorSideTop.Control = memTestDestination
+        AnchorSideTop.Side = asrBottom
+        Left = 949
+        Height = 19
+        Top = 860
+        Width = 114
+        BorderSpacing.Top = 8
+        Caption = 'Ready to test...'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object lblHotKeyCombo: TLabel
+        AnchorSideLeft.Side = asrCenter
+        AnchorSideTop.Control = memTestSource
+        AnchorSideTop.Side = asrBottom
+        Left = 143
+        Height = 19
+        Top = 859
+        Width = 63
+        BorderSpacing.Top = 7
+        Caption = 'Hotkey: '
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object btnAltTab: TButton
+        AnchorSideRight.Side = asrBottom
+        Left = 13
+        Height = 30
+        Top = 1
+        Width = 150
+        BorderSpacing.Left = 8
+        BorderSpacing.Top = 8
+        Caption = 'Alt + Tab Demo'
+        TabOrder = 2
+        OnClick = btnAltTabClick
+      end
+      object btnWaylandInfo: TButton
+        AnchorSideRight.Side = asrBottom
+        Left = 13
+        Height = 30
+        Top = 68
+        Width = 150
+        BorderSpacing.Left = 8
+        Caption = 'Wayland Info'
+        TabOrder = 3
+        OnClick = btnWaylandInfoClick
+      end
+      object btnToggleGlobalKeys: TButton
+        AnchorSideRight.Side = asrBottom
+        Left = 13
+        Height = 30
+        Top = 35
+        Width = 150
+        BorderSpacing.Left = 8
+        Caption = 'Global Key Monitor'
+        TabOrder = 4
+        OnClick = btnToggleGlobalKeysClick
+      end
+      object Bevel1: TBevel
+        AnchorSideLeft.Control = TabSheet1
+        AnchorSideLeft.Side = asrCenter
+        AnchorSideBottom.Control = TabSheet1
+        AnchorSideBottom.Side = asrBottom
+        Left = 664
+        Height = 752
+        Top = 100
+        Width = 10
+        Anchors = [akTop, akLeft, akBottom]
+        BorderSpacing.Bottom = 47
+      end
+      object btnToggleCapsLock: TToggleBox
+        AnchorSideLeft.Control = btnToggleNumLock
+        AnchorSideRight.Control = btnToggleNumLock
+        Left = 781
+        Height = 30
+        Top = 1
+        Width = 150
+        Anchors = [akTop, akRight]
+        BorderSpacing.Left = 8
+        Caption = '🔓 CAPS OFF'
+        TabOrder = 5
+        OnChange = btnToggleCapsLockChange
+        OnClick = btnToggleCapsLockClick
+      end
+      object btnToggleNumLock: TToggleBox
+        AnchorSideLeft.Control = memTestDestination
+        AnchorSideLeft.Side = asrCenter
+        AnchorSideRight.Side = asrCenter
+        Left = 931
+        Height = 30
+        Top = 1
+        Width = 150
+        Caption = 'NUM Off'
+        TabOrder = 6
+        OnChange = btnToggleNumLockChange
+        OnClick = btnToggleNumLockClick
+      end
+      object btnToggleScrollLock: TToggleBox
+        AnchorSideLeft.Control = btnToggleNumLock
+        AnchorSideLeft.Side = asrBottom
+        AnchorSideRight.Side = asrBottom
+        Left = 1081
+        Height = 30
+        Top = 1
+        Width = 150
+        Caption = 'SCR Off'
+        TabOrder = 7
+        OnChange = btnToggleScrollLockChange
+        OnClick = btnToggleScrollLockClick
+      end
+    end
+    object TabSheet2: TTabSheet
+      Caption = 'Mouse'
+      ClientHeight = 899
+      ClientWidth = 1338
+      object PaintBox1: TPaintBox
+        AnchorSideLeft.Control = TabSheet2
+        AnchorSideTop.Control = btnMoveMouseClick
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = TabSheet2
+        AnchorSideRight.Side = asrBottom
+        AnchorSideBottom.Control = TabSheet2
+        AnchorSideBottom.Side = asrBottom
+        Left = 10
+        Height = 826
+        Top = 63
+        Width = 1318
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        BorderSpacing.Around = 10
+        OnMouseDown = PaintBox1MouseDown
+        OnMouseMove = PaintBox1MouseMove
+        OnMouseUp = PaintBox1MouseUp
+        OnPaint = PaintBox1Paint
+      end
+      object btnMoveMouseClick: TButton
+        AnchorSideLeft.Control = TabSheet2
+        AnchorSideTop.Side = asrBottom
+        AnchorSideRight.Control = TabSheet2
+        AnchorSideRight.Side = asrBottom
+        Left = 0
+        Height = 38
+        Top = 15
+        Width = 1338
+        Anchors = [akTop, akLeft, akRight]
+        BorderSpacing.Top = 8
+        Caption = 'Mouse Movement Demo'
+        TabOrder = 0
+        OnClick = btnMoveMouseClickClick
+      end
+    end
+    object TabSheet3: TTabSheet
+      Caption = 'Window Spy'
+      ClientHeight = 899
+      ClientWidth = 1338
+      object SpySplitter: TSplitter
+        Left = 350
+        Height = 859
+        Top = 40
+        Width = 5
+      end
+      object pnlSpyToolbar: TPanel
+        Left = 0
+        Height = 40
+        Top = 0
+        Width = 1338
+        Align = alTop
+        BevelOuter = bvNone
+        ClientHeight = 40
+        ClientWidth = 1338
+        TabOrder = 0
+        object pnlFinderTarget: TPanel
+          Left = 4
+          Height = 32
+          Top = 4
+          Width = 32
+          BevelOuter = bvLowered
+          TabOrder = 0
+          OnMouseDown = pnlFinderTargetMouseDown
+          OnMouseMove = pnlFinderTargetMouseMove
+          OnMouseUp = pnlFinderTargetMouseUp
+          OnPaint = pnlFinderTargetPaint
+        end
+        object lblFinderHint: TLabel
+          Left = 44
+          Height = 19
+          Top = 12
+          Width = 144
+          Caption = 'Drag to find window'
+        end
+        object btnSpyRefresh: TButton
+          Left = 199
+          Height = 30
+          Top = 5
+          Width = 80
+          Caption = 'Refresh'
+          TabOrder = 1
+          OnClick = btnSpyRefreshClick
+        end
+        object chkSpyAutoRefresh: TCheckBox
+          Left = 294
+          Height = 21
+          Top = 9
+          Width = 114
+          Caption = 'Auto-refresh'
+          TabOrder = 2
+          OnChange = chkSpyAutoRefreshChange
+        end
+        object edtSpySearch: TEdit
+          Left = 419
+          Height = 31
+          Top = 6
+          Width = 200
+          TabOrder = 3
+          TextHint = 'Search windows...'
+          OnChange = edtSpySearchChange
+        end
+        object btnSpySearch: TButton
+          Left = 633
+          Height = 30
+          Top = 5
+          Width = 60
+          Caption = 'Find'
+          TabOrder = 4
+          OnClick = btnSpySearchClick
+        end
+        object btnSpyLocate: TButton
+          Left = 707
+          Height = 30
+          Top = 5
+          Width = 80
+          Caption = 'Locate'
+          TabOrder = 5
+          OnClick = btnSpyLocateClick
+        end
+        object btnSpyFlash: TButton
+          Left = 796
+          Height = 30
+          Top = 5
+          Width = 60
+          Caption = 'Flash'
+          TabOrder = 6
+          OnClick = btnSpyFlashClick
+        end
+        object btnSpyFocus: TButton
+          Left = 884
+          Height = 30
+          Top = 5
+          Width = 60
+          Caption = 'Focus'
+          TabOrder = 7
+          OnClick = btnSpyFocusClick
+        end
+        object btnSpyCopyInfo: TButton
+          Left = 969
+          Height = 30
+          Top = 6
+          Width = 80
+          Caption = 'Copy Info'
+          TabOrder = 8
+          OnClick = btnSpyCopyInfoClick
+        end
+      end
+      object pnlSpyLeft: TPanel
+        Left = 0
+        Height = 859
+        Top = 40
+        Width = 350
+        Align = alLeft
+        BevelOuter = bvNone
+        ClientHeight = 859
+        ClientWidth = 350
+        TabOrder = 1
+        object tvWindows: TTreeView
+          Left = 0
+          Height = 855
+          Top = 0
+          Width = 346
+          Align = alClient
+          ReadOnly = True
+          TabOrder = 0
+          Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
+          OnDblClick = tvWindowsDblClick
+          OnSelectionChanged = tvWindowsSelectionChanged
+        end
+      end
+      object pnlSpyRight: TPanel
+        Left = 355
+        Height = 859
+        Top = 40
+        Width = 983
+        Align = alClient
+        BevelOuter = bvNone
+        ClientHeight = 859
+        ClientWidth = 983
+        TabOrder = 2
+        object pcSpyDetails: TPageControl
+          Left = 0
+          Height = 779
+          Top = 0
+          Width = 983
+          ActivePage = tsSpyGeneral
+          Align = alClient
+          TabIndex = 0
+          TabOrder = 0
+          object tsSpyGeneral: TTabSheet
+            Caption = 'General'
+            ClientHeight = 746
+            ClientWidth = 979
+            object lblSpyHandle: TLabel
+              Left = 8
+              Height = 19
+              Top = 8
+              Width = 54
+              Caption = 'Handle:'
+            end
+            object edtSpyHandle: TEdit
+              Left = 100
+              Height = 31
+              Top = 5
+              Width = 200
+              ReadOnly = True
+              TabOrder = 0
+            end
+            object lblSpyCaption: TLabel
+              Left = 8
+              Height = 19
+              Top = 40
+              Width = 59
+              Caption = 'Caption:'
+            end
+            object edtSpyCaption: TEdit
+              Left = 100
+              Height = 31
+              Top = 37
+              Width = 500
+              TabOrder = 1
+            end
+            object btnSpySetCaption: TButton
+              Left = 610
+              Height = 28
+              Top = 37
+              Width = 60
+              Caption = 'Set'
+              TabOrder = 2
+              OnClick = btnSpySetCaptionClick
+            end
+            object lblSpyClass: TLabel
+              Left = 8
+              Height = 19
+              Top = 72
+              Width = 40
+              Caption = 'Class:'
+            end
+            object edtSpyClass: TEdit
+              Left = 100
+              Height = 31
+              Top = 69
+              Width = 300
+              ReadOnly = True
+              TabOrder = 3
+            end
+            object lblSpyRect: TLabel
+              Left = 8
+              Height = 19
+              Top = 104
+              Width = 75
+              Caption = 'Rectangle:'
+            end
+            object edtSpyRect: TEdit
+              Left = 100
+              Height = 31
+              Top = 101
+              Width = 300
+              ReadOnly = True
+              TabOrder = 4
+            end
+            object lblSpyClientRect: TLabel
+              Left = 8
+              Height = 19
+              Top = 136
+              Width = 82
+              Caption = 'Client Rect:'
+            end
+            object edtSpyClientRect: TEdit
+              Left = 100
+              Height = 31
+              Top = 133
+              Width = 300
+              ReadOnly = True
+              TabOrder = 5
+            end
+            object lblSpyProcess: TLabel
+              Left = 8
+              Height = 19
+              Top = 168
+              Width = 59
+              Caption = 'Process:'
+            end
+            object edtSpyProcess: TEdit
+              Left = 100
+              Height = 31
+              Top = 165
+              Width = 300
+              ReadOnly = True
+              TabOrder = 6
+            end
+            object lblSpyThread: TLabel
+              Left = 8
+              Height = 19
+              Top = 200
+              Width = 54
+              Caption = 'Thread:'
+            end
+            object edtSpyThread: TEdit
+              Left = 100
+              Height = 31
+              Top = 197
+              Width = 200
+              ReadOnly = True
+              TabOrder = 7
+            end
+            object gbSpyWindowActions: TGroupBox
+              Left = 8
+              Height = 130
+              Top = 240
+              Width = 400
+              Caption = 'Window Actions'
+              ClientHeight = 109
+              ClientWidth = 396
+              TabOrder = 8
+              object btnSpyShow: TButton
+                Left = 10
+                Height = 30
+                Top = 10
+                Width = 80
+                Caption = 'Show'
+                TabOrder = 0
+                OnClick = btnSpyShowClick
+              end
+              object btnSpyHide: TButton
+                Left = 100
+                Height = 30
+                Top = 10
+                Width = 80
+                Caption = 'Hide'
+                TabOrder = 1
+                OnClick = btnSpyHideClick
+              end
+              object btnSpyMaximize: TButton
+                Left = 190
+                Height = 30
+                Top = 10
+                Width = 80
+                Caption = 'Maximize'
+                TabOrder = 2
+                OnClick = btnSpyMaximizeClick
+              end
+              object btnSpyMinimize: TButton
+                Left = 280
+                Height = 30
+                Top = 10
+                Width = 80
+                Caption = 'Minimize'
+                TabOrder = 3
+                OnClick = btnSpyMinimizeClick
+              end
+              object btnSpyRestore: TButton
+                Left = 10
+                Height = 30
+                Top = 50
+                Width = 80
+                Caption = 'Restore'
+                TabOrder = 4
+                OnClick = btnSpyRestoreClick
+              end
+              object btnSpyClose: TButton
+                Left = 100
+                Height = 30
+                Top = 50
+                Width = 80
+                Caption = 'Close'
+                TabOrder = 5
+                OnClick = btnSpyCloseClick
+              end
+              object btnSpyBringToTop: TButton
+                Left = 190
+                Height = 30
+                Top = 50
+                Width = 80
+                Caption = 'To Front'
+                TabOrder = 6
+                OnClick = btnSpyBringToTopClick
+              end
+              object chkSpyEnabled: TCheckBox
+                Left = 280
+                Height = 21
+                Top = 55
+                Width = 80
+                Caption = 'Enabled'
+                TabOrder = 7
+                OnClick = chkSpyEnabledClick
+              end
+            end
+          end
+          object tsSpyStyles: TTabSheet
+            Caption = 'Styles'
+            ClientHeight = 746
+            ClientWidth = 979
+            object lblSpyStylesInfo: TLabel
+              Left = 8
+              Height = 19
+              Top = 8
+              Width = 101
+              Caption = 'Window Style:'
+            end
+            object edtSpyStyle: TEdit
+              Left = 100
+              Height = 31
+              Top = 5
+              Width = 200
+              ReadOnly = True
+              TabOrder = 0
+            end
+            object lblSpyExStyleInfo: TLabel
+              Left = 320
+              Height = 19
+              Top = 8
+              Width = 111
+              Caption = 'Extended Style:'
+            end
+            object edtSpyExStyle: TEdit
+              Left = 420
+              Height = 31
+              Top = 5
+              Width = 200
+              ReadOnly = True
+              TabOrder = 1
+            end
+            object lbSpyStyles: TListBox
+              Left = 8
+              Height = 280
+              Top = 45
+              Width = 350
+              ItemHeight = 0
+              TabOrder = 2
+              TopIndex = -1
+            end
+            object lbSpyExStyles: TListBox
+              Left = 370
+              Height = 280
+              Top = 45
+              Width = 350
+              ItemHeight = 0
+              TabOrder = 3
+              TopIndex = -1
+            end
+            object lblSpyStylesList: TLabel
+              Left = 8
+              Height = 19
+              Top = 330
+              Width = 86
+              Caption = 'Style Flags:'
+              Font.Style = [fsBold]
+              ParentFont = False
+            end
+            object lblSpyExStylesList: TLabel
+              Left = 370
+              Height = 19
+              Top = 330
+              Width = 163
+              Caption = 'Extended Style Flags:'
+              Font.Style = [fsBold]
+              ParentFont = False
+            end
+          end
+          object tsSpyClass: TTabSheet
+            Caption = 'Class'
+            ClientHeight = 746
+            ClientWidth = 979
+            object lblSpyClassName: TLabel
+              Left = 8
+              Height = 19
+              Top = 8
+              Width = 86
+              Caption = 'Class Name:'
+            end
+            object edtSpyClassName: TEdit
+              Left = 100
+              Height = 31
+              Top = 5
+              Width = 300
+              ReadOnly = True
+              TabOrder = 0
+            end
+            object lblSpyClassAtom: TLabel
+              Left = 8
+              Height = 19
+              Top = 40
+              Width = 83
+              Caption = 'Class Atom:'
+            end
+            object edtSpyClassAtom: TEdit
+              Left = 100
+              Height = 31
+              Top = 37
+              Width = 150
+              ReadOnly = True
+              TabOrder = 1
+            end
+            object lblSpyClassStyle: TLabel
+              Left = 8
+              Height = 19
+              Top = 72
+              Width = 79
+              Caption = 'Class Style:'
+            end
+            object edtSpyClassStyle: TEdit
+              Left = 100
+              Height = 31
+              Top = 69
+              Width = 200
+              ReadOnly = True
+              TabOrder = 2
+            end
+            object lblSpyWndProc: TLabel
+              Left = 8
+              Height = 19
+              Top = 104
+              Width = 73
+              Caption = 'Wnd Proc:'
+            end
+            object edtSpyWndProc: TEdit
+              Left = 100
+              Height = 31
+              Top = 101
+              Width = 200
+              ReadOnly = True
+              TabOrder = 3
+            end
+            object lblSpyClassBytes: TLabel
+              Left = 8
+              Height = 19
+              Top = 136
+              Width = 84
+              Caption = 'Class Bytes:'
+            end
+            object edtSpyClassBytes: TEdit
+              Left = 100
+              Height = 31
+              Top = 133
+              Width = 100
+              ReadOnly = True
+              TabOrder = 4
+            end
+            object lblSpyWndBytes: TLabel
+              Left = 220
+              Height = 19
+              Top = 136
+              Width = 106
+              Caption = 'Window Bytes:'
+            end
+            object edtSpyWndBytes: TEdit
+              Left = 310
+              Height = 31
+              Top = 133
+              Width = 100
+              ReadOnly = True
+              TabOrder = 5
+            end
+            object lbSpyClassStyles: TListBox
+              Left = 8
+              Height = 200
+              Top = 175
+              Width = 350
+              ItemHeight = 0
+              TabOrder = 6
+              TopIndex = -1
+            end
+            object lblSpyClassStyleFlags: TLabel
+              Left = 8
+              Height = 19
+              Top = 380
+              Width = 130
+              Caption = 'Class Style Flags:'
+              Font.Style = [fsBold]
+              ParentFont = False
+            end
+          end
+          object tsSpyProperties: TTabSheet
+            Caption = 'Properties'
+            ClientHeight = 746
+            ClientWidth = 979
+            object lvSpyProperties: TListView
+              Left = 8
+              Height = 300
+              Top = 8
+              Width = 710
+              Columns = <              
+                item
+                  Caption = 'Property'
+                  Width = 200
+                end              
+                item
+                  Caption = 'Value'
+                  Width = 503
+                end>
+              ReadOnly = True
+              RowSelect = True
+              TabOrder = 0
+              ViewStyle = vsReport
+            end
+            object lblSpyPropertiesHint: TLabel
+              Left = 8
+              Height = 19
+              Top = 320
+              Width = 286
+              Caption = 'Window properties set via SetProp() API'
+              Font.Color = clGray
+              ParentFont = False
+            end
+          end
+          object tsSpyProcess: TTabSheet
+            Caption = 'Process'
+            ClientHeight = 746
+            ClientWidth = 979
+            object lblSpyPID: TLabel
+              Left = 8
+              Height = 19
+              Top = 8
+              Width = 78
+              Caption = 'Process ID:'
+            end
+            object edtSpyPID: TEdit
+              Left = 100
+              Height = 31
+              Top = 5
+              Width = 150
+              ReadOnly = True
+              TabOrder = 0
+            end
+            object lblSpyTID: TLabel
+              Left = 270
+              Height = 19
+              Top = 8
+              Width = 73
+              Caption = 'Thread ID:'
+            end
+            object edtSpyTID: TEdit
+              Left = 340
+              Height = 31
+              Top = 5
+              Width = 150
+              ReadOnly = True
+              TabOrder = 1
+            end
+            object lblSpyProcName: TLabel
+              Left = 8
+              Height = 19
+              Top = 40
+              Width = 105
+              Caption = 'Process Name:'
+            end
+            object edtSpyProcName: TEdit
+              Left = 100
+              Height = 31
+              Top = 37
+              Width = 400
+              ReadOnly = True
+              TabOrder = 2
+            end
+            object lblSpyProcPath: TLabel
+              Left = 8
+              Height = 19
+              Top = 72
+              Width = 95
+              Caption = 'Process Path:'
+            end
+            object edtSpyProcPath: TEdit
+              Left = 100
+              Height = 31
+              Top = 69
+              Width = 600
+              ReadOnly = True
+              TabOrder = 3
+            end
+          end
+        end
+        object pnlSpyQuickInfo: TPanel
+          Left = 0
+          Height = 80
+          Top = 779
+          Width = 983
+          Align = alBottom
+          BevelOuter = bvLowered
+          ClientHeight = 80
+          ClientWidth = 983
+          TabOrder = 1
+          object lblSpyQuickHandle: TLabel
+            Left = 8
+            Height = 19
+            Top = 8
+            Width = 54
+            Caption = 'Handle:'
+          end
+          object lblSpyQuickHandleVal: TLabel
+            Left = 60
+            Height = 19
+            Top = 8
+            Width = 100
+            Caption = '0x00000000'
+            Font.Name = 'Monospace'
+            ParentFont = False
+          end
+          object lblSpyQuickClass: TLabel
+            Left = 200
+            Height = 19
+            Top = 8
+            Width = 40
+            Caption = 'Class:'
+          end
+          object lblSpyQuickClassVal: TLabel
+            Left = 240
+            Height = 19
+            Top = 8
+            Width = 5
+            Caption = '-'
+          end
+          object lblSpyQuickCaption: TLabel
+            Left = 8
+            Height = 19
+            Top = 28
+            Width = 59
+            Caption = 'Caption:'
+          end
+          object lblSpyQuickCaptionVal: TLabel
+            Left = 60
+            Height = 15
+            Top = 28
+            Width = 600
+            AutoSize = False
+            Caption = '-'
+          end
+          object lblSpyQuickRect: TLabel
+            Left = 8
+            Height = 19
+            Top = 48
+            Width = 36
+            Caption = 'Rect:'
+          end
+          object lblSpyQuickRectVal: TLabel
+            Left = 60
+            Height = 19
+            Top = 48
+            Width = 5
+            Caption = '-'
+          end
+        end
+      end
+    end
   end
-  object btnToggleCapsLock: TToggleBox
+  object chkStayOnTop: TCheckBox
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = btnTestStayOnTop
+    Left = 1134
+    Height = 21
+    Top = 0
+    Width = 108
+    Anchors = [akTop, akRight]
+    Caption = 'Stay On Top'
+    TabOrder = 2
+    OnChange = chkStayOnTopChange
+  end
+  object btnTestStayOnTop: TButton
+    AnchorSideTop.Control = Owner
+    AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
-    Left = 742
-    Height = 40
-    Top = 8
-    Width = 220
-    BorderSpacing.Left = 8
-    Caption = 'Toggle CAPS Lock'
-    TabOrder = 7
-    OnChange = btnToggleCapsLockChange
-    OnClick = btnToggleCapsLockClick
+    Left = 1242
+    Height = 25
+    Top = 0
+    Width = 100
+    Anchors = [akTop, akRight]
+    Caption = 'Test Form'
+    OnClick = btnTestStayOnTopClick
+    TabOrder = 3
   end
   object Timer1: TTimer
     Interval = 100
     OnTimer = Timer1Timer
     Left = 24
+    Top = 152
+  end
+  object TimerSpyRefresh: TTimer
+    Enabled = False
+    Interval = 500
+    OnTimer = TimerSpyRefreshTimer
+    Left = 88
     Top = 152
   end
 end

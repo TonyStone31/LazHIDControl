@@ -10,6 +10,7 @@ uses
   Classes,
   Controls,
   KeyInputIntf,
+  LCLType,
   MouseInputIntf,
   SysUtils,
   Unix;
@@ -32,6 +33,15 @@ type
   protected
     procedure DoDown(Key: word); override;
     procedure DoUp(Key: word); override;
+    procedure capsLockGetSaveState; override;
+    procedure capsLockRestoreState; override;
+  public
+    function GetCapsLockState: Boolean; override;
+    function GetNumLockState: Boolean; override;
+    function GetScrollLockState: Boolean; override;
+    procedure ToggleCapsLock; override;
+    procedure ToggleNumLock; override;
+    procedure ToggleScrollLock; override;
   end;
 
 function InitializeWaylandMouseInput: TMouseInput;
@@ -136,6 +146,53 @@ procedure TWaylandKeyInput.DoUp(Key: word);
 begin
   Emit(KeyboardFD, EV_KEY, Key, 0);
   Emit(KeyboardFD, EV_SYN, SYN_REPORT, 0);
+end;
+
+procedure TWaylandKeyInput.capsLockGetSaveState;
+begin
+  // Wayland uinput doesn't support querying lock key state
+  // This is a limitation of the uinput interface
+end;
+
+procedure TWaylandKeyInput.capsLockRestoreState;
+begin
+  // Wayland uinput doesn't support querying lock key state
+end;
+
+function TWaylandKeyInput.GetCapsLockState: Boolean;
+begin
+  // Wayland uinput doesn't support querying lock key state
+  Result := False;
+end;
+
+function TWaylandKeyInput.GetNumLockState: Boolean;
+begin
+  // Wayland uinput doesn't support querying lock key state
+  Result := False;
+end;
+
+function TWaylandKeyInput.GetScrollLockState: Boolean;
+begin
+  // Wayland uinput doesn't support querying lock key state
+  Result := False;
+end;
+
+procedure TWaylandKeyInput.ToggleCapsLock;
+begin
+  Down(VK_CAPITAL);
+  Up(VK_CAPITAL);
+end;
+
+procedure TWaylandKeyInput.ToggleNumLock;
+begin
+  Down(VK_NUMLOCK);
+  Up(VK_NUMLOCK);
+end;
+
+procedure TWaylandKeyInput.ToggleScrollLock;
+begin
+  Down(VK_SCROLL);
+  Up(VK_SCROLL);
 end;
 
 { Initialize Input }

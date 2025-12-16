@@ -50,3 +50,11 @@ desktop.ini
 *.compiled
 *.link.res
 *.lrt
+packagefiles.xml
+HIDControlDemo
+
+# Build scripts (user-specific paths)
+build-and-run.sh
+
+# Patch files
+*.patch

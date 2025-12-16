@@ -8,7 +8,8 @@ unit LazHIDControl;
 interface
 
 uses
-  MouseAndKeyInput, HotkeyInput, GlobalKeyMonitor, WindowManagerIntf;
+  MouseAndKeyInput, HotkeyInput, GlobalKeyMonitor, GlobalMouseMonitor, 
+  WindowManagerIntf, WindowManager;
 
 implementation
 

@@ -34,6 +34,15 @@ type
   protected
     procedure DoDown(Key: Word); override;
     procedure DoUp(Key: Word); override;
+    procedure capsLockGetSaveState; override;
+    procedure capsLockRestoreState; override;
+  public
+    function GetCapsLockState: Boolean; override;
+    function GetNumLockState: Boolean; override;
+    function GetScrollLockState: Boolean; override;
+    procedure ToggleCapsLock; override;
+    procedure ToggleNumLock; override;
+    procedure ToggleScrollLock; override;
   end;
 
 function InitializeKeyInput: TKeyInput;
@@ -249,6 +258,53 @@ end;
 procedure TCocoaKeyInput.DoUp(Key: Word);
 begin
   SendKeyInput(Key, False);
+end;
+
+procedure TCocoaKeyInput.capsLockGetSaveState;
+begin
+  // Cocoa implementation - not yet fully implemented
+end;
+
+procedure TCocoaKeyInput.capsLockRestoreState;
+begin
+  // Cocoa implementation - not yet fully implemented
+end;
+
+function TCocoaKeyInput.GetCapsLockState: Boolean;
+begin
+  // Cocoa implementation - not yet fully implemented
+  // Would use CGEventSourceFlagsState or NSEvent modifierFlags
+  Result := False;
+end;
+
+function TCocoaKeyInput.GetNumLockState: Boolean;
+begin
+  // macOS keyboards typically don't have NumLock
+  Result := False;
+end;
+
+function TCocoaKeyInput.GetScrollLockState: Boolean;
+begin
+  // macOS keyboards typically don't have ScrollLock
+  Result := False;
+end;
+
+procedure TCocoaKeyInput.ToggleCapsLock;
+begin
+  DoDown(VK_CAPITAL);
+  DoUp(VK_CAPITAL);
+end;
+
+procedure TCocoaKeyInput.ToggleNumLock;
+begin
+  // macOS keyboards typically don't have NumLock
+  // This is a no-op
+end;
+
+procedure TCocoaKeyInput.ToggleScrollLock;
+begin
+  // macOS keyboards typically don't have ScrollLock
+  // This is a no-op
 end;
 
 end.

@@ -137,8 +137,41 @@
         <UnitName Value="GlobalKeyMonitor"/>
       </Item>
       <Item>
+        <Filename Value="globalmousemonitorintf.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="GlobalMouseMonitorIntf"/>
+      </Item>
+      <Item>
+        <Filename Value="xglobalmousemonitor.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="XGlobalMouseMonitor"/>
+      </Item>
+      <Item>
+        <Filename Value="winglobalmousemonitor.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WinGlobalMouseMonitor"/>
+      </Item>
+      <Item>
+        <Filename Value="globalmousemonitor.pas"/>
+        <UnitName Value="GlobalMouseMonitor"/>
+      </Item>
+      <Item>
         <Filename Value="windowmanagerintf.pas"/>
         <UnitName Value="WindowManagerIntf"/>
+      </Item>
+      <Item>
+        <Filename Value="xwindowmanager.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="XWindowManager"/>
+      </Item>
+      <Item>
+        <Filename Value="winwindowmanager.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WinWindowManager"/>
+      </Item>
+      <Item>
+        <Filename Value="windowmanager.pas"/>
+        <UnitName Value="WindowManager"/>
       </Item>
     </Files>
     <RequiredPkgs>

@@ -42,6 +42,11 @@ type
     procedure PressUnicodeChar(unicode: cardinal); override;
     procedure PressASCIIChar(ch: char); override;
     function GetCapsLockState: Boolean; override;
+    function GetNumLockState: Boolean; override;
+    function GetScrollLockState: Boolean; override;
+    procedure ToggleCapsLock; override;
+    procedure ToggleNumLock; override;
+    procedure ToggleScrollLock; override;
   end;
   
 function InitializeKeyInput: TKeyInput;
@@ -258,6 +263,34 @@ end;
 function TWinKeyInput.GetCapsLockState: Boolean;
 begin
   Result := GetKeyStateVK(VK_CAPITAL);
+end;
+
+function TWinKeyInput.GetNumLockState: Boolean;
+begin
+  Result := GetKeyStateVK(VK_NUMLOCK);
+end;
+
+function TWinKeyInput.GetScrollLockState: Boolean;
+begin
+  Result := GetKeyStateVK(VK_SCROLL);
+end;
+
+procedure TWinKeyInput.ToggleCapsLock;
+begin
+  DoDown(VK_CAPITAL);
+  DoUp(VK_CAPITAL);
+end;
+
+procedure TWinKeyInput.ToggleNumLock;
+begin
+  DoDown(VK_NUMLOCK);
+  DoUp(VK_NUMLOCK);
+end;
+
+procedure TWinKeyInput.ToggleScrollLock;
+begin
+  DoDown(VK_SCROLL);
+  DoUp(VK_SCROLL);
 end;
 
 end.

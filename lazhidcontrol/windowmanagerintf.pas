@@ -69,6 +69,7 @@ type
     function DoFindWindowByClass(const AClassName: String): TWindowHandle; virtual; abstract;
     function DoFindWindowByPID(APID: LongWord): TWindowHandle; virtual; abstract;
     function DoEnumerateWindows: TList; virtual; abstract;  // Returns list of TWindowHandle
+    function DoGetWindowChildren(AHandle: TWindowHandle): TList; virtual;  // Returns list of child window handles
 
     // Window activation and focus
     function DoActivateWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
@@ -110,6 +111,7 @@ type
     function FindWindowByClass(const AClassName: String): TWindowHandle;
     function FindWindowByPID(APID: LongWord): TWindowHandle;
     function EnumerateWindows: TList;  // Returns list of TWindowHandle - caller must free
+    function GetWindowChildren(AHandle: TWindowHandle): TList;  // Returns list of child handles - caller must free
 
     // Window activation and focus
     function ActivateWindow(AHandle: TWindowHandle): Boolean;
@@ -189,6 +191,17 @@ end;
 function TWindowManager.EnumerateWindows: TList;
 begin
   Result := DoEnumerateWindows;
+end;
+
+function TWindowManager.GetWindowChildren(AHandle: TWindowHandle): TList;
+begin
+  Result := DoGetWindowChildren(AHandle);
+end;
+
+function TWindowManager.DoGetWindowChildren(AHandle: TWindowHandle): TList;
+begin
+  // Default implementation returns empty list - override in platform-specific classes
+  Result := TList.Create;
 end;
 
 // Window activation and focus

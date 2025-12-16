@@ -65,7 +65,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="3">
+    <Units Count="4">
       <Unit0>
         <Filename Value="HIDControlDemo.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -86,6 +86,14 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="WaylandInfo"/>
       </Unit2>
+      <Unit3>
+        <Filename Value="stayontoptestform.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmStayOnTopTest"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="StayOnTopTestForm"/>
+      </Unit3>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

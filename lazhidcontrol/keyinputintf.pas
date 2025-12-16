@@ -52,6 +52,11 @@ type
     procedure PressUnicodeChar(unicode: cardinal); virtual;
     procedure PressASCIIChar(ch: char); virtual;
     function GetCapsLockState: Boolean; dynamic; abstract;
+    function GetNumLockState: Boolean; dynamic; abstract;
+    function GetScrollLockState: Boolean; dynamic; abstract;
+    procedure ToggleCapsLock; dynamic; abstract;
+    procedure ToggleNumLock; dynamic; abstract;
+    procedure ToggleScrollLock; dynamic; abstract;
   end;
 
 implementation
