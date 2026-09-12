@@ -11,6 +11,7 @@
   - Window positioning and resizing
   - Window state changes (minimize, maximize, etc.)
   - Window enumeration and search
+  - Capturing a window as a picture
 
   Platform-specific implementations:
   - Windows: Win32 API (FindWindow, SetForegroundWindow, etc.)
@@ -37,7 +38,7 @@ unit WindowManagerIntf;
 interface
 
 uses
-  Classes, SysUtils, Types;
+  Classes, SysUtils, Types, Graphics, LCLType, LCLIntf;
 
 type
   TWindowHandle = PtrUInt;  // Platform-agnostic window handle
@@ -63,6 +64,10 @@ type
     function DoGetWindowTitle(AHandle: TWindowHandle): String; virtual; abstract;
     function DoGetWindowPID(AHandle: TWindowHandle): LongWord; virtual; abstract;
     function DoGetWindowRect(AHandle: TWindowHandle): TRect; virtual; abstract;
+
+    { Not abstract: the generic way works everywhere the LCL does, so a
+      platform only overrides it to do something better. }
+    function DoCaptureWindow(AHandle: TWindowHandle; ABitmap: TBitmap): Boolean; virtual;
 
     // Window search methods
     function DoFindWindow(const ATitle: String): TWindowHandle; virtual; abstract;
@@ -134,6 +139,13 @@ type
     function HideWindow(AHandle: TWindowHandle): Boolean;
     function IsWindowVisible(AHandle: TWindowHandle): Boolean;
 
+    { Capture a window into a bitmap - the picture half of an xdotool
+      replacement, and the thing that lets a test show its result rather than
+      describe it.  ABitmap is resized to the window and must not be nil.
+      Pass 0 for AHandle to take the whole screen. }
+    function CaptureWindow(AHandle: TWindowHandle; ABitmap: TBitmap): Boolean;
+    function CaptureWindowToFile(AHandle: TWindowHandle; const AFileName: String): Boolean;
+
     // Desktop and workspace management
     function GetDesktopCount: Integer;
     function GetCurrentDesktop: Integer;
@@ -170,6 +182,91 @@ end;
 function TWindowManager.GetWindowRect(AHandle: TWindowHandle): TRect;
 begin
   Result := DoGetWindowRect(AHandle);
+end;
+
+{ The screen, cut down to the window.
+
+  Deliberately not asking the window for its own contents.  Under a compositor
+  a window's backing store is redirected and what it holds is not always what
+  is on the screen; ask the screen and the answer is what a person would see,
+  which is the only answer a test or a bug report wants.  The cost is that
+  anything sitting on top of the window is captured with it, and a window
+  scrolled off the edge is clipped - both true of a photograph as well.
+
+  A platform with something better - XComposite here, PrintWindow on
+  Windows - can override DoCaptureWindow and say so. }
+function TWindowManager.DoCaptureWindow(AHandle: TWindowHandle;
+  ABitmap: TBitmap): Boolean;
+var
+  Screen: TBitmap;
+  R: TRect;
+  DC: HDC;
+begin
+  Result := False;
+  if ABitmap = nil then Exit;
+
+  Screen := TBitmap.Create;
+  try
+    DC := GetDC(0);
+    if DC = 0 then Exit;
+    try
+      Screen.LoadFromDevice(DC);
+    finally
+      ReleaseDC(0, DC);
+    end;
+    if (Screen.Width <= 0) or (Screen.Height <= 0) then Exit;
+
+    if AHandle = 0 then
+      R := Rect(0, 0, Screen.Width, Screen.Height)
+    else
+      R := GetWindowRect(AHandle);
+
+    { a window half off the screen still gives a picture of the half that
+      is on it, rather than nothing at all }
+    if R.Left < 0 then R.Left := 0;
+    if R.Top < 0 then R.Top := 0;
+    if R.Right > Screen.Width then R.Right := Screen.Width;
+    if R.Bottom > Screen.Height then R.Bottom := Screen.Height;
+    if (R.Right <= R.Left) or (R.Bottom <= R.Top) then Exit;
+
+    ABitmap.SetSize(R.Right - R.Left, R.Bottom - R.Top);
+    ABitmap.Canvas.CopyRect(Rect(0, 0, ABitmap.Width, ABitmap.Height),
+      Screen.Canvas, R);
+    Result := True;
+  finally
+    Screen.Free;
+  end;
+end;
+
+function TWindowManager.CaptureWindow(AHandle: TWindowHandle;
+  ABitmap: TBitmap): Boolean;
+begin
+  Result := DoCaptureWindow(AHandle, ABitmap);
+end;
+
+{ The extension decides the format, the way every other Save does. }
+function TWindowManager.CaptureWindowToFile(AHandle: TWindowHandle;
+  const AFileName: String): Boolean;
+var
+  Bmp: TBitmap;
+  Pic: TPicture;
+begin
+  Result := False;
+  Bmp := TBitmap.Create;
+  Pic := TPicture.Create;
+  try
+    if not CaptureWindow(AHandle, Bmp) then Exit;
+    try
+      Pic.Assign(Bmp);
+      Pic.SaveToFile(AFileName);
+      Result := True;
+    except
+      Result := False;
+    end;
+  finally
+    Pic.Free;
+    Bmp.Free;
+  end;
 end;
 
 // Window search methods
