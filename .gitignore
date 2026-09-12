@@ -58,3 +58,6 @@ build-and-run.sh
 
 # Patch files
 *.patch
+hidctl/hidctl
+hidctl/lib/
+hidctl/*.lps

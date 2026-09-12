@@ -43,6 +43,19 @@ end;
 
 See `USAGE_EXAMPLES.md` for complete examples and `HOTKEY_USAGE.md` for hotkey documentation.
 
+### From the command line
+
+`hidctl` puts the whole package behind a script - mouse, keys, windows and
+screenshots - with no dependency on xdotool, wmctrl, xwininfo or ImageMagick:
+
+```sh
+lazbuild hidctl/hidctl.lpi
+hidctl --window "Some App" script.txt
+hidctl --window "Some App" -          # or pipe a generated script in
+```
+
+See `hidctl/README.md`.
+
 ---
 
 ## 🛠 Current Status
