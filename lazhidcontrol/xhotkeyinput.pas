@@ -23,7 +23,12 @@ unit XHotkeyInput;
 interface
 
 uses
-  Classes, SysUtils, LCLType, X, XLib, Gdk2, Gdk2x, KeySym, HotkeyInputIntf;
+  Classes, SysUtils, LCLType, X, XLib, KeySym, HotkeyInputIntf,
+  {$ifdef LCLgtk3}
+  LazGdk3;
+  {$else}
+  Gdk2, Gdk2x;
+  {$endif}
 
 type
   { TXHotkey }
@@ -41,6 +46,33 @@ type
 function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 
 implementation
+
+{$ifdef LCLgtk3}
+{ The LCL gtk3 bindings stop short of the gdk_x11_* helpers, so bind the two
+  this unit needs straight from libgdk-3 }
+function gdk_x11_window_get_xid(window: PGdkWindow): TWindow; cdecl;
+  external LazGdk3_library name 'gdk_x11_window_get_xid';
+function gdk_x11_get_default_xdisplay: PDisplay; cdecl;
+  external LazGdk3_library name 'gdk_x11_get_default_xdisplay';
+{$endif}
+
+function DefaultXDisplay: PDisplay;
+begin
+  {$ifdef LCLgtk3}
+  Result := gdk_x11_get_default_xdisplay;
+  {$else}
+  Result := GDK_DISPLAY_XDISPLAY(gdk_display_get_default);
+  {$endif}
+end;
+
+function RootXid(Root: Pointer): TWindow;
+begin
+  {$ifdef LCLgtk3}
+  Result := gdk_x11_window_get_xid(Root);
+  {$else}
+  Result := gdk_x11_drawable_get_xid(Root);
+  {$endif}
+end;
 
 const
   AltMask = Mod1Mask;
@@ -124,7 +156,7 @@ begin
   if AnyEvent^._type <> KeyPress then
     Exit(GDK_FILTER_CONTINUE);
 
-  Display := GDK_DISPLAY_XDISPLAY(gdk_display_get_default);
+  Display := DefaultXDisplay;
   Sym := XKeycodeToKeysym(Display, KeyEvent^.keycode, 0);
   Key := SymToKey(Sym);
   ShiftState := ModToShift(KeyEvent^.state);
@@ -155,7 +187,7 @@ begin
   inherited Create(AKey, AShift, AOnHotkey);
 
   RootWindow := gdk_get_default_root_window;
-  Display := GDK_DISPLAY_XDISPLAY(gdk_display_get_default);
+  Display := DefaultXDisplay;
 
   if GlobalHotkeys = nil then
     GlobalHotkeys := TList.Create;
@@ -186,7 +218,7 @@ begin
   if KeySym = 0 then Exit;
 
   XKeyCode := XKeysymToKeycode(Display, KeySym);
-  Window := gdk_x11_drawable_get_xid(RootWindow);
+  Window := RootXid(RootWindow);
   CaptureKey(Display, XKeyCode, Modifier, Window);
 
   { Also capture the shifted variant if it's different (e.g., lowercase vs uppercase) }
@@ -237,7 +269,7 @@ begin
   if KeySym = 0 then Exit;
 
   XKeyCode := XKeysymToKeycode(Display, KeySym);
-  Window := gdk_x11_drawable_get_xid(RootWindow);
+  Window := RootXid(RootWindow);
   ReleaseKey(Display, XKeyCode, Modifier, Window);
 
   { Also release the shifted variant if it's different (e.g., lowercase vs uppercase) }
