@@ -31,6 +31,20 @@ PY
 Coordinates are relative to the target window's client area, so a window that
 opens two pixels lower than last time does not move every click in the test.
 
+### Moving rather than jumping
+
+`at x y` puts the pointer there.  `at x y 400` **walks** it there over four
+hundred milliseconds, in twenty millisecond steps, using the package's timed
+`TMouseInput.Move`.  `drag` takes the same trailing number.
+
+Use it whenever something is watching:
+
+* **recording a demonstration** - a pointer that teleports shows nothing
+  about where the hand went;
+* **hovers** - an application that only opens a tooltip after the pointer has
+  been still for a moment never sees a jump arrive;
+* **anything that tracks the pointer** as it moves rather than sampling it.
+
 ## Commands
 
 One per line.  Blank lines and `#` comments are ignored.
@@ -42,11 +56,12 @@ One per line.  Blank lines and `#` comments are ignored.
 | `activate` | bring it to the front |
 | `geometry x y w h` | move and resize it |
 | `at x y` | the pointer, in the window's coordinates |
+| `at x y <ms>` | walk it there over that many milliseconds instead of jumping |
 | `dwell <ms>` | how long to rest after each move (default 120) |
 | `click [l\|r\|m]` | press and release where the pointer is |
 | `dblclick [l\|r\|m]` | |
 | `press` / `release [l\|r\|m]` | hold a button down, let it go |
-| `drag x1 y1 x2 y2 [l\|r\|m]` | press, move in steps, release |
+| `drag x1 y1 x2 y2 [l\|r\|m] [ms]` | press, move, release - over that many milliseconds if given |
 | `scroll up\|down [n]` | |
 | `key <name>` | `return` `escape` `tab` `space` `back` `delete` `up` `down` `left` `right` `pgup` `pgdn` `home` `end` `f1`..`f12`, or one character |
 | `hold <name>` / `let <name>` | `ctrl` `shift` `alt` |

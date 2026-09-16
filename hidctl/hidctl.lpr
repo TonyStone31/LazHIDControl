@@ -142,7 +142,17 @@ begin
   end;
 end;
 
-procedure Drag(X1, Y1, X2, Y2: Integer; B: TMouseButton);
+{ A drag, optionally over a given number of milliseconds.
+
+  Ms = 0 keeps what this always did: twenty-four even steps with a short rest
+  between them, which is enough for an application to see a drag and is quick
+  enough not to hold a test up.
+
+  Anything else hands the travel to TMouseInput.Move's timed overload, which
+  walks the pointer in twenty millisecond steps for exactly that long.  That
+  is the one to use when somebody is going to watch it - a recording of a
+  drag that teleports shows nothing about where the hand went. }
+procedure Drag(X1, Y1, X2, Y2: Integer; B: TMouseButton; Ms: Integer = 0);
 var
   I: Integer;
 begin
@@ -150,12 +160,15 @@ begin
   Settle(80);
   MouseInput.Down(B, []);
   Settle(60);
-  for I := 1 to 24 do
-  begin
-    MouseInput.Move([], Client.Left + X1 + (X2 - X1) * I div 24,
-                        Client.Top + Y1 + (Y2 - Y1) * I div 24);
-    Settle(12);
-  end;
+  if Ms > 0 then
+    MouseInput.Move([], Client.Left + X2, Client.Top + Y2, Ms)
+  else
+    for I := 1 to 24 do
+    begin
+      MouseInput.Move([], Client.Left + X1 + (X2 - X1) * I div 24,
+                          Client.Top + Y1 + (Y2 - Y1) * I div 24);
+      Settle(12);
+    end;
   MouseInput.Up(B, []);
   Settle(80);
 end;
@@ -165,7 +178,8 @@ var
   P: TStringList;
   Cmd, Rest: string;
   K: Word;
-  Steps: Integer;
+  Steps, Ms: Integer;
+  Btm: TMouseButton;
 begin
   if (Trim(Line) = '') or (Copy(Trim(Line), 1, 1) = '#') then Exit;
 
@@ -212,7 +226,19 @@ begin
     end
     else if Cmd = 'at' then
     begin
-      MouseInput.Move([], Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]));
+      { "at x y" puts the pointer there.  "at x y 400" walks it there over
+        four hundred milliseconds instead, which is what the package's timed
+        Move has always been for and what this never offered.
+
+        The difference matters whenever something is watching: a recording,
+        a demonstration, or an application that only starts a hover after the
+        pointer has been still for a moment.  A jump is one event and there
+        is nothing in between it and the last one. }
+      if P.Count > 3 then
+        MouseInput.Move([], Client.Left + StrToInt(P[1]),
+                            Client.Top + StrToInt(P[2]), Max(0, StrToInt(P[3])))
+      else
+        MouseInput.Move([], Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]));
       Settle(Dwell);
     end
     else if Cmd = 'dwell' then
@@ -252,10 +278,19 @@ begin
     end
     else if Cmd = 'drag' then
     begin
-      if P.Count > 5 then
-        Drag(StrToInt(P[1]), StrToInt(P[2]), StrToInt(P[3]), StrToInt(P[4]), Btn(P[5]))
-      else
-        Drag(StrToInt(P[1]), StrToInt(P[2]), StrToInt(P[3]), StrToInt(P[4]), mbLeft);
+      { "drag x1 y1 x2 y2", then optionally a button, then optionally how
+        many milliseconds it should take.  The two are told apart by whether
+        it is a number - buttons are l, r and m - so either can be left out
+        and neither has to be remembered in order. }
+      Btm := mbLeft;
+      Ms := 0;
+      if (P.Count > 5) and not TryStrToInt(P[5], Ms) then
+      begin
+        Btm := Btn(P[5]);
+        Ms := 0;
+        if P.Count > 6 then TryStrToInt(P[6], Ms);
+      end;
+      Drag(StrToInt(P[1]), StrToInt(P[2]), StrToInt(P[3]), StrToInt(P[4]), Btm, Ms);
     end
     else if Cmd = 'key' then
     begin
