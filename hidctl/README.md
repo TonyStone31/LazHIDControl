@@ -16,16 +16,19 @@ The second form is the point of it.  Work the geometry out in whatever is
 convenient, and let this do the part that wants a typed API and a real window
 manager:
 
-```sh
-python3 - <<'PY' | hidctl --window "Some App" -
-import math
-print("dwell 8")
-print("at 300 400"); print("press")
-for i in range(140):
-    print("at %d %d" % (300 + i*6, 400 + int(90*math.sin(i/12.0))))
-print("release")
-print("shot /tmp/wave.png")
-PY
+```bash
+#!/usr/bin/env bash
+# a wave, drawn with the button held down
+{
+  echo "dwell 8"
+  echo "at 300 400"
+  echo "press"
+  # bash only does whole numbers, so awk works the curve out
+  awk 'BEGIN { for (i = 0; i < 140; i++)
+                 printf "at %d %d\n", 300 + i*6, 400 + int(90*sin(i/12)) }'
+  echo "release"
+  echo "shot /tmp/wave.png"
+} | hidctl --window "Some App" -
 ```
 
 Coordinates are relative to the target window's client area, so a window that

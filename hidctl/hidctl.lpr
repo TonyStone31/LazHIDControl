@@ -19,11 +19,10 @@ program hidctl;
   a program: work the geometry out wherever it is convenient, and let this do
   the part that wants a typed API and a real window manager.
 
-      python3 -c 'import math
-      print("at 300 400"); print("press")
-      for i in range(70):
-          print("at %d %d" % (300+i*12, 400+int(90*math.sin(i/6))))
-      print("release")' | hidctl --window "Some App" -
+      { echo "at 300 400"; echo "press"
+        awk 'BEGIN { for (i = 0; i < 70; i++)
+                       printf "at %d %d\n", 300 + i*12, 400 + int(90*sin(i/6)) }'
+        echo "release"; } | hidctl --window "Some App" -
 
   Commands, one per line; blank lines and # comments ignored:
 
