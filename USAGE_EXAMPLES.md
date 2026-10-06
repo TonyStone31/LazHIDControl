@@ -4,7 +4,7 @@
 
 ```pascal
 uses
-  LazHIDControl; // This brings in MouseAndKeyInput, HotkeyInput, GlobalKeyMonitor
+  MouseAndKeyInput, LCLType;
 
 // Simulate typing
 KeyInput.PressString('Hello World!');
@@ -34,13 +34,13 @@ MouseInput.Up(mbLeft, []);
 
 ```pascal
 uses
-  LazHIDControl, LCLType;
+  HotkeyInput, MouseAndKeyInput, LCLType;
 
 var
   MyHotkey: THotkey;
 
 // Register Ctrl+Shift+F9
-MyHotkey := THotkey.Create(VK_F9, [ssCtrl, ssShift], @OnHotkeyPressed);
+MyHotkey := CreateHotkey(VK_F9, [ssCtrl, ssShift], @OnHotkeyPressed);
 MyHotkey.Register;
 
 // Check if registration succeeded
@@ -52,10 +52,11 @@ else
 // Handler
 procedure TForm1.OnHotkeyPressed(Sender: TObject; Key: Word; Shift: TShiftState);
 begin
-  // IMPORTANT: Wait for keys to be released
+  // A delay does not guarantee that the hotkey modifiers were released.
+  // Arrange replay after release, as in the main demo.
   Sleep(200);
 
-  // Now safe to simulate input
+  // Simulate input
   KeyInput.PressString('Hotkey triggered!');
 end;
 
@@ -64,50 +65,13 @@ MyHotkey.Unregister;
 MyHotkey.Free;
 ```
 
-## Global Key Monitoring (for testing)
+## Platform support
 
-```pascal
-uses
-  LazHIDControl;
-
-var
-  KeyListener: TGlobalKeyListener;
-
-// Create and start monitoring
-KeyListener := TGlobalKeyListener.Create;
-KeyListener.OnKeyPress := @OnKeyPressed;
-KeyListener.StartMonitoring;
-
-// Check if active
-if KeyListener.Active then
-  ShowMessage('Monitoring system-wide key presses')
-else
-  ShowMessage('Not supported on this platform');
-
-// Handler
-procedure TForm1.OnKeyPressed(Key: Word; Shift: TShiftState);
-begin
-  // Display key info
-  StatusBar1.Panels[0].Text := Format('Key: %d', [Key]);
-end;
-
-// Cleanup
-KeyListener.StopMonitoring;
-KeyListener.Free;
-```
-
-## Platform Support
-
-| Feature | Windows | X11 (Linux) | Wayland | macOS |
-|---------|---------|-------------|---------|-------|
-| Mouse/Keyboard Automation | ✅ | ✅ | ✅* | ⚠️ Untested |
-| Global Hotkeys | ✅ | ✅ | ✅** | ❌ |
-| Global Key Monitoring | ✅ | ✅ | ❌ | ❌ |
-
-\* Wayland requires elevated permissions or proper user access to input devices
-\** Wayland hotkeys work on GNOME 45+ and KDE Plasma 5/6 only (via portal API)
+See the [platform status and Wayland limitations](README.md#platform-status)
+in the README. The Wayland input implementation is unfinished; device
+permissions alone do not make it functional.
 
 ## See Also
 
-- `HOTKEY_USAGE.md` - Detailed hotkey registration documentation
+- `lazhidcontrol/HOTKEY_USAGE.md` - Detailed hotkey registration documentation
 - `README.md` - Project overview and goals

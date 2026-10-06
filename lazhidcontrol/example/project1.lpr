@@ -8,7 +8,7 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms
-  { you can add units after this }, Unit1, LazMouseAndKeyInput;
+  { you can add units after this }, Unit1, LazHIDControl;
 
 begin
   Application.Initialize;

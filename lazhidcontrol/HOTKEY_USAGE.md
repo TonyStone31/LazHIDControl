@@ -4,21 +4,16 @@ The LazHIDControl package includes cross-platform global hotkey registration sup
 
 ## Platforms Supported
 
-- **Windows**: Fully supported using low-level keyboard hooks
+- **Windows**: Implemented using RegisterHotKey
 - **X11 (Linux/Unix)**: Fully supported using XGrabKey
-- **Wayland**: Supported on GNOME 45+ and KDE Plasma 5/6 via org.freedesktop.portal.GlobalShortcuts
+- **Wayland**: Not currently implemented; the portal backend is a stub
 - **macOS**: Not currently implemented
 
-### Wayland Compositor Support
+### Wayland status
 
-The Wayland implementation uses the GlobalShortcuts portal via D-Bus:
-
-- ✅ **GNOME 45+**: Full support
-- ✅ **KDE Plasma 5/6**: Full support
-- ❌ **Sway/wlroots**: Not supported (portal not implemented)
-- ❌ **Hyprland**: Not supported (portal not implemented)
-
-**Note**: Wayland hotkeys require user permission dialogs and cannot override compositor-defined hotkeys. This is a security feature of Wayland.
+`TWaylandHotkey.DoRegister` currently leaves `Registered` false. The
+D-Bus event loop and GlobalShortcuts portal registration are TODOs;
+no compositor is supported by this backend yet.
 
 ## Basic Usage
 
@@ -32,7 +27,7 @@ var
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   // Create and register a hotkey (Ctrl+Shift+F9)
-  MyHotkey := THotkey.Create(VK_F9, [ssCtrl, ssShift], @MyHotkeyHandler);
+  MyHotkey := CreateHotkey(VK_F9, [ssCtrl, ssShift], @MyHotkeyHandler);
   MyHotkey.Register;
 
   // Check if registration was successful
@@ -56,7 +51,7 @@ begin
   // Otherwise the modifier keys (Ctrl, Shift, etc.) will interfere
   Sleep(200);
 
-  // Now safe to simulate keyboard input
+  // Replay should wait for the hotkey modifiers to be released.
   KeyInput.PressString('Text typed by hotkey!');
 end;
 ```
@@ -146,6 +141,6 @@ The hotkey implementation is adapted from the [Codebot Pascal Library](http://cr
 
 ## See Also
 
-- Demo application in `project1.lpr` for complete working example
+- Demo application in `../HIDControlDemo.lpi` for complete working example
 - `MouseAndKeyInput` unit for keyboard and mouse simulation
 - `KeyInputIntf` and `MouseInputIntf` for low-level interfaces

@@ -61,3 +61,7 @@ build-and-run.sh
 hidctl/hidctl
 hidctl/lib/
 hidctl/*.lps
+
+# Small example executable and local assistant settings
+lazhidcontrol/example/project1
+.claude/

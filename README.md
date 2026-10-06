@@ -1,121 +1,137 @@
-# LazHIDControl - Cross-Platform HID Automation
+# LazHIDControl
 
-**LazHIDControl** extends the foundational work of **Tom Gregorovic's LazMouseAndKeyInput package**, adding modern platform support and global hotkey functionality. This package enables precise mouse and keyboard automation with cross-platform global hotkey registration, making it a powerful tool for building **xdotool replacements** and HID automation tools using **Free Pascal**.
+Mouse and keyboard automation for Lazarus / Free Pascal, with global hotkeys
+and window management. The working backends target Windows and Linux/X11.
+Wayland support is unfinished; macOS is not a supported target for this release.
 
----
+Package version: **1.0.0.0**. This is a runtime package, with no components to
+install on the IDE palette.
 
-## 🎯 Project Goals
-- **Enhance Cross-Platform Support**:
-  - Add and refine **Wayland** support, alongside existing support for **X Windows** and **Microsoft Windows**.
-  - Continue improving and testing **macOS** compatibility (community contributions welcome!).
-- **Provide a Free Pascal Alternative to xdotool**:
-  - Enable precise mouse and keyboard automation across platforms.
-  - Deliver a lightweight, open-source, and developer-friendly tool.
+## Install and build
 
----
+Open `lazhidcontrol/lazhidcontrol.lpk` in Lazarus, click **Compile**, then
+**Use → Add to Project**. Open `HIDControlDemo.lpi` to try the main demo.
+Keep the repository layout intact; the package belongs in its subdirectory.
 
-## 🚀 Quick Start
-
-### Installation
-1. In Lazarus IDE: **Package → Open Package File (.lpk)** → Select `lazhidcontrol/lazhidcontrol.lpk`
-2. Click **Compile** then **Use → Add to Project**
-
-### Basic Usage
-```pascal
-uses
-  LazHIDControl;
-
-// Simulate typing
-KeyInput.PressString('Hello World!');
-
-// Move and click mouse
-MouseInput.Move([], 100, 100, 500);
-MouseInput.Click(mbLeft, []);
-
-// Register global hotkey (Ctrl+Shift+F9)
-var
-  MyHotkey: THotkey;
-begin
-  MyHotkey := THotkey.Create(VK_F9, [ssCtrl, ssShift], @OnHotkeyHandler);
-  MyHotkey.Register;
-end;
-```
-
-See `USAGE_EXAMPLES.md` for complete examples and `HOTKEY_USAGE.md` for hotkey documentation.
-
-### From the command line
-
-`hidctl` puts the whole package behind a script - mouse, keys, windows and
-screenshots - with no dependency on xdotool, wmctrl, xwininfo or ImageMagick:
+From the repository root, with Lazarus tools on your PATH:
 
 ```sh
+lazbuild --add-package-link lazhidcontrol/lazhidcontrol.lpk
+lazbuild HIDControlDemo.lpi
+lazbuild lazhidcontrol/example/project1.lpi
 lazbuild hidctl/hidctl.lpi
-hidctl --window "Some App" script.txt
-hidctl --window "Some App" -          # or pipe a generated script in
 ```
 
-See `hidctl/README.md`.
+Package dependencies are `LCL` and `FCL` (declared FCL minimum: 1.0.0.0).
+Linux builds also need the FPC X11 and D-Bus units and linkable X11, Xtst and
+D-Bus libraries, plus the usual libraries for your LCL widgetset. The demo's
+X11 event support also loads `libXi` at runtime.
 
----
+The package and all three projects compiled on Linux x86-64 with GTK3,
+Lazarus 4.99 and FPC 3.3.1 during packaging review. That is a build check;
+it does not establish runtime support on every platform or older IDE versions.
+See [OPM.md](OPM.md) for submission notes.
 
-## 🛠 Current Status
-### Platforms
-- **Linux (X Windows)**:
-  - Mouse and keyboard input functionality is stable and reliable.
-  - Global hotkey registration fully supported via XGrabKey.
-- **Microsoft Windows**:
-  - Most features have been successfully tested and are performing as expected.
-  - Global hotkey registration fully supported via low-level keyboard hooks.
-- **Wayland**:
-  - Basic functionality is operational, but:
-    - **Requires elevated permissions** or proper user access to input devices.
-    - Advanced features are still under exploration.
-  - Global hotkey registration supported on GNOME 45+ and KDE Plasma 5/6 via portal API.
-- **macOS**:
-  - Currently untested due to lack of access to Mac systems.
+## Using it
 
----
+Use `MouseAndKeyInput` for the shared `KeyInput` and `MouseInput` objects.
+For example, inside a form event handler:
 
-## 🗓 Future Plans
-- **Wayland**:
-  - Resolve permission-related issues for easier usability.
-  - Explore compositor-specific protocols for advanced functionality.
-- **macOS**:
-  - Enable macOS support through testing and contributions.
-- **Additional Features**:
-  - Fully replicate and enhance **xdotool** capabilities.
-  - Ensure seamless operation across all supported platforms.
+```pascal
+// uses MouseAndKeyInput, Controls, LCLType;
+KeyInput.PressString('Hello World!');
+KeyInput.Press(VK_RETURN);
+MouseInput.Move([], 100, 100, 500); // screen coordinates, duration in ms
+MouseInput.Click(mbLeft, []);
+```
 
----
+Input goes to the focused application or current pointer location. These
+calls do not select a target application for you.
 
-## 🤝 Contributions
-Contributions are welcome! If you have experience with **Wayland**, **macOS**, or advanced input automation, your expertise is invaluable.
+[USAGE_EXAMPLES.md](USAGE_EXAMPLES.md) covers mouse/keyboard calls and hotkey
+registration. [HOTKEY_USAGE.md](lazhidcontrol/HOTKEY_USAGE.md) describes the
+hotkey API. Check `Registered` after registering a hotkey; the combination
+may already be in use.
 
-- Fork the repository and submit a pull request.
-- Report issues or suggest features via [GitHub Issues](https://github.com/TonyStone31/LazHIDControl/issues).
+## Examples and manual tests
 
----
+There is no automated test suite in this repository. The included projects
+are examples and manual checks:
 
-## 📜 Acknowledgments
-- **Tom Gregorovic** - Original author of LazMouseAndKeyInput package and Carbon (macOS) implementation
-- **Sammarco Francesco** - Cocoa (macOS) implementation
-- **Codebot** - Cross-platform hotkey implementation adapted from the Codebot Pascal Library
-- **Tony Stone** - Extended package with Wayland support, global hotkey registration, and modern platform enhancements
+- **`HIDControlDemo.lpi`**: keyboard replay, mouse movement/drawing, and window
+  inspection. The keyboard tab compares the source and destination text.
+  On startup the demo attempts to register **Ctrl+Shift+F9** to replay the
+  source text into the focused application. Use a disposable editor window
+  when trying it. The mouse demo moves and clicks the pointer. Window Spy
+  exercises window lookup, focus, geometry and screenshots. The stay-on-top
+  form is a manual window behavior check.
+- **`lazhidcontrol/example/project1.lpi`**: a smaller example with buttons
+  that click grid cells, move/double-click, type `HELLO` into an edit control,
+  and scroll the grid. Useful for checking the basic input API without the
+  larger demo.
+- **`hidctl/hidctl.lpi`**: command-line mouse, keyboard and window automation,
+  including screenshots. It runs a script against a selected window. See
+  [hidctl/README.md](hidctl/README.md) for the script commands.
 
----
+After building the CLI, run it from the repository root:
 
-## 🔄 Why a New Package?
+```sh
+./hidctl/hidctl --window "Some App" script.txt
+./hidctl/hidctl --window "Some App" -  # script from standard input
+```
 
-This project extends the original **[LazMouseAndKeyInput](https://gitlab.com/freepascal.org/lazarus/lazarus/-/tree/main/components/mouseandkeyinput?ref_type=heads)** package rather than contributing patches back for several practical reasons:
+Try input tests in a separate desktop session or nested X server where possible;
+mouse movement and typing affect whichever application receives the events.
+Compilation alone does not verify those interactions.
 
-- **Package Conflicts**: During development with multiple Lazarus installations, conflicts arose between the built-in package and extended versions
-- **Cleaner Extension Path**: Starting fresh allowed for significant feature additions (global hotkeys, Wayland support) without compatibility concerns
+## Platform status
 
-This approach enables rapid development and experimentation while maintaining compatibility with the original package's design philosophy.
+| Platform | Mouse / keyboard input | Hotkeys | Window management |
+| --- | --- | --- | --- |
+| Windows | Windows API backend | `RegisterHotKey` | Windows API backend |
+| Linux / X11 | XTest backend | `XGrabKey` | X11 backend |
+| Linux / Wayland | Unfinished `uinput` backend | Portal stub; registration fails | No native backend |
+| macOS | Existing Carbon/Cocoa code; unverified dispatch | Stub | No backend |
 
----
+Windows and X11 implementations are present, but Windows was not tested during
+this review. macOS needs implementation work and testing before claiming support.
 
-## 📚 Additional Resources
-- [Free Pascal](https://www.freepascal.org/)
-- [Lazarus IDE](https://www.lazarus-ide.org/)
-- [xdotool](https://github.com/jordansissel/xdotool)
+## Wayland: what is there now
+
+The intended approach is to emulate a keyboard and mouse using Linux
+[`uinput`](https://docs.kernel.org/input/uinput.html). A program creates virtual
+input devices through `/dev/uinput`; the compositor can then receive their events
+as device input. This differs from sending XTest events to an X server.
+
+The current `waylandmouseandkeyinput.pas` contains event-writing code, but does
+not open `/dev/uinput`, configure device capabilities, or create/destroy the
+virtual devices. Its keyboard and mouse file descriptors are never assigned.
+The event value field, key-code translation and relative mouse movement also
+need correction before this backend can be considered usable. Giving the app
+permissions alone does not complete it. Earlier Wayland testing may have used
+a different revision or an X11 path; this checkout does not establish which.
+
+On Linux the input factory chooses this backend whenever `WAYLAND_DISPLAY` is
+set, even if the Lazarus application itself runs under Xwayland. An Xwayland
+window therefore does not automatically make this package's input work. The
+hotkey portal implementation is also a stub, and window management remains X11
+only; it cannot manage native Wayland windows.
+
+The setup remembered from earlier testing was likely a **group membership and
+udev rule**, rather than creating a new login user. A finished `uinput` backend
+would need permission to access `/dev/uinput`. A dedicated group restricted to
+that device is preferable to joining the general `input` group, which can also
+grant access to physical input events. Do not treat running the demo as root or
+changing device permissions as a fix for the missing implementation.
+
+## License and authors
+
+Source notices specify **GPL-2.0-or-later**. [COPYING.GPL2](COPYING.GPL2) contains
+GPL version 2; [LICENSE](LICENSE) contains GPL version 3, an allowed later version.
+These retained input implementations are not covered by LazInk's 0BSD license.
+
+Original input code: Tom Gregorovic. Cocoa input: Sammarco Francesco.
+Hotkey implementation adapted from Codebot. Package extensions: Tony Stone.
+The corresponding source notices remain in place.
+
+Bugs and testing results: [GitHub issues](https://github.com/TonyStone31/LazHIDControl/issues).

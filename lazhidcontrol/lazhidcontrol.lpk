@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Name Value="LazHIDControl"/>
     <AddToProjectUsesSection Value="True"/>
-    <Author Value="Tony Stone - Extended from Tom Gregorovic's LazMouseAndKeyInput with hotkey support from Codebot"/>
+    <Author Value="Tony Stone - Original input implementation by Tom Gregorovic; hotkey support adapted from Codebot"/>
     <CompilerOptions>
       <Version Value="11"/>
       <PathDelim Value="\"/>
@@ -18,10 +18,8 @@
         </SyntaxOptions>
       </Parsing>
     </CompilerOptions>
-    <Description Value="Cross-platform HID automation with mouse, keyboard, and global hotkey support for Windows, X11, and Wayland.
-"/>
-    <License Value="GPL
-"/>
+    <Description Value="Mouse/keyboard automation, global hotkeys, input monitoring and window management for Windows and X11, with an unfinished Wayland input backend."/>
+    <License Value="GPL-2.0-or-later; see source notices, COPYING.GPL2, and LICENSE"/>
     <Version Major="1" Minor="0"/>
     <Files>
       <Item>
