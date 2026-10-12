@@ -15,9 +15,11 @@ type
     procedure KeyDown(Key: Word);
     procedure KeyUp(Key: Word);
   published
-    // Extra milliseconds between typed characters; text goes to the focused application.
+    // Extra milliseconds to rest between typed characters. Zero types at the
+    // backend's own pace. TypeText sends to whatever application has the focus.
     property TypingInterval: Cardinal read Delay write Delay default 0;
-    // Ctrl, Alt, and Shift applied around PressKey. TypeText types literal text.
+    // Ctrl, Alt, and Shift held around PressKey calls. TypeText ignores this
+    // and types its text literally.
     property Modifiers: TShiftState read KeyModifiers write KeyModifiers default [];
   end;
   THIDMouse = class(TComponent)
@@ -41,14 +43,17 @@ type
     procedure ButtonUp(Button: TMouseButton = mbLeft);
     procedure Scroll(Steps: Integer);
   published
-    // Milliseconds the pointer takes to arrive. Default 0 teleports.
+    // Milliseconds MoveTo spends walking the pointer to its target in small
+    // steps. Zero jumps straight there.
     property MovementDuration: Cardinal read Duration write Duration default 0;
-    // Ctrl, Alt, and Shift held during mouse actions.
+    // Ctrl, Alt, and Shift held during clicks, moves, and scrolls.
     property Modifiers: TShiftState read MouseModifiers write MouseModifiers default [];
-    // MoveTo coordinates are client coordinates of this control when assigned,
-    // screen coordinates otherwise. Clicks and scrolls act wherever the pointer is.
+    // A control whose client area anchors MoveTo coordinates. Leave empty for
+    // screen coordinates. Clicks and scrolls always act wherever the pointer is.
     property RelativeTo: TControl read RelativeControl write SetRelativeControl;
-    // Found window whose rectangle MoveTo offsets from; wins over RelativeTo.
+    // A THIDWindow whose found window anchors MoveTo coordinates, measured from
+    // its screen rectangle including native borders. Wins over RelativeTo;
+    // call Find on it first.
     property RelativeWindow: THIDWindow read TargetWindow write SetRelativeWindow;
   end;
 implementation

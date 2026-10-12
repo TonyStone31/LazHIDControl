@@ -29,20 +29,29 @@ type
     property Bitmap: TBitmap read Image;
     property LastError: string read ErrorText;
   published
+    // What Capture photographs: every monitor together, one monitor, a window
+    // found by title, the Region rectangle, or a rectangle the user drags out.
     property Source: THIDCaptureSource read CaptureSource write CaptureSource default hcsDesktop;
-    // -1 is the primary monitor; otherwise a Screen.Monitors index.
+    // Which monitor hcsMonitor captures: -1 is the primary monitor, otherwise
+    // an index into Screen.Monitors.
     property MonitorIndex: Integer read MonitorNumber write MonitorNumber default -1;
-    // For hcsWindow; blank captures the active window. What is grabbed is the
-    // window's screen area, so anything overlapping it is in the picture.
+    // Title of the window hcsWindow captures; blank captures the active window.
+    // The grab is that window's screen area, so anything overlapping it is in the picture.
     property WindowTitle: string read Title write Title;
-    // The hcsRegion rectangle, in screen coordinates.
+    // Left edge of the hcsRegion rectangle, in screen coordinates. Negative
+    // reaches monitors left of the primary.
     property RegionLeft: Integer read AreaLeft write AreaLeft default 0;
+    // Top edge of the hcsRegion rectangle, in screen coordinates.
     property RegionTop: Integer read AreaTop write AreaTop default 0;
+    // Width of the hcsRegion rectangle, in pixels.
     property RegionWidth: Integer read AreaWidth write AreaWidth default 0;
+    // Height of the hcsRegion rectangle, in pixels.
     property RegionHeight: Integer read AreaHeight write AreaHeight default 0;
-    // Bitmap belongs to the component; copy it to keep the image.
+    // Runs after each successful capture. The picture is in Bitmap, which the
+    // component owns; copy it to keep it past the next capture.
     property OnCaptured: TNotifyEvent read CapturedHandler write CapturedHandler;
-    // A canceled selection is not an error: Capture returns False with LastError empty.
+    // Why a capture failed; the message stays in LastError. A selection the
+    // user cancels is not an error - Capture just returns False.
     property OnError: THIDCaptureErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation

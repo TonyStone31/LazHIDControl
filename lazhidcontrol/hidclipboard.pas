@@ -31,12 +31,17 @@ type
     function Check: Boolean;
     property LastError: string read ErrorText;
   published
+    // True watches the clipboard once the form loads. Nothing runs in the designer.
     property Enabled: Boolean read Requested write SetEnabled default False;
-    // Several changes between checks can land as one event.
+    // Milliseconds between change checks. Default 250; several changes inside
+    // one interval can land as a single event.
     property PollInterval: Cardinal read GetInterval write SetInterval default 250;
-    // Enabling sets the baseline; the contents already there do not fire this.
+    // Something new is on the clipboard, text or not; read it with the LCL
+    // Clipboard if wanted. Enabling takes the contents already there as the
+    // baseline without firing.
     property OnChanged: TNotifyEvent read ChangeHandler write ChangeHandler;
-    // A failed query disables monitoring; the message is also in LastError.
+    // The clipboard query failed, which also disables monitoring; the message
+    // stays in LastError.
     property OnError: THIDClipboardErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation

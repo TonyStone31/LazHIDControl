@@ -40,18 +40,27 @@ type
     property Waiting: Boolean read GetWaiting;
     property LastError: string read ErrorText;
   published
-    // The filters combine; a blank or zero filter accepts anything.
+    // Title to look for; blank accepts any title. The filters that are set
+    // must all match the same window.
     property WindowTitle: string read TitleFilter write TitleFilter;
+    // Native window class to look for; blank accepts any class.
     property WindowClass: string read ClassFilter write ClassFilter;
+    // Only accept windows belonging to this process. Zero accepts any process.
     property ProcessID: LongWord read PIDFilter write PIDFilter default 0;
-    // Whole value rather than substring; either way case insensitive.
+    // True matches the whole title or class; False matches any part of it.
+    // Case insensitive either way.
     property ExactMatch: Boolean read Exact write Exact default False;
+    // True skips hidden and minimized windows when searching.
     property VisibleOnly: Boolean read Visible write Visible default True;
-    // Milliseconds WaitForWindow keeps looking. Zero means one immediate search.
+    // How many milliseconds WaitForWindow keeps looking before giving up.
+    // Zero makes it a single immediate search.
     property WaitTimeout: Cardinal read TimeoutValue write TimeoutValue default 5000;
+    // Runs when Find or WaitForWindow matches a window; Handle then identifies it.
     property OnFound: TNotifyEvent read FoundHandler write FoundHandler;
-    // A wait that expired; CancelWait does not fire this.
+    // Runs when WaitForWindow gives up. CancelWait never fires this.
     property OnTimeout: TNotifyEvent read TimeoutHandler write TimeoutHandler;
+    // An unsupported platform or a failed window operation; the message stays
+    // in LastError. No dialog is shown.
     property OnError: THIDWindowErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation

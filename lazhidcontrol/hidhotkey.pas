@@ -28,12 +28,17 @@ type
     property Registered: Boolean read GetRegistered;
     property LastError: string read ErrorText;
   published
-    // Global shortcut, such as Ctrl+Shift+F9. Supported modifiers: Ctrl, Alt, Shift.
+    // The key combination to register globally, so it works while any
+    // application has the focus. Ctrl, Alt, and Shift are the supported modifiers.
     property ShortCut: TShortCut read ShortcutValue write SetShortCut default 0;
-    // Registers after the form loads; never in the designer. Registered reports success.
+    // True registers the shortcut once the form loads and keeps it while the
+    // program runs. Nothing registers in the designer; read Registered for the outcome.
     property Enabled: Boolean read Requested write SetEnabled default False;
+    // Runs on the GUI thread each time the combination is pressed, in whatever
+    // application. The modifier keys may still be physically held at that moment.
     property OnHotkey: TNotifyEvent read Handler write Handler;
-    // An unavailable shortcut or backend; the message is also in LastError.
+    // The shortcut could not be registered - already taken, or no backend for
+    // this platform. The message stays in LastError; no dialog is shown.
     property OnError: THIDHotkeyErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation
