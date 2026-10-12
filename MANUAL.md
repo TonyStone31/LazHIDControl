@@ -1,10 +1,47 @@
-# Using the nonvisual components
+# The LazHIDControl manual
 
 [Back to the overview](README.md)
 
 Install `lazhidcontrol/lazhidcontrol.lpk` with **Use → Install**, then rebuild
 and restart Lazarus. Rebuild the IDE after component updates too, so its
 installed properties match your forms. The existing library API remains available.
+
+## The library beneath the components
+
+Everything the components do is also callable directly, with no form involved:
+
+```pascal
+uses MouseAndKeyInput, LCLType;
+
+KeyInput.PressString('Hello World!');
+KeyInput.Press(VK_RETURN);
+KeyInput.Down(VK_CONTROL);           // paired down/up for chords
+KeyInput.Press(VK_C);
+KeyInput.Up(VK_CONTROL);
+
+MouseInput.Move([], 100, 100, 500);  // x, y, optionally milliseconds of travel
+MouseInput.Click(mbLeft, []);
+MouseInput.Down(mbLeft, []);         // a drag, spelled out
+MouseInput.Move([], 300, 300, 1000);
+MouseInput.Up(mbLeft, []);
+```
+
+Hotkeys without the component go through `HotkeyInput`:
+
+```pascal
+uses HotkeyInput, LCLType;
+
+MyHotkey := CreateHotkey(VK_F9, [ssCtrl, ssShift], @OnHotkeyPressed);
+MyHotkey.Register;
+if not MyHotkey.Registered then ... // taken, or no backend here
+...
+MyHotkey.Free;                      // releases the binding
+```
+
+[lazhidcontrol/HOTKEY_USAGE.md](lazhidcontrol/HOTKEY_USAGE.md) goes deeper on
+the hotkey API. Input goes to the focused application or the current pointer
+position; nothing selects a target application for you - find and activate
+one with `THIDWindow` or the window manager API first.
 
 ## THIDHotkey
 
@@ -23,12 +60,12 @@ Settings are saved in the `.lfm`.
 The component owns its binding and releases it when destroyed. Constructors
 are passive and the designer never grabs keys. Published properties and events
 include source comments for the Object Inspector's hints and information box.
-Windows and GTK3 Linux/X11 use the existing backends. Wayland and macOS hotkey
+Windows and GTK2/GTK3 Linux/X11 use the existing backends. Wayland and macOS hotkey
 support remain unfinished; unsupported registration reports failure.
 
 The event runs on the GUI thread. Hotkey modifiers may still be held: if you
-replay typing, wait for their release first. The small demo only updates its
-status and brings its window forward.
+replay typing, wait for their release first. The automation demo's hotkey
+simply presses its own Capture button.
 
 ## THIDKeyboard and THIDMouse
 
@@ -96,13 +133,13 @@ also available for runtime targets. Copy `Bitmap` if retaining a capture after
 another capture or after freeing the component. Saving belongs to your app;
 the demo shows saving an opaque PNG with the standard LCL image class.
 
-## Small demos
+## In the demo
 
-- [HotkeyDemo.lpi](examples/hotkey/HotkeyDemo.lpi): one shortcut and one event handler.
-- [AutomationDemo.lpi](examples/automation/AutomationDemo.lpi): typing into its
-  own edit, moving to and clicking a sample button, capture source selection,
-  image preview, and PNG saving. Ctrl+Shift+F9 captures using the current settings.
-  Rectangle mode uses the screenshot properties saved in the `.lfm`.
+[AutomationDemo.lpi](examples/automation/AutomationDemo.lpi) exercises this:
+typing into its own edit, moving to and clicking a sample button, capture
+source selection, image preview, and PNG saving. Ctrl+Shift+F9 captures using
+the current settings. Rectangle mode uses the screenshot properties saved in
+the `.lfm`.
 
 The demos share Ctrl+Shift+F9; run one at a time or change its `ShortCut`.
 
@@ -241,6 +278,40 @@ reference takes precedence over **RelativeTo**. Coordinates use its reported
 screen rectangle, including native borders; they are not external child-control
 coordinates. The demo has a separate configured mouse component for this, and
 its **Move pointer to window offset X, Y** button moves without clicking.
+
+## The demos
+
+Two programs cover the lot.
+
+- **[examples/automation/AutomationDemo.lpi](examples/automation/AutomationDemo.lpi)** -
+  the component workout: typing with Unicode, a countdown that types into
+  whatever then has the focus, mouse clicking, every capture mode with
+  preview and save, a global hotkey wired in the Object Inspector
+  (Ctrl+Shift+F9 captures), window find/wait/activate, and live idle, power,
+  and clipboard monitoring. Every component sits on the form in the designer.
+- **[examples/hidcontroldemo/HIDControlDemo.lpi](examples/hidcontroldemo/HIDControlDemo.lpi)** -
+  the original library demo, for what the components do not show: global key
+  and mouse *monitoring*, Window Spy, and keyboard replay of a Unicode test
+  sheet into another application. Give the replay a disposable editor window.
+
+Try the input demos in a nested X server (`Xephyr :9 & DISPLAY=:9 ...`) so a
+misaimed script cannot click on your real desktop. That is also how we drive
+them with [hidctl](hidctl/README.md).
+
+## Wayland, in detail
+
+Synthetic input on Wayland means emulating a device through the kernel's
+[`uinput`](https://docs.kernel.org/input/uinput.html), since there is no XTest
+to ask. The checked-in `waylandmouseandkeyinput.pas` has event-writing code
+but never opens `/dev/uinput`, creates no virtual devices, and its key
+translation and coordinate handling need correction - it is a starting point,
+not a backend, and device permissions alone will not make it one. Global
+hotkeys want the `GlobalShortcuts` desktop portal; the current unit is a stub
+that registers nothing. Window management and capture would go through
+compositor protocols and the screenshot portal. None of this is hidden at run
+time: on a Wayland session these components fail with messages that say so,
+while idle, power, and clipboard monitoring - which ride D-Bus and GTK - work
+as described in their sections.
 
 ## Possible future work
 

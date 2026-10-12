@@ -561,54 +561,30 @@ end;
 
 procedure TMainForm.RunMouseDemo(Data: PtrInt);
 var
-  adjustedPoints: array[0..4] of TPoint;
-  paintBoxScreenPos: TPoint;
-  paintBoxWidth, paintBoxHeight: integer;
-  i, n: integer;
-  angle: double;
-  offsets: integer = 5;
-  radius: integer = 50;
-  offset: integer = 75;
-  steps: integer = 4;
+  Origin: TPoint;
+  W, H: Integer;
+
+  { press, walk the pointer through the points, release - one drawn stroke }
+  procedure Stroke(const Pts: array of TPoint);
+  var
+    I: Integer;
+  begin
+    MouseInput.Move([], Origin.X + Pts[0].X, Origin.Y + Pts[0].Y, 200);
+    MouseInput.Down(mbLeft, []);
+    for I := 1 to High(Pts) do
+      MouseInput.Move([], Origin.X + Pts[I].X, Origin.Y + Pts[I].Y, 250);
+    MouseInput.Up(mbLeft, []);
+  end;
+
 begin
   StatusBar1.Panels[2].Text := 'Running mouse demo...';
-  paintBoxScreenPos := PaintBox1.ClientToScreen(Types.Point(0, 0));
-  paintBoxWidth := PaintBox1.Width;
-  paintBoxHeight := PaintBox1.Height;
-
-  for i := 0 to 1 do
-  begin
-    MouseInput.Move([], paintBoxScreenPos.X + offsets, paintBoxScreenPos.Y + offsets, 200);
-    MouseInput.Down(mbLeft, []);
-    MouseInput.Move([], paintBoxScreenPos.X + PaintBox1.Width - offsets, paintBoxScreenPos.Y + offsets, 200);
-    MouseInput.Move([], paintBoxScreenPos.X + PaintBox1.Width - offsets, paintBoxScreenPos.Y + PaintBox1.Height - offsets, 200);
-    MouseInput.Move([], paintBoxScreenPos.X + offsets, paintBoxScreenPos.Y + PaintBox1.Height - offsets, 200);
-    MouseInput.Move([], paintBoxScreenPos.X + offsets, paintBoxScreenPos.Y + offsets, 200);
-    MouseInput.Up(mbLeft, []);
-    Inc(offsets, 15);
-  end;
-
-  adjustedPoints[0] := Types.Point(paintBoxScreenPos.X + offset, paintBoxScreenPos.Y + offset);
-  adjustedPoints[1] := Types.Point(paintBoxScreenPos.X + paintBoxWidth - offset, paintBoxScreenPos.Y + offset);
-  adjustedPoints[2] := Types.Point(paintBoxScreenPos.X + offset, paintBoxScreenPos.Y + paintBoxHeight - offset);
-  adjustedPoints[3] := Types.Point(paintBoxScreenPos.X + paintBoxWidth - offset, paintBoxScreenPos.Y + paintBoxHeight - offset);
-  adjustedPoints[4] := Types.Point(paintBoxScreenPos.X + (paintBoxWidth div 2), paintBoxScreenPos.Y + (paintBoxHeight div 2));
-
-  for i := 0 to High(adjustedPoints) do
-  begin
-    MouseInput.Move([], adjustedPoints[i].X + radius, adjustedPoints[i].Y, 1000);
-    MouseInput.Down(mbLeft, []);
-    for n := 0 to steps do
-    begin
-      angle := n * (2 * Pi / steps);
-      MouseInput.Move([],
-        adjustedPoints[i].X + Round(radius * Cos(angle)),
-        adjustedPoints[i].Y + Round(radius * Sin(angle)), (200 div steps));
-    end;
-    steps := steps * 2;
-    MouseInput.Up(mbLeft, []);
-  end;
-
+  Origin := PaintBox1.ClientToScreen(Types.Point(0, 0));
+  W := PaintBox1.Width;
+  H := PaintBox1.Height;
+  Stroke([Types.Point(10, 10), Types.Point(W - 10, 10),
+    Types.Point(W - 10, H - 10), Types.Point(10, H - 10), Types.Point(10, 10)]);
+  Stroke([Types.Point(10, 10), Types.Point(W - 10, H - 10)]);
+  Stroke([Types.Point(W - 10, 10), Types.Point(10, H - 10)]);
   StatusBar1.Panels[2].Text := 'Mouse demo complete';
 end;
 
@@ -785,8 +761,6 @@ begin
     mbMiddle: ButtonName := 'Middle';
     mbExtra1: ButtonName := 'Extra1 (Back)';
     mbExtra2: ButtonName := 'Extra2 (Forward)';
-  else
-    ButtonName := 'Unknown';
   end;
 
   StatusBar1.Panels[2].Text := Format('Last Click: %s @ (%d, %d)', [ButtonName, X, Y]);

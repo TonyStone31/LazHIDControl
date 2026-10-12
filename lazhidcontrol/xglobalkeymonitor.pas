@@ -231,7 +231,6 @@ end;
 
 constructor TXGlobalKeyListener.Create;
 var
-  major, minor: cint;
   event_base, error_base: cint;
 begin
   inherited Create;

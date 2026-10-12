@@ -51,7 +51,8 @@ desktop.ini
 *.link.res
 *.lrt
 packagefiles.xml
-HIDControlDemo
+examples/hidcontroldemo/HIDControlDemo
+examples/hidcontroldemo/HIDControlDemo.exe
 
 # Build scripts (user-specific paths)
 build-and-run.sh
@@ -62,10 +63,8 @@ hidctl/hidctl
 hidctl/lib/
 hidctl/*.lps
 
-# Small example executable and local assistant settings
-lazhidcontrol/example/project1
+# Local assistant settings
 .claude/
 
-# Nonvisual hotkey demo executable
-/examples/hotkey/HotkeyDemo
+# Demo executables
 /examples/automation/AutomationDemo

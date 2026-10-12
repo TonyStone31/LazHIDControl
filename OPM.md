@@ -1,6 +1,6 @@
 # LazHIDControl OPM maintainer notes
 
-- Package: `LazHIDControl`, runtime and design time (`RunAndDesignTime`); 46 listed units and the generated `lazhidcontrol.pas` entry point.
+- Package: `LazHIDControl`, runtime and design time (`RunAndDesignTime`); the listed units and the generated `lazhidcontrol.pas` entry point.
 - Palette components: `THIDHotkey`, `THIDKeyboard`, `THIDMouse`, `THIDScreenshot`, `THIDWindow`, `THIDSystemIdle`, `THIDPowerMonitor`, `THIDClipboardMonitor`.
 - Package file: `lazhidcontrol/lazhidcontrol.lpk`.
 - Version: **1.0.0.0**; unchanged for submission.
@@ -16,9 +16,9 @@
   D-Bus libraries, `libXi` for global monitoring; usual LCL/widgetset libraries.
   The unfinished Wayland backend targets uinput; access permissions alone
   do not make it functional.
-- Examples: `HIDControlDemo.lpi`, `lazhidcontrol/example/project1.lpi`, and
-  `hidctl/hidctl.lpi`, `examples/hotkey/HotkeyDemo.lpi`, and
-  `examples/automation/AutomationDemo.lpi`; all require `LazHIDControl`.
+- Examples: `examples/automation/AutomationDemo.lpi`,
+  `examples/hidcontroldemo/HIDControlDemo.lpi`, and the `hidctl/hidctl.lpi`
+  command-line tool; all require `LazHIDControl`.
 - Verified here: Linux x86-64, GTK3, Lazarus **4.99** (trunk), FPC **3.3.1**.
   Windows support is reported in the README but was not tested in this review.
   GTK2/Qt and release compiler/IDE versions were not verified here.
@@ -44,12 +44,13 @@ Project**, or register a package link; no IDE palette installation is needed.
 Select the **repository root** for OPM, preserving the package subdirectory.
 OPM stores `lazhidcontrol` as the relative package path; moving the `.lpk` to the
 root is unnecessary. Keep both license texts at the archive root, all package
-Pascal units, `lazhidcontrol/design/resources` palette assets, root documentation, `lazhidcontrol/HOTKEY_USAGE.md`, and the complete
-root demo, small example and `hidctl` sources/forms/projects. Keep `project1.ico`.
+Pascal units, `lazhidcontrol/design/resources` palette assets, the root
+documentation (`README.md`, `MANUAL.md`), `lazhidcontrol/HOTKEY_USAGE.md`, and
+the complete `examples` and `hidctl` sources/forms/projects.
 The Lazarus-generated `lazhidcontrol.pas` entry point is useful source.
 
 Exclude `lib` directories, backups, sessions, generated project `.res` files,
-compiled programs (`HIDControlDemo`, `hidctl/hidctl`, and example `project1`),
+compiled programs (the demos and `hidctl/hidctl`),
 local configuration, local build scripts and local patch files from the
 staging copy. No tracked build artifacts were found. Do not remove useful
 repository files merely to reduce the release archive.

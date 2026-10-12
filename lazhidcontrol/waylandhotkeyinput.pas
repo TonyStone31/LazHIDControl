@@ -68,7 +68,6 @@ const
 var
   GlobalHotkeys: TList = nil;
   PortalConn: PDBusConnection = nil;
-  MonitorThread: TThreadID = 0;
   MonitorActive: Boolean = False;
 
 function KeyToWaylandAccelerator(Key: Word; Shift: TShiftState): UTF8String;
@@ -128,7 +127,7 @@ begin
     if PortalConn <> nil then
     begin
       MonitorActive := True;
-      MonitorThread := BeginThread(@PortalMessageLoop, nil);
+      BeginThread(@PortalMessageLoop, nil);
     end;
   end;
 end;
