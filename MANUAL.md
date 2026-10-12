@@ -116,10 +116,10 @@ Choose `Source` in the Object Inspector, then call `Capture`. It returns
 
 Negative coordinates work for monitors to the left or above the primary;
 rectangles are clipped to the desktop. A missing window or invalid monitor
-reports failure rather than capturing the wrong target. Window capture crops
-its **visible screen area**: overlapping windows appear in the result, and
-minimized or offscreen targets cannot be captured. It does not reconstruct
-hidden window contents.
+reports failure rather than capturing the wrong target. Window capture reads
+the screen, so the target window is **brought to the front first** and given
+a moment to paint; minimized or offscreen targets cannot be captured, and
+hidden window contents are not reconstructed.
 
 ```pascal
 if HIDScreenshot1.Capture then

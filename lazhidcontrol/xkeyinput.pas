@@ -35,10 +35,10 @@ type
   private
     xDisplayConnection: PDisplay;
     capsLockBeginState: boolean;
-    ScratchKC: array[0..7] of Integer;
-    ScratchSym: array[0..7] of TKeySym;
-    ScratchTick: array[0..7] of QWord;
-    ScratchNext: Integer;
+    ScratchKC: array[0..15] of Integer;
+    ScratchSym: array[0..15] of TKeySym;
+    ScratchSaved: array[0..15] of array of TKeySym;
+    ScratchPerKC: Integer;
     ScratchReady: Boolean;
     function VirtualKeyToXKeySym(Key: word): TKeySym;
     procedure FindScratchKeycodes;
@@ -248,11 +248,16 @@ var
 begin
   if xDisplayConnection <> nil then
   begin
-    // hand the borrowed keycodes back empty
+    // hand every keycode back the way it was found
     Gone := NoSymbol;
     for I := 0 to High(ScratchKC) do
-      if (ScratchKC[I] <> 0) and (ScratchSym[I] <> NoSymbol) then
-        XChangeKeyboardMapping(xDisplayConnection, ScratchKC[I], 1, @Gone, 1);
+      if ScratchKC[I] <> 0 then
+      begin
+        if ScratchSaved[I] <> nil then
+          XChangeKeyboardMapping(xDisplayConnection, ScratchKC[I], ScratchPerKC, @ScratchSaved[I][0], 1)
+        else if ScratchSym[I] <> NoSymbol then
+          XChangeKeyboardMapping(xDisplayConnection, ScratchKC[I], 1, @Gone, 1);
+      end;
     XCloseDisplay(xDisplayConnection);
   end;
   inherited Destroy;
@@ -328,30 +333,67 @@ begin
   Sleep(5);
 end;
 
-{ Keycodes no key on the keyboard sends, free to carry whatever keysym a
-  character needs.  The spares live at the top of the range. }
+{ Keycodes to carry whatever keysym a character needs.  Empty keycodes - no
+  key on the keyboard sends them - are taken first; many keymaps have none,
+  so the rest are borrowed from the top of the range, skipping modifiers,
+  with their original rows saved for the destructor to put back. }
 procedure TXKeyInput.FindScratchKeycodes;
 var
-  MinKC, MaxKC, PerKC, KC, I, N: Integer;
+  MinKC, MaxKC, KC, I, N: Integer;
   Syms: PKeySym;
-  Used: Boolean;
+  Mods: PXModifierKeymap;
+  Used, IsMod: Boolean;
+
+  procedure Take(KC: Integer; Borrowed: Boolean);
+  var
+    J: Integer;
+  begin
+    ScratchKC[N] := KC;
+    if Borrowed then
+    begin
+      SetLength(ScratchSaved[N], ScratchPerKC);
+      for J := 0 to ScratchPerKC - 1 do
+        ScratchSaved[N][J] := Syms[(KC - MinKC) * ScratchPerKC + J];
+    end;
+    Inc(N);
+  end;
+
 begin
   ScratchReady := True;
   XDisplayKeycodes(xDisplayConnection, @MinKC, @MaxKC);
-  Syms := XGetKeyboardMapping(xDisplayConnection, MinKC, MaxKC - MinKC + 1, @PerKC);
+  Syms := XGetKeyboardMapping(xDisplayConnection, MinKC, MaxKC - MinKC + 1, @ScratchPerKC);
   if Syms = nil then Exit;
   N := 0;
   for KC := MaxKC downto MinKC do
   begin
     Used := False;
-    for I := 0 to PerKC - 1 do
-      if Syms[(KC - MinKC) * PerKC + I] <> NoSymbol then Used := True;
+    for I := 0 to ScratchPerKC - 1 do
+      if Syms[(KC - MinKC) * ScratchPerKC + I] <> NoSymbol then Used := True;
     if not Used then
     begin
-      ScratchKC[N] := KC;
-      Inc(N);
+      Take(KC, False);
       if N > High(ScratchKC) then Break;
     end;
+  end;
+  if N <= High(ScratchKC) then
+  begin
+    Mods := XGetModifierMapping(xDisplayConnection);
+    for KC := MaxKC downto MinKC do
+    begin
+      Used := False;
+      for I := 0 to N - 1 do
+        if ScratchKC[I] = KC then Used := True;
+      IsMod := False;
+      if Mods <> nil then
+        for I := 0 to 8 * Mods^.max_keypermod - 1 do
+          if (PKeyCode(Mods^.modifiermap) + I)^ = KC then IsMod := True;
+      if not Used and not IsMod then
+      begin
+        Take(KC, True);
+        if N > High(ScratchKC) then Break;
+      end;
+    end;
+    if Mods <> nil then XFreeModifiermap(Mods);
   end;
   XFree(Syms);
 end;
@@ -361,19 +403,17 @@ end;
   Ctrl+Shift+U hex entry this used to attempt, nothing depends on the
   receiving application's input method, or on CapsLock or NumLock.
 
-  The scratch keycodes take turns, and a symbol stays bound until its slot
-  comes round again, because a client may refetch the whole keyboard map a
-  moment late: unbinding right after the press is a race that loses
-  characters, and so is rebinding a keycode whose last press the client has
-  not digested yet.  So a repeated character finds its symbol still bound
-  and skips the rebinding, and a slot is never rebound within thirty
-  milliseconds of its last press - which matters on servers with only one
-  spare keycode, where every new character rebinds the same one. }
+  A receiving application translates a press against whatever the keyboard
+  map says when it gets around to the event, which under load can be well
+  after the press.  So the map has to hold still while typing: every new
+  symbol takes a fresh slot and nothing is ever rebound - until the slots
+  run out, when one long settle lets the slowest client catch up before the
+  whole pool is recycled.  That costs a pause once per potful of distinct
+  characters, and nothing at all the rest of the time. }
 procedure TXKeyInput.PressUnicodeChar(unicode: cardinal);
 var
   Sym: TKeySym;
   I, Slot: Integer;
-  Since: QWord;
 begin
   if xDisplayConnection = nil then Exit;
   // Latin-1 keysyms are their codepoints; the rest live in the Unicode range.
@@ -386,12 +426,15 @@ begin
     if (ScratchKC[I] <> 0) and (ScratchSym[I] = Sym) then Slot := I;
   if Slot < 0 then
   begin
-    Slot := ScratchNext;
-    if ScratchKC[Slot] = 0 then Slot := 0;
-    ScratchNext := (Slot + 1) mod Length(ScratchKC);
-    if ScratchKC[ScratchNext] = 0 then ScratchNext := 0;
-    Since := GetTickCount64 - ScratchTick[Slot];
-    if Since < 30 then Sleep(30 - Since);
+    for I := 0 to High(ScratchKC) do
+      if (ScratchKC[I] <> 0) and (ScratchSym[I] = NoSymbol) and (Slot < 0) then Slot := I;
+    if Slot < 0 then
+    begin
+      XSync(xDisplayConnection, False);
+      Sleep(700);
+      for I := 0 to High(ScratchKC) do ScratchSym[I] := NoSymbol;
+      Slot := 0;
+    end;
     XChangeKeyboardMapping(xDisplayConnection, ScratchKC[Slot], 1, @Sym, 1);
     ScratchSym[Slot] := Sym;
     XSync(xDisplayConnection, False);
@@ -401,7 +444,6 @@ begin
   XTestFakeKeyEvent(xDisplayConnection, ScratchKC[Slot], True, 0);
   XTestFakeKeyEvent(xDisplayConnection, ScratchKC[Slot], False, 0);
   XFlush(xDisplayConnection);
-  ScratchTick[Slot] := GetTickCount64;
   Sleep(5);
 end;
 

@@ -36,7 +36,7 @@ type
     // an index into Screen.Monitors.
     property MonitorIndex: Integer read MonitorNumber write MonitorNumber default -1;
     // Title of the window hcsWindow captures; blank captures the active window.
-    // The grab is that window's screen area, so anything overlapping it is in the picture.
+    // The grab reads the screen, so the window is brought to the front first.
     property WindowTitle: string read Title write Title;
     // Left edge of the hcsRegion rectangle, in screen coordinates. Negative
     // reaches monitors left of the primary.
@@ -199,6 +199,10 @@ begin
   EnsureWindowManager;
   if not Assigned(WindowMgr) then Exit(Failed('Window lookup is unavailable.'));
   if (Handle = 0) or not WindowMgr.IsWindowVisible(Handle) then Exit(Failed('The window is not visible.'));
+  // The grab reads the screen, so whatever covers the window would be in the
+  // picture; the window comes to the front first and gets a beat to paint.
+  WindowMgr.ActivateWindow(Handle);
+  Sleep(200);
   Result := CaptureArea(WindowMgr.GetWindowRect(Handle));
 end;
 function THIDScreenshot.Capture: Boolean;
