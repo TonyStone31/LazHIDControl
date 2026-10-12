@@ -1,11 +1,11 @@
-unit HIDIdle;
+unit HIDSystemIdle;
 {$mode objfpc}{$H+}
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
 uses Classes, SysUtils, ExtCtrls;
 type
-  THIDIdleErrorEvent = procedure(Sender: TObject; const Message: string) of object;
-  THIDIdle = class(TComponent)
+  THIDSystemIdleErrorEvent = procedure(Sender: TObject; const Message: string) of object;
+  THIDSystemIdle = class(TComponent)
   private
     Poll: TTimer;
     Requested, IdleState, KnownState: Boolean;
@@ -13,7 +13,7 @@ type
     Elapsed: QWord;
     ErrorText: string;
     IdleHandler, ActiveHandler: TNotifyEvent;
-    ErrorHandler: THIDIdleErrorEvent;
+    ErrorHandler: THIDSystemIdleErrorEvent;
     procedure SetEnabled(Value: Boolean);
     function GetInterval: Cardinal;
     procedure SetInterval(Value: Cardinal);
@@ -41,11 +41,11 @@ type
     // Fires once when activity resumes after idle; not on an initially active check.
     property OnActive: TNotifyEvent read ActiveHandler write ActiveHandler;
     // Reports a failed query once, stops Enabled monitoring, and sets LastError.
-    property OnError: THIDIdleErrorEvent read ErrorHandler write ErrorHandler;
+    property OnError: THIDSystemIdleErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation
 uses IdleInput;
-constructor THIDIdle.Create(AOwner: TComponent);
+constructor THIDSystemIdle.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   Threshold := 60000;
@@ -54,12 +54,12 @@ begin
   Poll.Interval := 1000;
   Poll.OnTimer := @Tick;
 end;
-procedure THIDIdle.Loaded;
+procedure THIDSystemIdle.Loaded;
 begin
   inherited Loaded;
   if Enabled then SetEnabled(True);
 end;
-procedure THIDIdle.SetEnabled(Value: Boolean);
+procedure THIDSystemIdle.SetEnabled(Value: Boolean);
 begin
   Requested := Value;
   Poll.Enabled := False;
@@ -68,21 +68,21 @@ begin
   if (csLoading in ComponentState) or (csDesigning in ComponentState) then Exit;
   if Value and Check then Poll.Enabled := Requested;
 end;
-function THIDIdle.GetInterval: Cardinal;
+function THIDSystemIdle.GetInterval: Cardinal;
 begin Result := Poll.Interval; end;
-procedure THIDIdle.SetInterval(Value: Cardinal);
+procedure THIDSystemIdle.SetInterval(Value: Cardinal);
 begin
   if Value = 0 then raise ERangeError.Create('PollInterval must be greater than zero.');
   Poll.Interval := Value;
 end;
-procedure THIDIdle.SetThreshold(Value: Cardinal);
+procedure THIDSystemIdle.SetThreshold(Value: Cardinal);
 begin
   if Value = 0 then raise ERangeError.Create('IdleThreshold must be greater than zero.');
   Threshold := Value;
 end;
-procedure THIDIdle.Tick(Sender: TObject);
+procedure THIDSystemIdle.Tick(Sender: TObject);
 begin Check; end;
-function THIDIdle.Check: Boolean;
+function THIDSystemIdle.Check: Boolean;
 var Value: QWord; Message: string; NowIdle, NotifyIdle, NotifyActive: Boolean;
 begin
   if csDesigning in ComponentState then Exit(False);
@@ -107,6 +107,6 @@ begin
   if NotifyIdle and Assigned(IdleHandler) then IdleHandler(Self);
   if NotifyActive and Assigned(ActiveHandler) then ActiveHandler(Self);
 end;
-function THIDIdle.QueryIdle(out Milliseconds: QWord; out Message: string): Boolean;
+function THIDSystemIdle.QueryIdle(out Milliseconds: QWord; out Message: string): Boolean;
 begin Result := QuerySystemIdle(Milliseconds, Message); end;
 end.

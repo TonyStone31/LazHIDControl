@@ -1,7 +1,7 @@
 # LazHIDControl OPM maintainer notes
 
 - Package: `LazHIDControl`, runtime and design time (`RunAndDesignTime`); 46 listed units and the generated `lazhidcontrol.pas` entry point.
-- Palette components: `THIDHotkey`, `THIDKeyboard`, `THIDMouse`, `THIDScreenshot`, `THIDWindow`, `THIDIdle`, `THIDPowerMonitor`, `THIDClipboardMonitor`.
+- Palette components: `THIDHotkey`, `THIDKeyboard`, `THIDMouse`, `THIDScreenshot`, `THIDWindow`, `THIDSystemIdle`, `THIDPowerMonitor`, `THIDClipboardMonitor`.
 - Package file: `lazhidcontrol/lazhidcontrol.lpk`.
 - Version: **1.0.0.0**; unchanged for submission.
 - Maintainer: Tony Stone; original input code by Tom Gregorovic, Cocoa input
@@ -44,7 +44,7 @@ Project**, or register a package link; no IDE palette installation is needed.
 Select the **repository root** for OPM, preserving the package subdirectory.
 OPM stores `lazhidcontrol` as the relative package path; moving the `.lpk` to the
 root is unnecessary. Keep both license texts at the archive root, all package
-Pascal units, root documentation, `lazhidcontrol/HOTKEY_USAGE.md`, and the complete
+Pascal units, `lazhidcontrol/design/resources` palette assets, root documentation, `lazhidcontrol/HOTKEY_USAGE.md`, and the complete
 root demo, small example and `hidctl` sources/forms/projects. Keep `project1.ico`.
 The Lazarus-generated `lazhidcontrol.pas` entry point is useful source.
 

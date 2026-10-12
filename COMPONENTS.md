@@ -142,7 +142,7 @@ The automation demo's **Find and activate window** button uses the title box.
 X11 uses the window manager's client list, falling back to direct root children
 on bare X servers. macOS and native Wayland window backends remain placeholders.
 
-## THIDIdle
+## THIDSystemIdle
 
 Drop the component on a form, set **IdleThreshold** in milliseconds (default
 60000), assign **OnIdle** and **OnActive**, then set **Enabled** to True.

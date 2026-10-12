@@ -3,7 +3,7 @@ unit AutomationDemoMain;
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
 uses Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  Spin, WindowManagerIntf, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDIdle, HIDPower, HIDClipboard, PowerInput, Clipbrd;
+  Spin, WindowManagerIntf, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard, PowerInput, Clipbrd;
 type
   TAutomationForm = class(TForm)
     InputPanel, CapturePanel, IdlePanel, PowerPanel, ClipboardPanel: TPanel;
@@ -19,7 +19,7 @@ type
     Hotkey: THIDHotkey;
     SaveDialog: TSaveDialog;
     Window: THIDWindow;
-    Idle: THIDIdle;
+    SystemIdle: THIDSystemIdle;
     IdleBox: TCheckBox;
     IdleStatus: TLabel;
     FindButton, MoveWindowButton, CopyButton, CopyImageButton, RefreshPowerButton: TButton;
@@ -137,7 +137,7 @@ begin Clipboard.AsText := TextInput.Text; end;
 procedure TAutomationForm.IdleBoxChange(Sender: TObject);
 begin
   IdleStatus.Caption := 'Active; leave mouse and keyboard alone for 5 seconds.';
-  Idle.Enabled := IdleBox.Checked;
+  SystemIdle.Enabled := IdleBox.Checked;
   if not IdleBox.Checked then IdleStatus.Caption := 'Idle detection is off.';
 end;
 procedure TAutomationForm.BecameIdle(Sender: TObject);
@@ -183,7 +183,7 @@ initialization
   RegisterClass(THIDMouse);
   RegisterClass(THIDScreenshot);
   RegisterClass(THIDWindow);
-  RegisterClass(THIDIdle);
+  RegisterClass(THIDSystemIdle);
   RegisterClass(THIDPowerMonitor);
   RegisterClass(THIDClipboardMonitor);
 end.

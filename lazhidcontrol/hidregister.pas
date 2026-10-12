@@ -4,9 +4,11 @@ unit HIDRegister;
 interface
 procedure Register;
 implementation
-uses Classes, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDIdle, HIDPower, HIDClipboard;
+uses LResources, Classes, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard;
 procedure Register;
 begin
-  RegisterComponents('LazHIDControl', [THIDHotkey, THIDKeyboard, THIDMouse, THIDScreenshot, THIDWindow, THIDIdle, THIDPowerMonitor, THIDClipboardMonitor]);
+  RegisterComponents('LazHIDControl', [THIDHotkey, THIDKeyboard, THIDMouse, THIDScreenshot, THIDWindow, THIDSystemIdle, THIDPowerMonitor, THIDClipboardMonitor]);
 end;
+initialization
+  {$I design/resources/HIDPalette.lrs}
 end.

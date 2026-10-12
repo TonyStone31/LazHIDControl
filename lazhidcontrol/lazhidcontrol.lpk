@@ -198,8 +198,8 @@
         <UnitName Value="HIDWindow"/>
       </Item>
       <Item>
-        <Filename Value="hididle.pas"/>
-        <UnitName Value="HIDIdle"/>
+        <Filename Value="hidsystemidle.pas"/>
+        <UnitName Value="HIDSystemIdle"/>
       </Item>
       <Item>
         <Filename Value="idleinput.pas"/>

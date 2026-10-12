@@ -326,7 +326,7 @@ object AutomationForm: TAutomationForm
     Left = 680
     Top = 160
   end
-  object Idle: THIDIdle
+  object SystemIdle: THIDSystemIdle
     IdleThreshold = 5000
     OnIdle = BecameIdle
     OnActive = BecameActive

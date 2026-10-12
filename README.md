@@ -44,7 +44,7 @@ See [OPM.md](OPM.md) for submission notes.
 | `THIDMouse` | Configure movement timing and a relative control or external window, then move, click, or scroll. |
 | `THIDPowerMonitor` | Enable sleep/wake events and watch power source, battery level, and charging. |
 | `THIDClipboardMonitor` | Enable clipboard-change events; use LCL to read the copied data. |
-| `THIDIdle` | Set an inactivity threshold and handle `OnIdle` / `OnActive`. |
+| `THIDSystemIdle` | Set an inactivity threshold and handle `OnIdle` / `OnActive`. |
 | `THIDWindow` | Find a window by title, class, or process; wait for it, activate, move, or resize. |
 | `THIDScreenshot` | Choose desktop, monitor, window, rectangle, or drag selection; call `Capture`. |
 

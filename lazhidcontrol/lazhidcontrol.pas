@@ -10,7 +10,7 @@ interface
 uses
   MouseAndKeyInput, HotkeyInput, GlobalKeyMonitor, GlobalMouseMonitor,
   WindowManagerIntf, WindowManager, HIDHotkey, HIDRegister, HIDInput,
-  HIDScreenshot, HIDWindow, HIDIdle, HIDPower, HIDClipboard, LazarusPackageIntf;
+  HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard, LazarusPackageIntf;
 
 implementation
 
