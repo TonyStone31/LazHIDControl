@@ -58,7 +58,7 @@
         <UnitName Value="HIDMouseInputIntf"/>
       </Item>
       <Item>
-        <Filename Value="waylandhidmouseandkeyinput.pas"/>
+        <Filename Value="waylandmouseandkeyinput.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="WaylandMouseAndKeyInput"/>
       </Item>
@@ -83,7 +83,7 @@
         <UnitName Value="HIDXMouseInput"/>
       </Item>
       <Item>
-        <Filename Value="hothidkeyinputintf.pas"/>
+        <Filename Value="hotkeyinputintf.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="HotkeyInputIntf"/>
       </Item>

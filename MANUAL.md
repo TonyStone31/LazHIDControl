@@ -302,7 +302,7 @@ them with [hidctl](hidctl/README.md).
 
 Synthetic input on Wayland means emulating a device through the kernel's
 [`uinput`](https://docs.kernel.org/input/uinput.html), since there is no XTest
-to ask. The checked-in `waylandhidmouseandkeyinput.pas` has event-writing code
+to ask. The checked-in `waylandmouseandkeyinput.pas` has event-writing code
 but never opens `/dev/uinput`, creates no virtual devices, and its key
 translation and coordinate handling need correction - it is a starting point,
 not a backend, and device permissions alone will not make it one. Global
