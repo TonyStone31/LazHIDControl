@@ -34,10 +34,10 @@ native Wayland windows. macOS is not a supported submission target: dispatch is
 incomplete, hotkey/key-monitor code is stubbed, and global mouse monitoring and
 window management return nil. Platform behavior was preserved, not repaired.
 
-Several public unit names overlap Lazarus's bundled input implementation.
-Avoid adding both implementations to one project; this package has no dependency
-on that other package. It is a runtime library, so use **Compile → Use → Add to
-Project**, or register a package link; no IDE palette installation is needed.
+Every unit name carries the `hid` prefix, so nothing collides with Lazarus's
+bundled `mouseandkeyinput` package - installing both into the IDE is fine.
+The package is `RunAndDesignTime`: install it for the palette components, or
+**Use → Add to Project** for library-only use.
 
 ## Release contents and checks
 

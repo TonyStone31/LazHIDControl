@@ -1,4 +1,4 @@
-{ XKeyInput
+{ HIDXKeyInput
 
   Copyright (C) 2008 Tom Gregorovic
 
@@ -14,7 +14,7 @@
   <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
 }
-unit XKeyInput;
+unit HIDXKeyInput;
 
 {$mode objfpc}{$H+}
 {$linklib Xtst}
@@ -23,7 +23,7 @@ interface
 
 uses
   Classes,
-  KeyInputIntf, KeySym,
+  HIDKeyInputIntf, KeySym,
   SysUtils,
   X,
   XLib;

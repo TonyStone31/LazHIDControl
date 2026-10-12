@@ -65,7 +65,7 @@ end;
 Or skip the components and use the library directly:
 
 ```pascal
-uses MouseAndKeyInput, LCLType;
+uses HIDMouseAndKeyInput, LCLType;
 KeyInput.PressString('Hello World!');
 KeyInput.Press(VK_RETURN);
 MouseInput.Move([], 100, 100, 500);  // walk there over half a second

@@ -24,66 +24,66 @@
     <Version Major="1" Minor="0"/>
     <Files>
       <Item>
-        <Filename Value="carbonkeyinput.pas"/>
+        <Filename Value="HIDCarbonKeyInput.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="CarbonKeyInput"/>
+        <UnitName Value="HIDCarbonKeyInput"/>
       </Item>
       <Item>
-        <Filename Value="carbonmouseinput.pas"/>
+        <Filename Value="HIDCarbonMouseInput.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="CarbonMouseInput"/>
+        <UnitName Value="HIDCarbonMouseInput"/>
       </Item>
       <Item>
-        <Filename Value="cocoakeyinput.pas"/>
+        <Filename Value="HIDCocoaKeyInput.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="CocoaKeyInput"/>
+        <UnitName Value="HIDCocoaKeyInput"/>
       </Item>
       <Item>
-        <Filename Value="cocoamouseinput.pas"/>
+        <Filename Value="HIDCocoaMouseInput.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="CocoaMouseInput"/>
+        <UnitName Value="HIDCocoaMouseInput"/>
       </Item>
       <Item>
-        <Filename Value="keyinputintf.pas"/>
+        <Filename Value="HIDKeyInputIntf.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="KeyInputIntf"/>
+        <UnitName Value="HIDKeyInputIntf"/>
       </Item>
       <Item>
-        <Filename Value="mouseandkeyinput.pas"/>
-        <UnitName Value="MouseAndKeyInput"/>
+        <Filename Value="HIDMouseAndKeyInput.pas"/>
+        <UnitName Value="HIDMouseAndKeyInput"/>
       </Item>
       <Item>
-        <Filename Value="mouseinputintf.pas"/>
+        <Filename Value="HIDMouseInputIntf.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="MouseInputIntf"/>
+        <UnitName Value="HIDMouseInputIntf"/>
       </Item>
       <Item>
-        <Filename Value="waylandmouseandkeyinput.pas"/>
+        <Filename Value="waylandhidmouseandkeyinput.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="WaylandMouseAndKeyInput"/>
       </Item>
       <Item>
-        <Filename Value="winkeyinput.pas"/>
+        <Filename Value="HIDWinKeyInput.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="WinKeyInput"/>
+        <UnitName Value="HIDWinKeyInput"/>
       </Item>
       <Item>
-        <Filename Value="winmouseinput.pas"/>
+        <Filename Value="HIDWinMouseInput.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="WinMouseInput"/>
+        <UnitName Value="HIDWinMouseInput"/>
       </Item>
       <Item>
-        <Filename Value="xkeyinput.pas"/>
+        <Filename Value="HIDXKeyInput.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="XKeyInput"/>
+        <UnitName Value="HIDXKeyInput"/>
       </Item>
       <Item>
-        <Filename Value="xmouseinput.pas"/>
+        <Filename Value="HIDXMouseInput.pas"/>
         <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="XMouseInput"/>
+        <UnitName Value="HIDXMouseInput"/>
       </Item>
       <Item>
-        <Filename Value="hotkeyinputintf.pas"/>
+        <Filename Value="hothidkeyinputintf.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="HotkeyInputIntf"/>
       </Item>

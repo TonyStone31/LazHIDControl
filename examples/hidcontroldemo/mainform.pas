@@ -25,7 +25,7 @@ uses
   WindowManager,
   WindowManagerIntf,
   Graphics,
-  MouseAndKeyInput,
+  HIDMouseAndKeyInput,
   Clipbrd;
 
 type

@@ -65,7 +65,7 @@ program hidctl;
 uses
   {$IFDEF UNIX}cthreads,{$ENDIF}
   Interfaces, Classes, SysUtils, Math, Controls, Forms, LCLType, Graphics,
-  Clipbrd, MouseAndKeyInput, WindowManager, WindowManagerIntf,
+  Clipbrd, HIDMouseAndKeyInput, WindowManager, WindowManagerIntf,
   HIDScreenshot, IdleInput, PowerInput;
 
 var

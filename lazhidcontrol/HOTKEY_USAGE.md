@@ -19,7 +19,7 @@ no compositor is supported by this backend yet.
 
 ```pascal
 uses
-  HotkeyInput, MouseAndKeyInput, LCLType;
+  HotkeyInput, HIDMouseAndKeyInput, LCLType;
 
 var
   MyHotkey: THotkey;
@@ -142,5 +142,5 @@ The hotkey implementation is adapted from the [Codebot Pascal Library](http://cr
 ## See Also
 
 - Demo application in `../HIDControlDemo.lpi` for complete working example
-- `MouseAndKeyInput` unit for keyboard and mouse simulation
-- `KeyInputIntf` and `MouseInputIntf` for low-level interfaces
+- `HIDMouseAndKeyInput` unit for keyboard and mouse simulation
+- `HIDKeyInputIntf` and `HIDMouseInputIntf` for low-level interfaces

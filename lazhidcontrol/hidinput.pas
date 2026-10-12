@@ -57,7 +57,7 @@ type
     property RelativeWindow: THIDWindow read TargetWindow write SetRelativeWindow;
   end;
 implementation
-uses MouseAndKeyInput, WindowManager;
+uses HIDMouseAndKeyInput, WindowManager;
 procedure THIDKeyboard.CheckAvailable;
 begin
   if csDesigning in ComponentState then raise EInvalidOperation.Create('Input is disabled in the designer.');

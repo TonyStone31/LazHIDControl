@@ -1,4 +1,4 @@
-{ CocoaKeyInput
+{ HIDCocoaKeyInput
 
   Copyright (C) 2019 Sammarco Francesco
 
@@ -14,7 +14,7 @@
   <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
 }
-unit CocoaKeyInput;
+unit HIDCocoaKeyInput;
 
 {$mode objfpc}{$H+}
 
@@ -24,7 +24,7 @@ uses
   MacOSAll,
   Classes, SysUtils, Controls, Forms,
   CocoaUtils, CGEventSource, CGEvent, CGEventTypes, CGRemoteOperation, CFBase,
-  KeyInputIntf;
+  HIDKeyInputIntf;
 
 type
 

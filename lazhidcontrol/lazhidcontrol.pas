@@ -8,7 +8,7 @@ unit LazHIDControl;
 interface
 
 uses
-  MouseAndKeyInput, HotkeyInput, GlobalKeyMonitor, GlobalMouseMonitor,
+  HIDMouseAndKeyInput, HotkeyInput, GlobalKeyMonitor, GlobalMouseMonitor,
   WindowManagerIntf, WindowManager, HIDHotkey, HIDRegister, HIDInput,
   HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard, LazarusPackageIntf;
 

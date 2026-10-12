@@ -1,4 +1,4 @@
-{ CocoaMouseInput
+{ HIDCocoaMouseInput
 
   Copyright (C) 2019 Sammarco Francesco
 
@@ -14,7 +14,7 @@
   <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
 }
-unit CocoaMouseInput;
+unit HIDCocoaMouseInput;
 
 {$mode objfpc}{$H+}
 
@@ -23,7 +23,7 @@ interface
 uses
   Classes, SysUtils, Controls, Forms,
   CocoaUtils, CocoaAll, CGGeometry, CGEvent, CGEventTypes, CFBase,
-  MouseInputIntf;
+  HIDMouseInputIntf;
 
 type
 

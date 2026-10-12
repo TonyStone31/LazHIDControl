@@ -9,9 +9,9 @@ uses
   BaseUnix,
   Classes,
   Controls,
-  KeyInputIntf,
+  HIDKeyInputIntf,
   LCLType,
-  MouseInputIntf,
+  HIDMouseInputIntf,
   SysUtils,
   Unix;
 
