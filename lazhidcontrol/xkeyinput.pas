@@ -35,7 +35,13 @@ type
   private
     xDisplayConnection: PDisplay;
     capsLockBeginState: boolean;
+    ScratchKC: array[0..7] of Integer;
+    ScratchSym: array[0..7] of TKeySym;
+    ScratchTick: array[0..7] of QWord;
+    ScratchNext: Integer;
+    ScratchReady: Boolean;
     function VirtualKeyToXKeySym(Key: word): TKeySym;
+    procedure FindScratchKeycodes;
   protected
     procedure DoDown(Key: word); override;
     procedure DoUp(Key: word); override;
@@ -236,9 +242,19 @@ begin
 end;
 
 destructor TXKeyInput.Destroy;
+var
+  Gone: TKeySym;
+  I: Integer;
 begin
   if xDisplayConnection <> nil then
+  begin
+    // hand the borrowed keycodes back empty
+    Gone := NoSymbol;
+    for I := 0 to High(ScratchKC) do
+      if (ScratchKC[I] <> 0) and (ScratchSym[I] <> NoSymbol) then
+        XChangeKeyboardMapping(xDisplayConnection, ScratchKC[I], 1, @Gone, 1);
     XCloseDisplay(xDisplayConnection);
+  end;
   inherited Destroy;
 end;
 
@@ -312,47 +328,81 @@ begin
   Sleep(5);
 end;
 
+{ Keycodes no key on the keyboard sends, free to carry whatever keysym a
+  character needs.  The spares live at the top of the range. }
+procedure TXKeyInput.FindScratchKeycodes;
+var
+  MinKC, MaxKC, PerKC, KC, I, N: Integer;
+  Syms: PKeySym;
+  Used: Boolean;
+begin
+  ScratchReady := True;
+  XDisplayKeycodes(xDisplayConnection, @MinKC, @MaxKC);
+  Syms := XGetKeyboardMapping(xDisplayConnection, MinKC, MaxKC - MinKC + 1, @PerKC);
+  if Syms = nil then Exit;
+  N := 0;
+  for KC := MaxKC downto MinKC do
+  begin
+    Used := False;
+    for I := 0 to PerKC - 1 do
+      if Syms[(KC - MinKC) * PerKC + I] <> NoSymbol then Used := True;
+    if not Used then
+    begin
+      ScratchKC[N] := KC;
+      Inc(N);
+      if N > High(ScratchKC) then Break;
+    end;
+  end;
+  XFree(Syms);
+end;
+
+{ Any character into any application: borrow a spare keycode, give it the
+  character's keysym, and press it - the way xdotool types.  Unlike the
+  Ctrl+Shift+U hex entry this used to attempt, nothing depends on the
+  receiving application's input method, or on CapsLock or NumLock.
+
+  The scratch keycodes take turns, and a symbol stays bound until its slot
+  comes round again, because a client may refetch the whole keyboard map a
+  moment late: unbinding right after the press is a race that loses
+  characters, and so is rebinding a keycode whose last press the client has
+  not digested yet.  So a repeated character finds its symbol still bound
+  and skips the rebinding, and a slot is never rebound within thirty
+  milliseconds of its last press - which matters on servers with only one
+  spare keycode, where every new character rebinds the same one. }
 procedure TXKeyInput.PressUnicodeChar(unicode: cardinal);
 var
-  unicodestring: string;
-  j: integer;
-  keyCode: word;
-  savedCapsLockState: Boolean;
-  actualCapsLockWasOn: Boolean;
+  Sym: TKeySym;
+  I, Slot: Integer;
+  Since: QWord;
 begin
-  // IMPORTANT: Ctrl+Shift+U does NOT work when CapsLock is ON
-  // We must temporarily toggle CapsLock OFF, then restore it
-  savedCapsLockState := CapsLockStateAtStringStart;
-  CapsLockStateAtStringStart := False;
-
-  actualCapsLockWasOn := False;
-  try
-    actualCapsLockWasOn := GetCapsLockState;
-  except
-    actualCapsLockWasOn := False;
+  if xDisplayConnection = nil then Exit;
+  // Latin-1 keysyms are their codepoints; the rest live in the Unicode range.
+  if unicode < $100 then Sym := unicode
+  else Sym := TKeySym($01000000) or TKeySym(unicode);
+  if not ScratchReady then FindScratchKeycodes;
+  if ScratchKC[0] = 0 then Exit;
+  Slot := -1;
+  for I := 0 to High(ScratchKC) do
+    if (ScratchKC[I] <> 0) and (ScratchSym[I] = Sym) then Slot := I;
+  if Slot < 0 then
+  begin
+    Slot := ScratchNext;
+    if ScratchKC[Slot] = 0 then Slot := 0;
+    ScratchNext := (Slot + 1) mod Length(ScratchKC);
+    if ScratchKC[ScratchNext] = 0 then ScratchNext := 0;
+    Since := GetTickCount64 - ScratchTick[Slot];
+    if Since < 30 then Sleep(30 - Since);
+    XChangeKeyboardMapping(xDisplayConnection, ScratchKC[Slot], 1, @Sym, 1);
+    ScratchSym[Slot] := Sym;
+    XSync(xDisplayConnection, False);
+    // let every client take the new mapping in before the key arrives
+    Sleep(10);
   end;
-
-  if actualCapsLockWasOn then
-    capsLockGetSaveState;
-
-  try
-    unicodestring := IntToHex(unicode, 4);
-    Apply([ssCtrl, ssShift]);
-    Press(VK_U);
-
-    for j := 1 to Length(unicodeString) do begin
-      if unicodeString[j] in ['0'..'9'] then
-        keyCode := VK_0 + Ord(unicodeString[j]) - Ord('0')
-      else if unicodeString[j] in ['A'..'F'] then
-        keyCode := VK_A + Ord(unicodeString[j]) - Ord('A');
-      Press(keyCode);
-    end;
-    Unapply([ssCtrl, ssShift]);
-  finally
-    CapsLockStateAtStringStart := savedCapsLockState;
-    if actualCapsLockWasOn then
-      capsLockRestoreState;
-  end;
+  XTestFakeKeyEvent(xDisplayConnection, ScratchKC[Slot], True, 0);
+  XTestFakeKeyEvent(xDisplayConnection, ScratchKC[Slot], False, 0);
+  XFlush(xDisplayConnection);
+  ScratchTick[Slot] := GetTickCount64;
+  Sleep(5);
 end;
 
 function TXKeyInput.GetNumLockState: Boolean;
