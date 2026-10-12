@@ -49,6 +49,8 @@ type
     AtomNetWMStateMaximizedVert: TAtom;
     AtomNetWMStateMaximizedHorz: TAtom;
     AtomNetCloseWindow: TAtom;
+    AtomNetMoveResizeWindow: TAtom;
+    AtomNetSupportingWMCheck: TAtom;
     AtomNetWMWindowType: TAtom;
     AtomNetWMWindowTypeNormal: TAtom;
 
@@ -87,6 +89,7 @@ type
     function DoRaiseWindow(AHandle: TWindowHandle): boolean; override;
 
     // Window positioning and sizing
+    function EwmhManaged: boolean;
     function DoMoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean; override;
     function DoResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean; override;
     function DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean; override;
@@ -174,6 +177,8 @@ procedure TXWindowManager.InitializeAtoms;
 begin
   // EWMH atoms
   AtomNetActiveWindow := XInternAtom(XDisplayHandle, '_NET_ACTIVE_WINDOW', False);
+  AtomNetMoveResizeWindow := XInternAtom(XDisplayHandle, '_NET_MOVERESIZE_WINDOW', False);
+  AtomNetSupportingWMCheck := XInternAtom(XDisplayHandle, '_NET_SUPPORTING_WM_CHECK', False);
   AtomNetClientList := XInternAtom(XDisplayHandle, '_NET_CLIENT_LIST', False);
   AtomNetClientListStacking := XInternAtom(XDisplayHandle, '_NET_CLIENT_LIST_STACKING', False);
   AtomNetCurrentDesktop := XInternAtom(XDisplayHandle, '_NET_CURRENT_DESKTOP', False);
@@ -522,25 +527,61 @@ end;
 
 // Window positioning and sizing
 
+{ A window manager re-frames a raw XMoveWindow, so a window moved to its own
+  reported position would drift by the frame.  _NET_MOVERESIZE_WINDOW with
+  static gravity names the client's root position - the same thing
+  GetWindowRect reports - and the manager does its own frame arithmetic.
+  Bits: gravity 10 (static), 8-11 which fields are present, 12 the source. }
+function TXWindowManager.EwmhManaged: boolean;
+var
+  Data: Pointer;
+  Count: culong;
+begin
+  Result := GetWindowProperty(RootWindowHandle, AtomNetSupportingWMCheck, Data, Count);
+  if Result then
+  begin
+    Result := Count > 0;
+    XFree(Data);
+  end;
+end;
+
 function TXWindowManager.DoMoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean;
 begin
-  XMoveWindow(XDisplayHandle, TWindow(AHandle), X, Y);
-  XFlush(XDisplayHandle);
-  Result := True;
+  if EwmhManaged then
+    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow,
+      10 or (1 shl 8) or (1 shl 9) or (1 shl 12), X, Y, 0, 0)
+  else
+  begin
+    XMoveWindow(XDisplayHandle, TWindow(AHandle), X, Y);
+    XFlush(XDisplayHandle);
+    Result := True;
+  end;
 end;
 
 function TXWindowManager.DoResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean;
 begin
-  XResizeWindow(XDisplayHandle, TWindow(AHandle), Width, Height);
-  XFlush(XDisplayHandle);
-  Result := True;
+  if EwmhManaged then
+    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow,
+      10 or (1 shl 10) or (1 shl 11) or (1 shl 12), 0, 0, Width, Height)
+  else
+  begin
+    XResizeWindow(XDisplayHandle, TWindow(AHandle), Width, Height);
+    XFlush(XDisplayHandle);
+    Result := True;
+  end;
 end;
 
 function TXWindowManager.DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean;
 begin
-  XMoveResizeWindow(XDisplayHandle, TWindow(AHandle), X, Y, Width, Height);
-  XFlush(XDisplayHandle);
-  Result := True;
+  if EwmhManaged then
+    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow,
+      10 or (1 shl 8) or (1 shl 9) or (1 shl 10) or (1 shl 11) or (1 shl 12), X, Y, Width, Height)
+  else
+  begin
+    XMoveResizeWindow(XDisplayHandle, TWindow(AHandle), X, Y, Width, Height);
+    XFlush(XDisplayHandle);
+    Result := True;
+  end;
 end;
 
 // Window state management
