@@ -18,10 +18,10 @@ uses
   SysUtils,
   Types,
   WaylandInfo,
-  StayOnTopTestForm,
   GlobalKeyMonitor,
   GlobalMouseMonitor,
   HIDHotkey,
+  LazUTF8,
   WindowManager,
   WindowManagerIntf,
   Graphics,
@@ -56,8 +56,6 @@ type
     btnToggleNumLock: TToggleBox;
     btnToggleScrollLock: TToggleBox;
     btnWaylandInfo: TButton;
-    btnTestStayOnTop: TButton;
-    chkStayOnTop: TCheckBox;
     chkSpyAutoRefresh: TCheckBox;
     edtSpyCaption: TEdit;
     edtSpyClass: TEdit;
@@ -117,10 +115,8 @@ type
     procedure btnToggleScrollLockChange(Sender: TObject);
     procedure btnToggleScrollLockClick(Sender: TObject);
     procedure btnWaylandInfoClick(Sender: TObject);
-    procedure btnTestStayOnTopClick(Sender: TObject);
     procedure btnToggleGlobalKeysClick(Sender: TObject);
     procedure chkSpyAutoRefreshChange(Sender: TObject);
-    procedure chkStayOnTopChange(Sender: TObject);
     procedure edtSpySearchChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -191,8 +187,40 @@ procedure TMainForm.memTestDestinationChange(Sender: TObject);
 var
   i: integer;
   allMatch: boolean;
+  Detail: string;
+
+  { name the first differing character, invisible ones included }
+  function Shown(const C: string): string;
+  var
+    L: Integer;
+  begin
+    if C = '' then Exit('nothing');
+    Result := Format('U+%.4X', [UTF8CodepointToUnicode(PChar(C), L)]);
+    if C = ' ' then Result := 'space'
+    else if UTF8CodepointToUnicode(PChar(C), L) > $20 then Result := C + ' (' + Result + ')';
+  end;
+
+  function FirstDiff(const Want, Got: string): string;
+  var
+    K: Integer;
+    CW, CG: string;
+  begin
+    Result := '';
+    for K := 1 to Math.Max(UTF8Length(Want), UTF8Length(Got)) do
+    begin
+      CW := UTF8Copy(Want, K, 1);
+      CG := UTF8Copy(Got, K, 1);
+      if CW <> CG then
+        Exit(Format('char %d is %s, expected %s', [K, Shown(CG), Shown(CW)]));
+    end;
+  end;
+
 begin
+  Detail := '';
   allMatch := (memTestSource.Lines.Count = memTestDestination.Lines.Count);
+  if not allMatch and (memTestDestination.Lines.Count > 0) then
+    Detail := Format('%d lines, expected %d',
+      [memTestDestination.Lines.Count, memTestSource.Lines.Count]);
 
   if allMatch then
   begin
@@ -201,6 +229,8 @@ begin
       if memTestSource.Lines[i] <> memTestDestination.Lines[i] then
       begin
         allMatch := False;
+        Detail := Format('line %d: %s',
+          [i + 1, FirstDiff(memTestSource.Lines[i], memTestDestination.Lines[i])]);
         Break;
       end;
     end;
@@ -218,7 +248,7 @@ begin
   end
   else
   begin
-    lblMatchStatus.Caption := '✗ Text does not match';
+    lblMatchStatus.Caption := '✗ Does not match - ' + Detail;
     lblMatchStatus.Font.Color := clRed;
   end;
 end;
@@ -611,21 +641,6 @@ end;
 procedure TMainForm.chkSpyAutoRefreshChange(Sender: TObject);
 begin
   TimerSpyRefresh.Enabled := chkSpyAutoRefresh.Checked;
-end;
-
-procedure TMainForm.chkStayOnTopChange(Sender: TObject);
-begin
-  if chkStayOnTop.Checked then
-    FormStyle := fsSystemStayOnTop
-  else
-    FormStyle := fsNormal;
-end;
-
-procedure TMainForm.btnTestStayOnTopClick(Sender: TObject);
-begin
-  if frmStayOnTopTest = nil then
-    Application.CreateForm(TfrmStayOnTopTest, frmStayOnTopTest);
-  frmStayOnTopTest.Show;
 end;
 
 procedure TMainForm.edtSpySearchChange(Sender: TObject);

@@ -537,33 +537,7 @@ object MainForm: TMainForm
           end
         end
       end
-      end
     end
-  end
-  object chkStayOnTop: TCheckBox
-    AnchorSideTop.Control = Owner
-    AnchorSideRight.Control = btnTestStayOnTop
-    Left = 1134
-    Height = 21
-    Top = 0
-    Width = 108
-    Anchors = [akTop, akRight]
-    Caption = 'Stay On Top'
-    TabOrder = 2
-    OnChange = chkStayOnTopChange
-  end
-  object btnTestStayOnTop: TButton
-    AnchorSideTop.Control = Owner
-    AnchorSideRight.Control = Owner
-    AnchorSideRight.Side = asrBottom
-    Left = 1242
-    Height = 25
-    Top = 0
-    Width = 100
-    Anchors = [akTop, akRight]
-    Caption = 'Test Form'
-    OnClick = btnTestStayOnTopClick
-    TabOrder = 3
   end
   object Timer1: TTimer
     Interval = 100

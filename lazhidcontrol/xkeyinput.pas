@@ -35,9 +35,9 @@ type
   private
     xDisplayConnection: PDisplay;
     capsLockBeginState: boolean;
-    ScratchKC: array[0..15] of Integer;
-    ScratchSym: array[0..15] of TKeySym;
-    ScratchSaved: array[0..15] of array of TKeySym;
+    ScratchKC: array[0..31] of Integer;
+    ScratchSym: array[0..31] of TKeySym;
+    ScratchSaved: array[0..31] of array of TKeySym;
     ScratchPerKC: Integer;
     ScratchReady: Boolean;
     function VirtualKeyToXKeySym(Key: word): TKeySym;
@@ -438,8 +438,10 @@ begin
     XChangeKeyboardMapping(xDisplayConnection, ScratchKC[Slot], 1, @Sym, 1);
     ScratchSym[Slot] := Sym;
     XSync(xDisplayConnection, False);
-    // let every client take the new mapping in before the key arrives
-    Sleep(10);
+    { Every client reloads its keymap now - input-method daemons like IBus
+      can swallow the next key while they do.  Only a first-seen character
+      pays this; a symbol already in a slot types with no pause at all. }
+    Sleep(60);
   end;
   XTestFakeKeyEvent(xDisplayConnection, ScratchKC[Slot], True, 0);
   XTestFakeKeyEvent(xDisplayConnection, ScratchKC[Slot], False, 0);
