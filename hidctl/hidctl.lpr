@@ -1,6 +1,6 @@
 program hidctl;
 
-{ hidctl - work a program the way a person does, from a script.
+(* hidctl - work a program the way a person does, from a script.
 
   The command line half of LazHIDControl: everything the package can do to a
   mouse, a keyboard and a window, reachable from a shell script, a Makefile,
@@ -19,17 +19,20 @@ program hidctl;
   a program: work the geometry out wherever it is convenient, and let this do
   the part that wants a typed API and a real window manager.
 
-      { echo "at 300 400"; echo "press"
+      ( echo "at 300 400"; echo "press"
         awk 'BEGIN { for (i = 0; i < 70; i++)
                        printf "at %d %d\n", 300 + i*12, 400 + int(90*sin(i/6)) }'
-        echo "release"; } | hidctl --window "Some App" -
+        echo "release" ) | hidctl --window "Some App" -
 
   Commands, one per line; blank lines and # comments ignored:
 
       find <text>        the window whose title contains this
+      waitfor <ms> <text>  the same, but keep looking for up to that long
       title              print the window's title
       activate           bring it to the front
       geometry x y w h   move and resize it
+      minimize           put it away
+      restore            bring it back
       at x y             the pointer, in the window's coordinates
       dwell <ms>         how long to rest after each move (default 120)
       click [l|r|m]      press and release where the pointer is
@@ -46,17 +49,24 @@ program hidctl;
       type <text>        typed as if on the keyboard
       wait <ms>
       shot <file>        a PNG of the window
+      shotdesk <file>    a PNG of the whole desktop
+      shotarea x y w h <file>  a PNG of that part of the window
+      clipset <text>     put text on the clipboard
+      clipget            print what text is on it
+      idle               print the session's idle time in milliseconds
+      power              print power source, battery and charging
       echo <text>
 
   Exits non-zero if a command fails or the window is not found.
-}
+*)
 
 {$mode objfpc}{$H+}
 
 uses
   {$IFDEF UNIX}cthreads,{$ENDIF}
-  Interfaces, Classes, SysUtils, Math, Controls, Forms, LCLType,
-  MouseAndKeyInput, WindowManager, WindowManagerIntf;
+  Interfaces, Classes, SysUtils, Math, Controls, Forms, LCLType, Graphics,
+  Clipbrd, MouseAndKeyInput, WindowManager, WindowManagerIntf,
+  HIDScreenshot, IdleInput, PowerInput;
 
 var
   Win: TWindowHandle = 0;
@@ -129,6 +139,71 @@ begin
   end;
 end;
 
+{ Report the window just found, which every way of finding one wants to do. }
+procedure Announce;
+begin
+  Refresh;
+  WriteLn('found "', WindowMgr.GetWindowTitle(Win), '" at ',
+    Client.Left, ',', Client.Top, ' ',
+    Client.Right - Client.Left, 'x', Client.Bottom - Client.Top);
+end;
+
+{ The desktop, or a piece of the window, through the package's own
+  THIDScreenshot - the same road the dropped component takes. }
+procedure AreaShot(const FileName: string; const Area: TRect; Whole: Boolean);
+var
+  S: THIDScreenshot;
+  Png: TPortableNetworkGraphic;
+  Ok: Boolean;
+begin
+  S := THIDScreenshot.Create(nil);
+  try
+    if Whole then Ok := S.Capture else Ok := S.CaptureArea(Area);
+    if not Ok then
+    begin
+      WriteLn('could not capture: ', S.LastError);
+      Failed := True;
+      Exit;
+    end;
+    Png := TPortableNetworkGraphic.Create;
+    try
+      Png.Assign(S.Bitmap);
+      Png.SaveToFile(FileName);
+    finally
+      Png.Free;
+    end;
+    WriteLn('shot ', FileName, ' ', S.Bitmap.Width, 'x', S.Bitmap.Height);
+  finally
+    S.Free;
+  end;
+end;
+
+procedure PowerLine;
+const
+  Names: array[TPowerSource] of string = ('unknown source', 'ac', 'battery');
+var
+  P: TPowerInput;
+  St: TPowerStatus;
+  Line: string;
+begin
+  P := CreatePowerInput;
+  if (P = nil) or not P.Start or not P.ReadStatus(St) then
+  begin
+    if P = nil then WriteLn('power is not implemented on this platform')
+    else WriteLn('power: ', P.ErrorText);
+    Failed := True;
+  end
+  else
+  begin
+    Line := 'power ' + Names[St.Source];
+    if St.BatteryPercent >= 0 then Line := Line + ' ' + IntToStr(St.BatteryPercent) + '%'
+    else Line := Line + ' no battery';
+    if St.Charging then Line := Line + ' charging';
+    WriteLn(Line);
+  end;
+  P.Free;
+end;
+
 procedure Settle(Ms: Integer);
 var
   Until_: QWord;
@@ -175,10 +250,11 @@ end;
 procedure Run(const Line: string);
 var
   P: TStringList;
-  Cmd, Rest: string;
+  Cmd, Rest, Msg: string;
   K: Word;
   Steps, Ms: Integer;
   Btm: TMouseButton;
+  Deadline, Q: QWord;
 begin
   if (Trim(Line) = '') or (Copy(Trim(Line), 1, 1) = '#') then Exit;
 
@@ -201,12 +277,26 @@ begin
         Failed := True;
       end
       else
+        Announce;
+    end
+    else if Cmd = 'waitfor' then
+    begin
+      { waitfor 5000 Some App - for the window that is not up yet }
+      Ms := StrToInt(P[1]);
+      Rest := Trim(Copy(Rest, Length(P[1]) + 1, MaxInt));
+      Deadline := GetTickCount64 + QWord(Max(0, Ms));
+      repeat
+        Win := WindowMgr.FindWindow(Rest);
+        if Win <> 0 then Break;
+        Settle(100);
+      until GetTickCount64 >= Deadline;
+      if Win = 0 then
       begin
-        Refresh;
-        WriteLn('found "', WindowMgr.GetWindowTitle(Win), '" at ',
-          Client.Left, ',', Client.Top, ' ',
-          Client.Right - Client.Left, 'x', Client.Bottom - Client.Top);
-      end;
+        WriteLn('no window titled "', Rest, '" after ', Ms, ' ms');
+        Failed := True;
+      end
+      else
+        Announce;
     end
     else if Cmd = 'title' then
       WriteLn('title ', WindowMgr.GetWindowTitle(Win))
@@ -221,6 +311,17 @@ begin
       WindowMgr.MoveResizeWindow(Win, StrToInt(P[1]), StrToInt(P[2]),
         StrToInt(P[3]), StrToInt(P[4]));
       Settle(400);
+      Refresh;
+    end
+    else if Cmd = 'minimize' then
+    begin
+      WindowMgr.MinimizeWindow(Win);
+      Settle(250);
+    end
+    else if Cmd = 'restore' then
+    begin
+      WindowMgr.RestoreWindow(Win);
+      Settle(250);
       Refresh;
     end
     else if Cmd = 'at' then
@@ -318,6 +419,35 @@ begin
       Settle(StrToInt(P[1]))
     else if Cmd = 'shot' then
       Shot(Rest)
+    else if Cmd = 'shotdesk' then
+      AreaShot(Rest, Rect(0, 0, 0, 0), True)
+    else if Cmd = 'shotarea' then
+    begin
+      Refresh;
+      AreaShot(P[5], Rect(Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]),
+        Client.Left + StrToInt(P[1]) + StrToInt(P[3]),
+        Client.Top + StrToInt(P[2]) + StrToInt(P[4])), False);
+    end
+    else if Cmd = 'clipset' then
+    begin
+      { held only while hidctl runs, unless a clipboard manager keeps it }
+      Clipboard.AsText := Rest;
+      Settle(100);
+    end
+    else if Cmd = 'clipget' then
+      WriteLn('clip ', Clipboard.AsText)
+    else if Cmd = 'idle' then
+    begin
+      if QuerySystemIdle(Q, Msg) then
+        WriteLn('idle ', Q)
+      else
+      begin
+        WriteLn('idle: ', Msg);
+        Failed := True;
+      end;
+    end
+    else if Cmd = 'power' then
+      PowerLine
     else if Cmd = 'echo' then
       WriteLn(Rest)
     else
@@ -355,7 +485,7 @@ begin
 
   if ScriptFile = '' then
   begin
-    WriteLn('hsdrive [--window <title>] <script>   (- for standard input)');
+    WriteLn('hidctl [--window <title>] <script>   (- for standard input)');
     Halt(2);
   end;
 

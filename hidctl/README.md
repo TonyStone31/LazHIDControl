@@ -55,9 +55,11 @@ One per line.  Blank lines and `#` comments are ignored.
 | | |
 | --- | --- |
 | `find <text>` | the window whose title contains this |
+| `waitfor <ms> <text>` | the same, but keep looking for up to that long |
 | `title` | print the window's title |
 | `activate` | bring it to the front |
 | `geometry x y w h` | move and resize it |
+| `minimize` / `restore` | put it away, bring it back |
 | `at x y` | the pointer, in the window's coordinates |
 | `at x y <ms>` | walk it there over that many milliseconds instead of jumping |
 | `dwell <ms>` | how long to rest after each move (default 120) |
@@ -71,9 +73,18 @@ One per line.  Blank lines and `#` comments are ignored.
 | `type <text>` | typed as if on the keyboard |
 | `wait <ms>` | |
 | `shot <file>` | a PNG of the window |
-| `echo <text>` | |
+| `shotdesk <file>` | a PNG of the whole desktop |
+| `shotarea x y w h <file>` | a PNG of that part of the window |
+| `clipset <text>` | put text on the clipboard (held while hidctl runs, unless a clipboard manager keeps it) |
+| `clipget` | print the clipboard's text |
+| `idle` | print the session's idle time in milliseconds |
+| `power` | print power source, battery percentage and charging |
 
 Exits non-zero if a command fails or the window is not found.
+
+A script can watch the machine as well as drive it: `idle` and `power` read
+the same backends as the `THIDSystemIdle` and `THIDPowerMonitor` components,
+and the desktop and area shots go through `THIDScreenshot`.
 
 ## Testing without taking the machine over
 
