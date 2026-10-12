@@ -1,6 +1,6 @@
 object AutomationForm: TAutomationForm
-  Left = 24
-  Top = 24
+  Left = 10
+  Top = 10
   Width = 900
   Height = 732
   Position = poDesigned

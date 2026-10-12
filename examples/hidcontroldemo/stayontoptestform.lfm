@@ -1,7 +1,7 @@
 object frmStayOnTopTest: TfrmStayOnTopTest
-  Left = 400
+  Left = 10
   Height = 150
-  Top = 300
+  Top = 10
   Width = 300
   Caption = 'fsStayOnTop Test Form'
   ClientHeight = 150

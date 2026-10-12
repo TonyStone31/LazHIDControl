@@ -22,21 +22,11 @@ uses
   GlobalKeyMonitor,
   GlobalMouseMonitor,
   HIDHotkey,
-  WindowManager
-  {$IFDEF WINDOWS}
-  , WinWindowManager, Windows
-  {$ENDIF}
-  {$IFDEF UNIX}
-    {$IFNDEF DARWIN}
-    , XWindowManager
-    {$ENDIF}
-  {$ENDIF}
-  // These must be after Windows unit to override shadowed types
-  , WindowManagerIntf
-  , Graphics
-  , MouseAndKeyInput
-  , Clipbrd
-  ;
+  WindowManager,
+  WindowManagerIntf,
+  Graphics,
+  MouseAndKeyInput,
+  Clipbrd;
 
 type
 
@@ -1158,28 +1148,22 @@ begin
   Result := SelectedSpyWindow;
 end;
 
+{ Catch the eye with the package's own moves: come forward, wiggle. }
 procedure TMainForm.FlashWindow(AHandle: TWindowHandle);
-{$IFDEF WINDOWS}
 var
-  i: Integer;
+  R: TRect;
+  I: Integer;
 begin
-  // Flash the window by rapidly showing/hiding its border
-  for i := 1 to 3 do
+  WindowMgr.ActivateWindow(AHandle);
+  R := WindowMgr.GetWindowRect(AHandle);
+  for I := 1 to 2 do
   begin
-    // This uses the FlashWindow API for visual feedback
-    Windows.FlashWindow(HWND(AHandle), True);
-    Sleep(100);
-    Windows.FlashWindow(HWND(AHandle), False);
-    Sleep(100);
+    WindowMgr.MoveWindow(AHandle, R.Left + 24, R.Top);
+    Sleep(90);
+    WindowMgr.MoveWindow(AHandle, R.Left, R.Top);
+    Sleep(90);
   end;
 end;
-{$ELSE}
-begin
-  // On Linux/X11, we could potentially draw a highlight rectangle
-  // For now just bring it to front
-  WindowMgr.ActivateWindow(AHandle);
-end;
-{$ENDIF}
 
 procedure TMainForm.LocateWindowInTree(AHandle: TWindowHandle);
 var

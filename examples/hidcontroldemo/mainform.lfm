@@ -1,7 +1,7 @@
 object MainForm: TMainForm
-  Left = 409
+  Left = 10
   Height = 820
-  Top = 300
+  Top = 10
   Width = 1120
   Caption = 'LazHIDControl Demo'
   ClientHeight = 820

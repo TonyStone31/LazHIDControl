@@ -1,7 +1,7 @@
 object frmWaylandInfo: TfrmWaylandInfo
-  Left = 500
+  Left = 10
   Height = 599
-  Top = 300
+  Top = 10
   Width = 839
   Caption = 'Wayland Implementation Info'
   ClientHeight = 599
