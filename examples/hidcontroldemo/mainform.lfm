@@ -1,12 +1,11 @@
 object MainForm: TMainForm
   Left = 409
-  Height = 955
-  Top = 873
-  Width = 1342
+  Height = 820
+  Top = 300
+  Width = 1120
   Caption = 'LazHIDControl Demo'
-  ClientHeight = 955
-  ClientWidth = 1342
-  DesignTimePPI = 115
+  ClientHeight = 820
+  ClientWidth = 1120
   KeyPreview = True
   Position = poDesktopCenter
   LCLVersion = '4.99.0.0'
@@ -14,6 +13,14 @@ object MainForm: TMainForm
   OnDestroy = FormDestroy
   OnKeyDown = FormKeyDown
   OnResize = FormResize
+  object ReplayHotkey: THIDHotkey
+    ShortCut = 24696
+    Enabled = True
+    OnHotkey = ReplayHotkeyPressed
+    OnError = ReplayHotkeyError
+    Left = 616
+    Top = 480
+  end
   object StatusBar1: TStatusBar
     Left = 0
     Height = 23
@@ -106,15 +113,20 @@ object MainForm: TMainForm
         Font.Style = [fsBold]
         ParentFont = False
       end
+      object btnTypeToRight: TButton
+        Left = 575
+        Height = 30
+        Top = 38
+        Width = 300
+        Caption = 'Type the left text into the right box'
+        OnClick = btnTypeToRightClick
+        TabOrder = 8
+      end
       object lblHotKeyCombo: TLabel
-        AnchorSideLeft.Side = asrCenter
-        AnchorSideTop.Control = memTestSource
-        AnchorSideTop.Side = asrBottom
-        Left = 143
+        Left = 575
         Height = 19
-        Top = 859
+        Top = 76
         Width = 63
-        BorderSpacing.Top = 7
         Caption = 'Hotkey: '
         Font.Style = [fsBold]
         ParentFont = False
@@ -124,7 +136,7 @@ object MainForm: TMainForm
         Left = 13
         Height = 30
         Top = 1
-        Width = 150
+        Width = 190
         BorderSpacing.Left = 8
         BorderSpacing.Top = 8
         Caption = 'Alt + Tab Demo'
@@ -136,7 +148,7 @@ object MainForm: TMainForm
         Left = 13
         Height = 30
         Top = 68
-        Width = 150
+        Width = 190
         BorderSpacing.Left = 8
         Caption = 'Wayland Info'
         TabOrder = 3
@@ -147,7 +159,7 @@ object MainForm: TMainForm
         Left = 13
         Height = 30
         Top = 35
-        Width = 150
+        Width = 190
         BorderSpacing.Left = 8
         Caption = 'Global Key Monitor'
         TabOrder = 4
@@ -166,40 +178,33 @@ object MainForm: TMainForm
         BorderSpacing.Bottom = 47
       end
       object btnToggleCapsLock: TToggleBox
-        AnchorSideLeft.Control = btnToggleNumLock
-        AnchorSideRight.Control = btnToggleNumLock
-        Left = 781
+        Left = 706
         Height = 30
         Top = 1
-        Width = 150
+        Width = 130
         Anchors = [akTop, akRight]
-        BorderSpacing.Left = 8
         Caption = '🔓 CAPS OFF'
         TabOrder = 5
         OnChange = btnToggleCapsLockChange
         OnClick = btnToggleCapsLockClick
       end
       object btnToggleNumLock: TToggleBox
-        AnchorSideLeft.Control = memTestDestination
-        AnchorSideLeft.Side = asrCenter
-        AnchorSideRight.Side = asrCenter
-        Left = 931
+        Left = 844
         Height = 30
         Top = 1
-        Width = 150
+        Width = 130
+        Anchors = [akTop, akRight]
         Caption = 'NUM Off'
         TabOrder = 6
         OnChange = btnToggleNumLockChange
         OnClick = btnToggleNumLockClick
       end
       object btnToggleScrollLock: TToggleBox
-        AnchorSideLeft.Control = btnToggleNumLock
-        AnchorSideLeft.Side = asrBottom
-        AnchorSideRight.Side = asrBottom
-        Left = 1081
+        Left = 982
         Height = 30
         Top = 1
-        Width = 150
+        Width = 130
+        Anchors = [akTop, akRight]
         Caption = 'SCR Off'
         TabOrder = 7
         OnChange = btnToggleScrollLockChange
@@ -285,7 +290,7 @@ object MainForm: TMainForm
           Caption = 'Drag to find window'
         end
         object btnSpyRefresh: TButton
-          Left = 199
+          Left = 250
           Height = 30
           Top = 5
           Width = 80
@@ -294,7 +299,7 @@ object MainForm: TMainForm
           OnClick = btnSpyRefreshClick
         end
         object chkSpyAutoRefresh: TCheckBox
-          Left = 294
+          Left = 345
           Height = 21
           Top = 9
           Width = 114
@@ -303,16 +308,16 @@ object MainForm: TMainForm
           OnChange = chkSpyAutoRefreshChange
         end
         object edtSpySearch: TEdit
-          Left = 419
+          Left = 480
           Height = 31
           Top = 6
-          Width = 200
+          Width = 190
           TabOrder = 3
           TextHint = 'Search windows...'
           OnChange = edtSpySearchChange
         end
         object btnSpySearch: TButton
-          Left = 633
+          Left = 684
           Height = 30
           Top = 5
           Width = 60
@@ -321,7 +326,7 @@ object MainForm: TMainForm
           OnClick = btnSpySearchClick
         end
         object btnSpyLocate: TButton
-          Left = 707
+          Left = 752
           Height = 30
           Top = 5
           Width = 80
@@ -330,7 +335,7 @@ object MainForm: TMainForm
           OnClick = btnSpyLocateClick
         end
         object btnSpyFlash: TButton
-          Left = 796
+          Left = 840
           Height = 30
           Top = 5
           Width = 60
@@ -339,7 +344,7 @@ object MainForm: TMainForm
           OnClick = btnSpyFlashClick
         end
         object btnSpyFocus: TButton
-          Left = 884
+          Left = 908
           Height = 30
           Top = 5
           Width = 60
@@ -348,10 +353,10 @@ object MainForm: TMainForm
           OnClick = btnSpyFocusClick
         end
         object btnSpyCopyInfo: TButton
-          Left = 969
+          Left = 976
           Height = 30
           Top = 6
-          Width = 80
+          Width = 95
           Caption = 'Copy Info'
           TabOrder = 8
           OnClick = btnSpyCopyInfoClick
@@ -387,571 +392,151 @@ object MainForm: TMainForm
         Width = 983
         Align = alClient
         BevelOuter = bvNone
-        ClientHeight = 859
-        ClientWidth = 983
         TabOrder = 2
-        object pcSpyDetails: TPageControl
-          Left = 0
-          Height = 779
-          Top = 0
-          Width = 983
-          ActivePage = tsSpyGeneral
-          Align = alClient
-          TabIndex = 0
-          TabOrder = 0
-          object tsSpyGeneral: TTabSheet
-            Caption = 'General'
-            ClientHeight = 746
-            ClientWidth = 979
-            object lblSpyHandle: TLabel
-              Left = 8
-              Height = 19
-              Top = 8
-              Width = 54
-              Caption = 'Handle:'
-            end
-            object edtSpyHandle: TEdit
-              Left = 100
-              Height = 31
-              Top = 5
-              Width = 200
-              ReadOnly = True
-              TabOrder = 0
-            end
-            object lblSpyCaption: TLabel
-              Left = 8
-              Height = 19
-              Top = 40
-              Width = 59
-              Caption = 'Caption:'
-            end
-            object edtSpyCaption: TEdit
-              Left = 100
-              Height = 31
-              Top = 37
-              Width = 500
-              TabOrder = 1
-            end
-            object btnSpySetCaption: TButton
-              Left = 610
-              Height = 28
-              Top = 37
-              Width = 60
-              Caption = 'Set'
-              TabOrder = 2
-              OnClick = btnSpySetCaptionClick
-            end
-            object lblSpyClass: TLabel
-              Left = 8
-              Height = 19
-              Top = 72
-              Width = 40
-              Caption = 'Class:'
-            end
-            object edtSpyClass: TEdit
-              Left = 100
-              Height = 31
-              Top = 69
-              Width = 300
-              ReadOnly = True
-              TabOrder = 3
-            end
-            object lblSpyRect: TLabel
-              Left = 8
-              Height = 19
-              Top = 104
-              Width = 75
-              Caption = 'Rectangle:'
-            end
-            object edtSpyRect: TEdit
-              Left = 100
-              Height = 31
-              Top = 101
-              Width = 300
-              ReadOnly = True
-              TabOrder = 4
-            end
-            object lblSpyClientRect: TLabel
-              Left = 8
-              Height = 19
-              Top = 136
-              Width = 82
-              Caption = 'Client Rect:'
-            end
-            object edtSpyClientRect: TEdit
-              Left = 100
-              Height = 31
-              Top = 133
-              Width = 300
-              ReadOnly = True
-              TabOrder = 5
-            end
-            object lblSpyProcess: TLabel
-              Left = 8
-              Height = 19
-              Top = 168
-              Width = 59
-              Caption = 'Process:'
-            end
-            object edtSpyProcess: TEdit
-              Left = 100
-              Height = 31
-              Top = 165
-              Width = 300
-              ReadOnly = True
-              TabOrder = 6
-            end
-            object lblSpyThread: TLabel
-              Left = 8
-              Height = 19
-              Top = 200
-              Width = 54
-              Caption = 'Thread:'
-            end
-            object edtSpyThread: TEdit
-              Left = 100
-              Height = 31
-              Top = 197
-              Width = 200
-              ReadOnly = True
-              TabOrder = 7
-            end
-            object gbSpyWindowActions: TGroupBox
-              Left = 8
-              Height = 130
-              Top = 240
-              Width = 400
-              Caption = 'Window Actions'
-              ClientHeight = 109
-              ClientWidth = 396
-              TabOrder = 8
-              object btnSpyShow: TButton
-                Left = 10
-                Height = 30
-                Top = 10
-                Width = 80
-                Caption = 'Show'
-                TabOrder = 0
-                OnClick = btnSpyShowClick
-              end
-              object btnSpyHide: TButton
-                Left = 100
-                Height = 30
-                Top = 10
-                Width = 80
-                Caption = 'Hide'
-                TabOrder = 1
-                OnClick = btnSpyHideClick
-              end
-              object btnSpyMaximize: TButton
-                Left = 190
-                Height = 30
-                Top = 10
-                Width = 80
-                Caption = 'Maximize'
-                TabOrder = 2
-                OnClick = btnSpyMaximizeClick
-              end
-              object btnSpyMinimize: TButton
-                Left = 280
-                Height = 30
-                Top = 10
-                Width = 80
-                Caption = 'Minimize'
-                TabOrder = 3
-                OnClick = btnSpyMinimizeClick
-              end
-              object btnSpyRestore: TButton
-                Left = 10
-                Height = 30
-                Top = 50
-                Width = 80
-                Caption = 'Restore'
-                TabOrder = 4
-                OnClick = btnSpyRestoreClick
-              end
-              object btnSpyClose: TButton
-                Left = 100
-                Height = 30
-                Top = 50
-                Width = 80
-                Caption = 'Close'
-                TabOrder = 5
-                OnClick = btnSpyCloseClick
-              end
-              object btnSpyBringToTop: TButton
-                Left = 190
-                Height = 30
-                Top = 50
-                Width = 80
-                Caption = 'To Front'
-                TabOrder = 6
-                OnClick = btnSpyBringToTopClick
-              end
-              object chkSpyEnabled: TCheckBox
-                Left = 280
-                Height = 21
-                Top = 55
-                Width = 80
-                Caption = 'Enabled'
-                TabOrder = 7
-                OnClick = chkSpyEnabledClick
-              end
-            end
-          end
-          object tsSpyStyles: TTabSheet
-            Caption = 'Styles'
-            ClientHeight = 746
-            ClientWidth = 979
-            object lblSpyStylesInfo: TLabel
-              Left = 8
-              Height = 19
-              Top = 8
-              Width = 101
-              Caption = 'Window Style:'
-            end
-            object edtSpyStyle: TEdit
-              Left = 100
-              Height = 31
-              Top = 5
-              Width = 200
-              ReadOnly = True
-              TabOrder = 0
-            end
-            object lblSpyExStyleInfo: TLabel
-              Left = 320
-              Height = 19
-              Top = 8
-              Width = 111
-              Caption = 'Extended Style:'
-            end
-            object edtSpyExStyle: TEdit
-              Left = 420
-              Height = 31
-              Top = 5
-              Width = 200
-              ReadOnly = True
-              TabOrder = 1
-            end
-            object lbSpyStyles: TListBox
-              Left = 8
-              Height = 280
-              Top = 45
-              Width = 350
-              ItemHeight = 0
-              TabOrder = 2
-              TopIndex = -1
-            end
-            object lbSpyExStyles: TListBox
-              Left = 370
-              Height = 280
-              Top = 45
-              Width = 350
-              ItemHeight = 0
-              TabOrder = 3
-              TopIndex = -1
-            end
-            object lblSpyStylesList: TLabel
-              Left = 8
-              Height = 19
-              Top = 330
-              Width = 86
-              Caption = 'Style Flags:'
-              Font.Style = [fsBold]
-              ParentFont = False
-            end
-            object lblSpyExStylesList: TLabel
-              Left = 370
-              Height = 19
-              Top = 330
-              Width = 163
-              Caption = 'Extended Style Flags:'
-              Font.Style = [fsBold]
-              ParentFont = False
-            end
-          end
-          object tsSpyClass: TTabSheet
-            Caption = 'Class'
-            ClientHeight = 746
-            ClientWidth = 979
-            object lblSpyClassName: TLabel
-              Left = 8
-              Height = 19
-              Top = 8
-              Width = 86
-              Caption = 'Class Name:'
-            end
-            object edtSpyClassName: TEdit
-              Left = 100
-              Height = 31
-              Top = 5
-              Width = 300
-              ReadOnly = True
-              TabOrder = 0
-            end
-            object lblSpyClassAtom: TLabel
-              Left = 8
-              Height = 19
-              Top = 40
-              Width = 83
-              Caption = 'Class Atom:'
-            end
-            object edtSpyClassAtom: TEdit
-              Left = 100
-              Height = 31
-              Top = 37
-              Width = 150
-              ReadOnly = True
-              TabOrder = 1
-            end
-            object lblSpyClassStyle: TLabel
-              Left = 8
-              Height = 19
-              Top = 72
-              Width = 79
-              Caption = 'Class Style:'
-            end
-            object edtSpyClassStyle: TEdit
-              Left = 100
-              Height = 31
-              Top = 69
-              Width = 200
-              ReadOnly = True
-              TabOrder = 2
-            end
-            object lblSpyWndProc: TLabel
-              Left = 8
-              Height = 19
-              Top = 104
-              Width = 73
-              Caption = 'Wnd Proc:'
-            end
-            object edtSpyWndProc: TEdit
-              Left = 100
-              Height = 31
-              Top = 101
-              Width = 200
-              ReadOnly = True
-              TabOrder = 3
-            end
-            object lblSpyClassBytes: TLabel
-              Left = 8
-              Height = 19
-              Top = 136
-              Width = 84
-              Caption = 'Class Bytes:'
-            end
-            object edtSpyClassBytes: TEdit
-              Left = 100
-              Height = 31
-              Top = 133
-              Width = 100
-              ReadOnly = True
-              TabOrder = 4
-            end
-            object lblSpyWndBytes: TLabel
-              Left = 220
-              Height = 19
-              Top = 136
-              Width = 106
-              Caption = 'Window Bytes:'
-            end
-            object edtSpyWndBytes: TEdit
-              Left = 310
-              Height = 31
-              Top = 133
-              Width = 100
-              ReadOnly = True
-              TabOrder = 5
-            end
-            object lbSpyClassStyles: TListBox
-              Left = 8
-              Height = 200
-              Top = 175
-              Width = 350
-              ItemHeight = 0
-              TabOrder = 6
-              TopIndex = -1
-            end
-            object lblSpyClassStyleFlags: TLabel
-              Left = 8
-              Height = 19
-              Top = 380
-              Width = 130
-              Caption = 'Class Style Flags:'
-              Font.Style = [fsBold]
-              ParentFont = False
-            end
-          end
-          object tsSpyProperties: TTabSheet
-            Caption = 'Properties'
-            ClientHeight = 746
-            ClientWidth = 979
-            object lvSpyProperties: TListView
-              Left = 8
-              Height = 300
-              Top = 8
-              Width = 710
-              Columns = <              
-                item
-                  Caption = 'Property'
-                  Width = 200
-                end              
-                item
-                  Caption = 'Value'
-                  Width = 503
-                end>
-              ReadOnly = True
-              RowSelect = True
-              TabOrder = 0
-              ViewStyle = vsReport
-            end
-            object lblSpyPropertiesHint: TLabel
-              Left = 8
-              Height = 19
-              Top = 320
-              Width = 286
-              Caption = 'Window properties set via SetProp() API'
-              Font.Color = clGray
-              ParentFont = False
-            end
-          end
-          object tsSpyProcess: TTabSheet
-            Caption = 'Process'
-            ClientHeight = 746
-            ClientWidth = 979
-            object lblSpyPID: TLabel
-              Left = 8
-              Height = 19
-              Top = 8
-              Width = 78
-              Caption = 'Process ID:'
-            end
-            object edtSpyPID: TEdit
-              Left = 100
-              Height = 31
-              Top = 5
-              Width = 150
-              ReadOnly = True
-              TabOrder = 0
-            end
-            object lblSpyTID: TLabel
-              Left = 270
-              Height = 19
-              Top = 8
-              Width = 73
-              Caption = 'Thread ID:'
-            end
-            object edtSpyTID: TEdit
-              Left = 340
-              Height = 31
-              Top = 5
-              Width = 150
-              ReadOnly = True
-              TabOrder = 1
-            end
-            object lblSpyProcName: TLabel
-              Left = 8
-              Height = 19
-              Top = 40
-              Width = 105
-              Caption = 'Process Name:'
-            end
-            object edtSpyProcName: TEdit
-              Left = 100
-              Height = 31
-              Top = 37
-              Width = 400
-              ReadOnly = True
-              TabOrder = 2
-            end
-            object lblSpyProcPath: TLabel
-              Left = 8
-              Height = 19
-              Top = 72
-              Width = 95
-              Caption = 'Process Path:'
-            end
-            object edtSpyProcPath: TEdit
-              Left = 100
-              Height = 31
-              Top = 69
-              Width = 600
-              ReadOnly = True
-              TabOrder = 3
-            end
-          end
+        object lblSpyHandle: TLabel
+          Left = 8
+          Top = 12
+          Caption = 'Handle:'
         end
-        object pnlSpyQuickInfo: TPanel
-          Left = 0
-          Height = 80
-          Top = 779
-          Width = 983
-          Align = alBottom
-          BevelOuter = bvLowered
-          ClientHeight = 80
-          ClientWidth = 983
+        object edtSpyHandle: TEdit
+          Left = 110
+          Top = 8
+          Width = 300
+          ReadOnly = True
+          TabOrder = 0
+        end
+        object lblSpyCaption: TLabel
+          Left = 8
+          Top = 48
+          Caption = 'Title:'
+        end
+        object edtSpyCaption: TEdit
+          Left = 110
+          Top = 44
+          Width = 460
+          ReadOnly = True
           TabOrder = 1
-          object lblSpyQuickHandle: TLabel
-            Left = 8
-            Height = 19
-            Top = 8
-            Width = 54
-            Caption = 'Handle:'
-          end
-          object lblSpyQuickHandleVal: TLabel
-            Left = 60
-            Height = 19
+        end
+        object lblSpyClass: TLabel
+          Left = 8
+          Top = 84
+          Caption = 'Class:'
+        end
+        object edtSpyClass: TEdit
+          Left = 110
+          Top = 80
+          Width = 300
+          ReadOnly = True
+          TabOrder = 2
+        end
+        object lblSpyRect: TLabel
+          Left = 8
+          Top = 120
+          Caption = 'Rectangle:'
+        end
+        object edtSpyRect: TEdit
+          Left = 110
+          Top = 116
+          Width = 300
+          ReadOnly = True
+          TabOrder = 3
+        end
+        object lblSpyProcess: TLabel
+          Left = 8
+          Top = 156
+          Caption = 'Process:'
+        end
+        object edtSpyProcess: TEdit
+          Left = 110
+          Top = 152
+          Width = 300
+          ReadOnly = True
+          TabOrder = 4
+        end
+        object lblSpyState: TLabel
+          Left = 8
+          Top = 192
+          Caption = 'State:'
+        end
+        object edtSpyState: TEdit
+          Left = 110
+          Top = 188
+          Width = 300
+          ReadOnly = True
+          TabOrder = 5
+        end
+        object gbSpyWindowActions: TGroupBox
+          Left = 8
+          Top = 232
+          Width = 562
+          Height = 118
+          Caption = 'Window Actions'
+          TabOrder = 6
+          object btnSpyShow: TButton
+            Left = 12
             Top = 8
             Width = 100
-            Caption = '0x00000000'
-            Font.Name = 'Monospace'
-            ParentFont = False
+            Height = 30
+            Caption = 'Show'
+            OnClick = btnSpyShowClick
+            TabOrder = 0
           end
-          object lblSpyQuickClass: TLabel
-            Left = 200
-            Height = 19
+          object btnSpyHide: TButton
+            Left = 120
             Top = 8
-            Width = 40
-            Caption = 'Class:'
+            Width = 100
+            Height = 30
+            Caption = 'Hide'
+            OnClick = btnSpyHideClick
+            TabOrder = 1
           end
-          object lblSpyQuickClassVal: TLabel
-            Left = 240
-            Height = 19
+          object btnSpyMinimize: TButton
+            Left = 228
             Top = 8
-            Width = 5
-            Caption = '-'
+            Width = 100
+            Height = 30
+            Caption = 'Minimize'
+            OnClick = btnSpyMinimizeClick
+            TabOrder = 2
           end
-          object lblSpyQuickCaption: TLabel
-            Left = 8
-            Height = 19
-            Top = 28
-            Width = 59
-            Caption = 'Caption:'
+          object btnSpyMaximize: TButton
+            Left = 336
+            Top = 8
+            Width = 100
+            Height = 30
+            Caption = 'Maximize'
+            OnClick = btnSpyMaximizeClick
+            TabOrder = 3
           end
-          object lblSpyQuickCaptionVal: TLabel
-            Left = 60
-            Height = 15
-            Top = 28
-            Width = 600
-            AutoSize = False
-            Caption = '-'
+          object btnSpyRestore: TButton
+            Left = 444
+            Top = 8
+            Width = 100
+            Height = 30
+            Caption = 'Restore'
+            OnClick = btnSpyRestoreClick
+            TabOrder = 4
           end
-          object lblSpyQuickRect: TLabel
-            Left = 8
-            Height = 19
-            Top = 48
-            Width = 36
-            Caption = 'Rect:'
+          object btnSpyBringToTop: TButton
+            Left = 12
+            Top = 46
+            Width = 100
+            Height = 30
+            Caption = 'To Front'
+            OnClick = btnSpyBringToTopClick
+            TabOrder = 5
           end
-          object lblSpyQuickRectVal: TLabel
-            Left = 60
-            Height = 19
-            Top = 48
-            Width = 5
-            Caption = '-'
+          object btnSpyClose: TButton
+            Left = 120
+            Top = 46
+            Width = 100
+            Height = 30
+            Caption = 'Close'
+            OnClick = btnSpyCloseClick
+            TabOrder = 6
           end
         end
+      end
       end
     end
   end

@@ -21,7 +21,7 @@ uses
   StayOnTopTestForm,
   GlobalKeyMonitor,
   GlobalMouseMonitor,
-  HotkeyInput,
+  HIDHotkey,
   WindowManager
   {$IFDEF WINDOWS}
   , WinWindowManager, Windows
@@ -45,6 +45,8 @@ type
   TMainForm = class(TForm)
     Bevel1: TBevel;
     btnAltTab: TButton;
+    btnTypeToRight: TButton;
+    ReplayHotkey: THIDHotkey;
     btnMoveMouseClick: TButton;
     btnSpyBringToTop: TButton;
     btnSpyClose: TButton;
@@ -58,7 +60,6 @@ type
     btnSpyRefresh: TButton;
     btnSpyRestore: TButton;
     btnSpySearch: TButton;
-    btnSpySetCaption: TButton;
     btnSpyShow: TButton;
     btnToggleCapsLock: TToggleBox;
     btnToggleGlobalKeys: TButton;
@@ -68,74 +69,29 @@ type
     btnTestStayOnTop: TButton;
     chkStayOnTop: TCheckBox;
     chkSpyAutoRefresh: TCheckBox;
-    chkSpyEnabled: TCheckBox;
     edtSpyCaption: TEdit;
     edtSpyClass: TEdit;
-    edtSpyClassAtom: TEdit;
-    edtSpyClassBytes: TEdit;
-    edtSpyClassName: TEdit;
-    edtSpyClassStyle: TEdit;
-    edtSpyClientRect: TEdit;
-    edtSpyExStyle: TEdit;
     edtSpyHandle: TEdit;
-    edtSpyPID: TEdit;
+    edtSpyState: TEdit;
+    lblSpyState: TLabel;
     edtSpyProcess: TEdit;
-    edtSpyProcName: TEdit;
-    edtSpyProcPath: TEdit;
     edtSpyRect: TEdit;
     edtSpySearch: TEdit;
-    edtSpyStyle: TEdit;
-    edtSpyThread: TEdit;
-    edtSpyTID: TEdit;
-    edtSpyWndBytes: TEdit;
-    edtSpyWndProc: TEdit;
     gbSpyWindowActions: TGroupBox;
     lblFinderHint: TLabel;
     lblHotKeyCombo: TLabel;
     lblMatchStatus: TLabel;
     lblSpyCaption: TLabel;
     lblSpyClass: TLabel;
-    lblSpyClassAtom: TLabel;
-    lblSpyClassBytes: TLabel;
-    lblSpyClassName: TLabel;
-    lblSpyClassStyle: TLabel;
-    lblSpyClassStyleFlags: TLabel;
-    lblSpyClientRect: TLabel;
-    lblSpyExStyleInfo: TLabel;
-    lblSpyExStylesList: TLabel;
     lblSpyHandle: TLabel;
-    lblSpyPID: TLabel;
     lblSpyProcess: TLabel;
-    lblSpyProcName: TLabel;
-    lblSpyProcPath: TLabel;
-    lblSpyPropertiesHint: TLabel;
-    lblSpyQuickCaption: TLabel;
-    lblSpyQuickCaptionVal: TLabel;
-    lblSpyQuickClass: TLabel;
-    lblSpyQuickClassVal: TLabel;
-    lblSpyQuickHandle: TLabel;
-    lblSpyQuickHandleVal: TLabel;
-    lblSpyQuickRect: TLabel;
-    lblSpyQuickRectVal: TLabel;
     lblSpyRect: TLabel;
-    lblSpyStylesInfo: TLabel;
-    lblSpyStylesList: TLabel;
-    lblSpyThread: TLabel;
-    lblSpyTID: TLabel;
-    lblSpyWndBytes: TLabel;
-    lblSpyWndProc: TLabel;
-    lbSpyClassStyles: TListBox;
-    lbSpyExStyles: TListBox;
-    lbSpyStyles: TListBox;
-    lvSpyProperties: TListView;
     memTestDestination: TMemo;
     memTestSource: TMemo;
     PageControl1: TPageControl;
     PaintBox1: TPaintBox;
-    pcSpyDetails: TPageControl;
     pnlFinderTarget: TPanel;
     pnlSpyLeft: TPanel;
-    pnlSpyQuickInfo: TPanel;
     pnlSpyRight: TPanel;
     pnlSpyToolbar: TPanel;
     SpySplitter: TSplitter;
@@ -145,13 +101,11 @@ type
     TabSheet3: TTabSheet;
     Timer1: TTimer;
     TimerSpyRefresh: TTimer;
-    tsSpyClass: TTabSheet;
-    tsSpyGeneral: TTabSheet;
-    tsSpyProcess: TTabSheet;
-    tsSpyProperties: TTabSheet;
-    tsSpyStyles: TTabSheet;
     tvWindows: TTreeView;
     procedure btnAltTabClick(Sender: TObject);
+    procedure btnTypeToRightClick(Sender: TObject);
+    procedure ReplayHotkeyPressed(Sender: TObject);
+    procedure ReplayHotkeyError(Sender: TObject; const Message: string);
     procedure btnMoveMouseClickClick(Sender: TObject);
     procedure btnSpyBringToTopClick(Sender: TObject);
     procedure btnSpyCloseClick(Sender: TObject);
@@ -165,7 +119,6 @@ type
     procedure btnSpyRefreshClick(Sender: TObject);
     procedure btnSpyRestoreClick(Sender: TObject);
     procedure btnSpySearchClick(Sender: TObject);
-    procedure btnSpySetCaptionClick(Sender: TObject);
     procedure btnSpyShowClick(Sender: TObject);
     procedure btnToggleCapsLockChange(Sender: TObject);
     procedure btnToggleCapsLockClick(Sender: TObject);
@@ -177,7 +130,6 @@ type
     procedure btnTestStayOnTopClick(Sender: TObject);
     procedure btnToggleGlobalKeysClick(Sender: TObject);
     procedure chkSpyAutoRefreshChange(Sender: TObject);
-    procedure chkSpyEnabledClick(Sender: TObject);
     procedure chkStayOnTopChange(Sender: TObject);
     procedure edtSpySearchChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -204,7 +156,6 @@ type
     BitmapCanvasDemo: TBitmap;
     GlobalKeyListener: TGlobalKeyListener;
     GlobalMouseListener: TGlobalMouseListener;
-    ReplayHotkey: THotkey;
     UpdatingCapsLock: boolean;
     UpdatingNumLock: boolean;
     UpdatingScrollLock: boolean;
@@ -217,10 +168,10 @@ type
 
     procedure RunMouseDemo(Data: PtrInt);
     procedure RunReplayHotkey(Data: PtrInt);
+    procedure RunTypeToRight(Data: PtrInt);
     procedure UpdateKeyDisplay(Key: word; Shift: TShiftState);
     procedure OnGlobalKeyPress(Key: word; Shift: TShiftState);
     procedure OnGlobalMouseClick(Button: TMouseButton; X, Y: Integer);
-    procedure OnReplayHotkey(Sender: TObject; Key: word; Shift: TShiftState);
     procedure DrawFinderTarget(ACanvas: TCanvas; ARect: TRect);
     procedure ResizeStatusBarPanels;
 
@@ -228,14 +179,11 @@ type
     procedure RefreshWindowTree;
     procedure AddWindowToTree(AHandle: TWindowHandle; AParentNode: TTreeNode);
     procedure UpdateSpyWindowDetails(AHandle: TWindowHandle);
-    procedure UpdateSpyQuickInfo(AHandle: TWindowHandle);
     procedure ClearSpyDetails;
     function GetSelectedSpyWindow: TWindowHandle;
     procedure FlashWindow(AHandle: TWindowHandle);
     procedure LocateWindowInTree(AHandle: TWindowHandle);
     function FindWindowNode(AHandle: TWindowHandle; AStartNode: TTreeNode): TTreeNode;
-    procedure PopulateStylesList(AHandle: TWindowHandle);
-    procedure PopulateClassInfo(AHandle: TWindowHandle);
   public
 
   end;
@@ -445,24 +393,6 @@ begin
     ShowMessage('No window found matching: ' + SearchText);
 end;
 
-procedure TMainForm.btnSpySetCaptionClick(Sender: TObject);
-{$IFDEF WINDOWS}
-var
-  h: TWindowHandle;
-begin
-  h := GetSelectedSpyWindow;
-  if h <> 0 then
-  begin
-    SetWindowText(HWND(h), PChar(edtSpyCaption.Text));
-    UpdateSpyWindowDetails(h);
-  end;
-end;
-{$ELSE}
-begin
-  // Setting window caption not supported on this platform - silently ignore
-end;
-{$ENDIF}
-
 procedure TMainForm.btnSpyShowClick(Sender: TObject);
 var
   h: TWindowHandle;
@@ -624,18 +554,9 @@ begin
   if GlobalMouseListener <> nil then
     GlobalMouseListener.OnMouseClick := @OnGlobalMouseClick;
 
-  ReplayHotkey := CreateHotkey(VK_F9, [ssCtrl, ssShift], @OnReplayHotkey);
-  ReplayHotkey.Register;
-
-  if not ReplayHotkey.Registered then
+  if ReplayHotkey.Registered then
   begin
-    lblHotKeyCombo.Caption := 'Hotkey: Ctrl+Shift+F9 (not available on this platform)';
-    lblHotKeyCombo.Font.Color := clRed;
-    StatusBar1.Panels[2].Text := 'Hotkey registration failed';
-  end
-  else
-  begin
-    lblHotKeyCombo.Caption := 'Hotkey: Press Ctrl+Shift+F9 anywhere to replay text';
+    lblHotKeyCombo.Caption := 'Or focus any application and press Ctrl+Shift+F9 to type it there.';
     lblHotKeyCombo.Font.Color := clGreen;
     StatusBar1.Panels[2].Text := 'Hotkey registered successfully';
   end;
@@ -652,12 +573,6 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
-  if Assigned(ReplayHotkey) then
-  begin
-    ReplayHotkey.Unregister;
-    ReplayHotkey.Free;
-  end;
-
   if Assigned(GlobalKeyListener) then
   begin
     GlobalKeyListener.StopMonitoring;
@@ -707,21 +622,6 @@ procedure TMainForm.chkSpyAutoRefreshChange(Sender: TObject);
 begin
   TimerSpyRefresh.Enabled := chkSpyAutoRefresh.Checked;
 end;
-
-procedure TMainForm.chkSpyEnabledClick(Sender: TObject);
-{$IFDEF WINDOWS}
-var
-  h: TWindowHandle;
-begin
-  h := GetSelectedSpyWindow;
-  if h <> 0 then
-    EnableWindow(HWND(h), chkSpyEnabled.Checked);
-end;
-{$ELSE}
-begin
-  // Enable/Disable window not supported on this platform - silently ignore
-end;
-{$ENDIF}
 
 procedure TMainForm.chkStayOnTopChange(Sender: TObject);
 begin
@@ -782,9 +682,42 @@ begin
   BitmapCanvasDemo.Canvas.FillRect(BitmapCanvasDemo.Canvas.ClipRect);
 end;
 
-procedure TMainForm.OnReplayHotkey(Sender: TObject; Key: word; Shift: TShiftState);
+procedure TMainForm.ReplayHotkeyPressed(Sender: TObject);
 begin
   Application.QueueAsyncCall(@RunReplayHotkey, 0);
+end;
+
+procedure TMainForm.ReplayHotkeyError(Sender: TObject; const Message: string);
+begin
+  lblHotKeyCombo.Caption := 'The global hotkey Ctrl+Shift+F9 is not available: ' + Message;
+  lblHotKeyCombo.Font.Color := clRed;
+  StatusBar1.Panels[2].Text := 'Hotkey registration failed';
+end;
+
+procedure TMainForm.btnTypeToRightClick(Sender: TObject);
+begin
+  memTestDestination.Clear;
+  memTestDestination.SetFocus;
+  Application.QueueAsyncCall(@RunTypeToRight, 0);
+end;
+
+{ Typing into our own memo blocks our own message loop, so the arriving
+  keys would all be translated only after the last one was sent.  A line at
+  a time with the queue drained between lines keeps the receiver current -
+  and looks like typing. }
+procedure TMainForm.RunTypeToRight(Data: PtrInt);
+var
+  I: Integer;
+begin
+  StatusBar1.Panels[2].Text := 'Typing the test sheet...';
+  for I := 0 to memTestSource.Lines.Count - 1 do
+  begin
+    Application.ProcessMessages;
+    if I > 0 then KeyInput.Press(VK_RETURN);
+    KeyInput.PressString(memTestSource.Lines[I]);
+  end;
+  Application.ProcessMessages;
+  StatusBar1.Panels[2].Text := 'Text replay complete';
 end;
 
 procedure TMainForm.RunReplayHotkey(Data: PtrInt);
@@ -948,7 +881,7 @@ begin
     if (WinHandle <> 0) and (WinHandle <> SelectedSpyWindow) then
     begin
       SelectedSpyWindow := WinHandle;
-      UpdateSpyQuickInfo(WinHandle);
+      UpdateSpyWindowDetails(WinHandle);
     end;
   end;
 end;
@@ -1189,74 +1122,25 @@ procedure TMainForm.UpdateSpyWindowDetails(AHandle: TWindowHandle);
 var
   Info: TWindowInfo;
   R: TRect;
+  State: string;
 begin
-  if (AHandle = 0) or (WindowMgr = nil) then
+  if (AHandle = 0) or (WindowMgr = nil) or not WindowMgr.GetWindowInfo(AHandle, Info) then
   begin
     ClearSpyDetails;
     Exit;
   end;
-
-  if not WindowMgr.GetWindowInfo(AHandle, Info) then
-  begin
-    ClearSpyDetails;
-    Exit;
-  end;
-
-  // General tab
   edtSpyHandle.Text := Format('0x%x (%d)', [AHandle, AHandle]);
   edtSpyCaption.Text := Info.Title;
   edtSpyClass.Text := Info.ClassName;
-
   R := Info.Rect;
   edtSpyRect.Text := Format('(%d, %d) - (%d, %d) [%dx%d]',
     [R.Left, R.Top, R.Right, R.Bottom, R.Right - R.Left, R.Bottom - R.Top]);
-
-  // Client rect would require platform-specific calls
-  edtSpyClientRect.Text := '(not available)';
-
   edtSpyProcess.Text := Format('%s (PID: %d)', [Info.ProcessName, Info.ProcessID]);
-  edtSpyThread.Text := '(not available)';
-
-  // Update enabled checkbox
-  {$IFDEF WINDOWS}
-  chkSpyEnabled.Checked := IsWindowEnabled(HWND(AHandle));
-  {$ELSE}
-  chkSpyEnabled.Checked := True;
-  {$ENDIF}
-
-  // Process tab
-  edtSpyPID.Text := IntToStr(Info.ProcessID);
-  edtSpyTID.Text := '(not available)';
-  edtSpyProcName.Text := Info.ProcessName;
-  edtSpyProcPath.Text := '(not available)';
-
-  // Update styles
-  PopulateStylesList(AHandle);
-
-  // Update class info
-  PopulateClassInfo(AHandle);
-
-  // Update quick info panel
-  UpdateSpyQuickInfo(AHandle);
-end;
-
-procedure TMainForm.UpdateSpyQuickInfo(AHandle: TWindowHandle);
-var
-  Info: TWindowInfo;
-  R: TRect;
-begin
-  if (AHandle = 0) or (WindowMgr = nil) then Exit;
-
-  if WindowMgr.GetWindowInfo(AHandle, Info) then
-  begin
-    lblSpyQuickHandleVal.Caption := Format('0x%x', [AHandle]);
-    lblSpyQuickClassVal.Caption := Info.ClassName;
-    lblSpyQuickCaptionVal.Caption := Info.Title;
-
-    R := Info.Rect;
-    lblSpyQuickRectVal.Caption := Format('(%d, %d) %dx%d',
-      [R.Left, R.Top, R.Right - R.Left, R.Bottom - R.Top]);
-  end;
+  if Info.IsMinimized then State := 'minimized'
+  else if Info.IsMaximized then State := 'maximized'
+  else State := 'normal';
+  if not Info.IsVisible then State := State + ', hidden';
+  edtSpyState.Text := State;
 end;
 
 procedure TMainForm.ClearSpyDetails;
@@ -1265,31 +1149,8 @@ begin
   edtSpyCaption.Text := '';
   edtSpyClass.Text := '';
   edtSpyRect.Text := '';
-  edtSpyClientRect.Text := '';
   edtSpyProcess.Text := '';
-  edtSpyThread.Text := '';
-  edtSpyStyle.Text := '';
-  edtSpyExStyle.Text := '';
-  edtSpyClassName.Text := '';
-  edtSpyClassAtom.Text := '';
-  edtSpyClassStyle.Text := '';
-  edtSpyWndProc.Text := '';
-  edtSpyClassBytes.Text := '';
-  edtSpyWndBytes.Text := '';
-  edtSpyPID.Text := '';
-  edtSpyTID.Text := '';
-  edtSpyProcName.Text := '';
-  edtSpyProcPath.Text := '';
-
-  lbSpyStyles.Clear;
-  lbSpyExStyles.Clear;
-  lbSpyClassStyles.Clear;
-  lvSpyProperties.Clear;
-
-  lblSpyQuickHandleVal.Caption := '0x00000000';
-  lblSpyQuickClassVal.Caption := '-';
-  lblSpyQuickCaptionVal.Caption := '-';
-  lblSpyQuickRectVal.Caption := '-';
+  edtSpyState.Text := '';
 end;
 
 function TMainForm.GetSelectedSpyWindow: TWindowHandle;
@@ -1360,96 +1221,6 @@ begin
 
     Node := Node.GetNextSibling;
   end;
-end;
-
-procedure TMainForm.PopulateStylesList(AHandle: TWindowHandle);
-{$IFDEF WINDOWS}
-var
-  Style, ExStyle: LONG_PTR;
-begin
-  Style := GetWindowLongPtr(HWND(AHandle), GWL_STYLE);
-  ExStyle := GetWindowLongPtr(HWND(AHandle), GWL_EXSTYLE);
-
-  edtSpyStyle.Text := Format('0x%x', [Style]);
-  edtSpyExStyle.Text := Format('0x%x', [ExStyle]);
-
-  lbSpyStyles.Clear;
-  // Common window styles
-  if (Style and WS_OVERLAPPED) <> 0 then lbSpyStyles.Items.Add('WS_OVERLAPPED');
-  if (Style and WS_POPUP) <> 0 then lbSpyStyles.Items.Add('WS_POPUP');
-  if (Style and WS_CHILD) <> 0 then lbSpyStyles.Items.Add('WS_CHILD');
-  if (Style and WS_MINIMIZE) <> 0 then lbSpyStyles.Items.Add('WS_MINIMIZE');
-  if (Style and WS_VISIBLE) <> 0 then lbSpyStyles.Items.Add('WS_VISIBLE');
-  if (Style and WS_DISABLED) <> 0 then lbSpyStyles.Items.Add('WS_DISABLED');
-  if (Style and WS_CLIPSIBLINGS) <> 0 then lbSpyStyles.Items.Add('WS_CLIPSIBLINGS');
-  if (Style and WS_CLIPCHILDREN) <> 0 then lbSpyStyles.Items.Add('WS_CLIPCHILDREN');
-  if (Style and WS_MAXIMIZE) <> 0 then lbSpyStyles.Items.Add('WS_MAXIMIZE');
-  if (Style and WS_CAPTION) = WS_CAPTION then lbSpyStyles.Items.Add('WS_CAPTION');
-  if (Style and WS_BORDER) <> 0 then lbSpyStyles.Items.Add('WS_BORDER');
-  if (Style and WS_DLGFRAME) <> 0 then lbSpyStyles.Items.Add('WS_DLGFRAME');
-  if (Style and WS_VSCROLL) <> 0 then lbSpyStyles.Items.Add('WS_VSCROLL');
-  if (Style and WS_HSCROLL) <> 0 then lbSpyStyles.Items.Add('WS_HSCROLL');
-  if (Style and WS_SYSMENU) <> 0 then lbSpyStyles.Items.Add('WS_SYSMENU');
-  if (Style and WS_THICKFRAME) <> 0 then lbSpyStyles.Items.Add('WS_THICKFRAME');
-  if (Style and WS_MINIMIZEBOX) <> 0 then lbSpyStyles.Items.Add('WS_MINIMIZEBOX');
-  if (Style and WS_MAXIMIZEBOX) <> 0 then lbSpyStyles.Items.Add('WS_MAXIMIZEBOX');
-
-  lbSpyExStyles.Clear;
-  // Extended styles
-  if (ExStyle and WS_EX_DLGMODALFRAME) <> 0 then lbSpyExStyles.Items.Add('WS_EX_DLGMODALFRAME');
-  if (ExStyle and WS_EX_NOPARENTNOTIFY) <> 0 then lbSpyExStyles.Items.Add('WS_EX_NOPARENTNOTIFY');
-  if (ExStyle and WS_EX_TOPMOST) <> 0 then lbSpyExStyles.Items.Add('WS_EX_TOPMOST');
-  if (ExStyle and WS_EX_ACCEPTFILES) <> 0 then lbSpyExStyles.Items.Add('WS_EX_ACCEPTFILES');
-  if (ExStyle and WS_EX_TRANSPARENT) <> 0 then lbSpyExStyles.Items.Add('WS_EX_TRANSPARENT');
-  if (ExStyle and WS_EX_MDICHILD) <> 0 then lbSpyExStyles.Items.Add('WS_EX_MDICHILD');
-  if (ExStyle and WS_EX_TOOLWINDOW) <> 0 then lbSpyExStyles.Items.Add('WS_EX_TOOLWINDOW');
-  if (ExStyle and WS_EX_WINDOWEDGE) <> 0 then lbSpyExStyles.Items.Add('WS_EX_WINDOWEDGE');
-  if (ExStyle and WS_EX_CLIENTEDGE) <> 0 then lbSpyExStyles.Items.Add('WS_EX_CLIENTEDGE');
-  if (ExStyle and WS_EX_CONTEXTHELP) <> 0 then lbSpyExStyles.Items.Add('WS_EX_CONTEXTHELP');
-  if (ExStyle and WS_EX_RIGHT) <> 0 then lbSpyExStyles.Items.Add('WS_EX_RIGHT');
-  if (ExStyle and WS_EX_RTLREADING) <> 0 then lbSpyExStyles.Items.Add('WS_EX_RTLREADING');
-  if (ExStyle and WS_EX_LEFTSCROLLBAR) <> 0 then lbSpyExStyles.Items.Add('WS_EX_LEFTSCROLLBAR');
-  if (ExStyle and WS_EX_CONTROLPARENT) <> 0 then lbSpyExStyles.Items.Add('WS_EX_CONTROLPARENT');
-  if (ExStyle and WS_EX_STATICEDGE) <> 0 then lbSpyExStyles.Items.Add('WS_EX_STATICEDGE');
-  if (ExStyle and WS_EX_APPWINDOW) <> 0 then lbSpyExStyles.Items.Add('WS_EX_APPWINDOW');
-  if (ExStyle and WS_EX_LAYERED) <> 0 then lbSpyExStyles.Items.Add('WS_EX_LAYERED');
-  if (ExStyle and WS_EX_COMPOSITED) <> 0 then lbSpyExStyles.Items.Add('WS_EX_COMPOSITED');
-  if (ExStyle and WS_EX_NOACTIVATE) <> 0 then lbSpyExStyles.Items.Add('WS_EX_NOACTIVATE');
-end;
-{$ELSE}
-begin
-  edtSpyStyle.Text := '(Windows only)';
-  edtSpyExStyle.Text := '(Windows only)';
-  lbSpyStyles.Clear;
-  lbSpyExStyles.Clear;
-end;
-{$ENDIF}
-
-procedure TMainForm.PopulateClassInfo(AHandle: TWindowHandle);
-var
-  Info: TWindowInfo;
-begin
-  if (WindowMgr = nil) or not WindowMgr.GetWindowInfo(AHandle, Info) then Exit;
-
-  edtSpyClassName.Text := Info.ClassName;
-
-  {$IFDEF WINDOWS}
-  edtSpyClassAtom.Text := Format('0x%x', [GetClassLongPtr(HWND(AHandle), GCW_ATOM)]);
-  edtSpyClassStyle.Text := Format('0x%x', [GetClassLongPtr(HWND(AHandle), GCL_STYLE)]);
-  edtSpyWndProc.Text := Format('0x%x', [GetClassLongPtr(HWND(AHandle), GCLP_WNDPROC)]);
-  edtSpyClassBytes.Text := IntToStr(GetClassLongPtr(HWND(AHandle), GCL_CBCLSEXTRA));
-  edtSpyWndBytes.Text := IntToStr(GetClassLongPtr(HWND(AHandle), GCL_CBWNDEXTRA));
-
-  lbSpyClassStyles.Clear;
-  // Add class style flags here if needed
-  {$ELSE}
-  edtSpyClassAtom.Text := '(Windows only)';
-  edtSpyClassStyle.Text := '(Windows only)';
-  edtSpyWndProc.Text := '(Windows only)';
-  edtSpyClassBytes.Text := '(Windows only)';
-  edtSpyWndBytes.Text := '(Windows only)';
-  lbSpyClassStyles.Clear;
-  {$ENDIF}
 end;
 
 end.

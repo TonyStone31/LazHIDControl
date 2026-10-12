@@ -3,12 +3,14 @@ unit AutomationDemoMain;
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
 uses Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  Spin, WindowManagerIntf, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard, PowerInput, Clipbrd;
+  Spin, WindowManagerIntf, WindowManager, HIDHotkey, HIDInput, HIDScreenshot,
+  HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard, PowerInput, Clipbrd;
 type
   TAutomationForm = class(TForm)
     InputPanel, CapturePanel, IdlePanel, PowerPanel, ClipboardPanel: TPanel;
     TextLabel, OutputLabel, WindowLabel, MonitorLabel, Status: TLabel;
-    TextInput, Output, WindowInput: TEdit;
+    TextInput, Output: TEdit;
+    WindowInput: TComboBox;
     TypeButton, TypeLaterButton, MouseButton, SampleButton, CaptureButton, SaveButton: TButton;
     DelayInput: TSpinEdit;
     Countdown: TTimer;
@@ -50,6 +52,7 @@ type
     procedure BecameActive(Sender: TObject);
     procedure IdleError(Sender: TObject; const Message: string);
     procedure FindButtonClick(Sender: TObject);
+    procedure WindowInputDropDown(Sender: TObject);
     procedure WindowFound(Sender: TObject);
     procedure WindowTimeout(Sender: TObject);
     procedure TypeButtonClick(Sender: TObject);
@@ -58,6 +61,7 @@ type
     procedure MouseButtonClick(Sender: TObject);
     procedure SampleButtonClick(Sender: TObject);
     procedure CaptureButtonClick(Sender: TObject);
+    procedure CaptureError(Sender: TObject; const Message: string);
     procedure Captured(Sender: TObject);
     procedure SaveButtonClick(Sender: TObject);
     procedure Error(Sender: TObject; const Message: string);
@@ -177,6 +181,32 @@ begin
   Status.Caption := 'Waiting for a visible window (up to 5 seconds)...';
   Window.WaitForWindow;
 end;
+procedure TAutomationForm.WindowInputDropDown(Sender: TObject);
+var
+  Windows: TList;
+  Item: Pointer;
+  Info: TWindowInfo;
+  Keep: string;
+begin
+  Keep := WindowInput.Text;
+  WindowInput.Items.BeginUpdate;
+  WindowInput.Items.Clear;
+  EnsureWindowManager;
+  if WindowMgr <> nil then
+  begin
+    Windows := WindowMgr.EnumerateWindows;
+    try
+      for Item in Windows do
+        if WindowMgr.GetWindowInfo(TWindowHandle(Item), Info) and Info.IsVisible
+          and (Info.Title <> '') then
+          WindowInput.Items.Add(Info.Title);
+    finally
+      Windows.Free;
+    end;
+  end;
+  WindowInput.Items.EndUpdate;
+  WindowInput.Text := Keep;
+end;
 procedure TAutomationForm.WindowFound(Sender: TObject);
 var Info: TWindowInfo;
 begin
@@ -202,4 +232,12 @@ begin
 end;
 procedure TAutomationForm.Error(Sender: TObject; const Message: string);
 begin Status.Caption := Message; end;
+{ A stale picture above a failure line reads as a result, so it goes. }
+procedure TAutomationForm.CaptureError(Sender: TObject; const Message: string);
+begin
+  Preview.Picture.Clear;
+  SaveButton.Enabled := False;
+  CopyImageButton.Enabled := False;
+  Status.Caption := Message;
+end;
 end.
