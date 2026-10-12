@@ -128,9 +128,9 @@ type
     procedure PaintBox1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
     procedure PaintBox1MouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
     procedure PaintBox1Paint(Sender: TObject);
-    procedure pnlFinderTargetMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure pnlFinderTargetMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-    procedure pnlFinderTargetMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure pnlFinderTargetMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
+    procedure pnlFinderTargetMouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
+    procedure pnlFinderTargetMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
     procedure pnlFinderTargetPaint(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure TimerSpyRefreshTimer(Sender: TObject);
@@ -148,16 +148,16 @@ type
     LastClickPos: TPoint;
 
     // Window spy variables
-    FinderDragging: Boolean;
+    FinderDragging: boolean;
     SelectedSpyWindow: TWindowHandle;
-    SpyFlashCount: Integer;
+    SpyFlashCount: integer;
 
     procedure RunMouseDemo(Data: PtrInt);
     procedure RunReplayHotkey(Data: PtrInt);
     procedure RunTypeToRight(Data: PtrInt);
     procedure UpdateKeyDisplay(Key: word; Shift: TShiftState);
     procedure OnGlobalKeyPress(Key: word; Shift: TShiftState);
-    procedure OnGlobalMouseClick(Button: TMouseButton; X, Y: Integer);
+    procedure OnGlobalMouseClick(Button: TMouseButton; X, Y: integer);
     procedure DrawFinderTarget(ACanvas: TCanvas; ARect: TRect);
     procedure ResizeStatusBarPanels;
 
@@ -189,10 +189,10 @@ var
   allMatch: boolean;
   Detail: string;
 
-  { name the first differing character, invisible ones included }
+{ name the first differing character, invisible ones included }
   function Shown(const C: string): string;
   var
-    L: Integer;
+    L: integer;
   begin
     if C = '' then Exit('nothing');
     Result := Format('U+%.4X', [UTF8CodepointToUnicode(PChar(C), L)]);
@@ -202,7 +202,7 @@ var
 
   function FirstDiff(const Want, Got: string): string;
   var
-    K: Integer;
+    K: integer;
     CW, CG: string;
   begin
     Result := '';
@@ -219,8 +219,7 @@ begin
   Detail := '';
   allMatch := (memTestSource.Lines.Count = memTestDestination.Lines.Count);
   if not allMatch and (memTestDestination.Lines.Count > 0) then
-    Detail := Format('%d lines, expected %d',
-      [memTestDestination.Lines.Count, memTestSource.Lines.Count]);
+    Detail := Format('%d lines, expected %d', [memTestDestination.Lines.Count, memTestSource.Lines.Count]);
 
   if allMatch then
   begin
@@ -229,8 +228,7 @@ begin
       if memTestSource.Lines[i] <> memTestDestination.Lines[i] then
       begin
         allMatch := False;
-        Detail := Format('line %d: %s',
-          [i + 1, FirstDiff(memTestSource.Lines[i], memTestDestination.Lines[i])]);
+        Detail := Format('line %d: %s', [i + 1, FirstDiff(memTestSource.Lines[i], memTestDestination.Lines[i])]);
         Break;
       end;
     end;
@@ -301,7 +299,7 @@ var
   h: TWindowHandle;
   Info: TWindowInfo;
   R: TRect;
-  InfoText: String;
+  InfoText: string;
 begin
   h := GetSelectedSpyWindow;
   if (h = 0) or (WindowMgr = nil) then Exit;
@@ -309,16 +307,9 @@ begin
   if WindowMgr.GetWindowInfo(h, Info) then
   begin
     R := Info.Rect;
-    InfoText := Format(
-      'Handle: 0x%x' + LineEnding +
-      'Title: %s' + LineEnding +
-      'Class: %s' + LineEnding +
-      'Rect: (%d, %d) - (%d, %d) [%dx%d]' + LineEnding +
-      'PID: %d' + LineEnding +
-      'Process: %s',
-      [h, Info.Title, Info.ClassName,
-       R.Left, R.Top, R.Right, R.Bottom, R.Right - R.Left, R.Bottom - R.Top,
-       Info.ProcessID, Info.ProcessName]);
+    InfoText := Format('Handle: 0x%x' + LineEnding + 'Title: %s' + LineEnding + 'Class: %s' + LineEnding +
+      'Rect: (%d, %d) - (%d, %d) [%dx%d]' + LineEnding + 'PID: %d' + LineEnding + 'Process: %s', [h, Info.Title, Info.ClassName,
+      R.Left, R.Top, R.Right, R.Bottom, R.Right - R.Left, R.Bottom - R.Top, Info.ProcessID, Info.ProcessName]);
     Clipboard.AsText := InfoText;
     StatusBar1.Panels[2].Text := 'Window info copied to clipboard';
   end;
@@ -397,7 +388,7 @@ end;
 
 procedure TMainForm.btnSpySearchClick(Sender: TObject);
 var
-  SearchText: String;
+  SearchText: string;
   h: TWindowHandle;
 begin
   SearchText := Trim(edtSpySearch.Text);
@@ -512,14 +503,14 @@ end;
 procedure TMainForm.RunMouseDemo(Data: PtrInt);
 var
   Origin: TPoint;
-  W, H: Integer;
+  W, H: integer;
 
   { press, walk the pointer through the points, release - one drawn stroke.
     The target is our own window, so the queue is drained after every step:
     blocked, GTK would compress the backlog and the corners would go missing. }
   procedure Stroke(const Pts: array of TPoint);
   var
-    I, Step, Steps: Integer;
+    I, Step, Steps: integer;
     A, B: TPoint;
   begin
     MouseInput.Move([], Origin.X + Pts[0].X, Origin.Y + Pts[0].Y, 200);
@@ -533,7 +524,7 @@ var
       for Step := 1 to Steps do
       begin
         MouseInput.Move([], Origin.X + A.X + (B.X - A.X) * Step div Steps,
-                            Origin.Y + A.Y + (B.Y - A.Y) * Step div Steps);
+          Origin.Y + A.Y + (B.Y - A.Y) * Step div Steps);
         Sleep(10);
         Application.ProcessMessages;
       end;
@@ -547,8 +538,7 @@ begin
   Origin := PaintBox1.ClientToScreen(Types.Point(0, 0));
   W := PaintBox1.Width;
   H := PaintBox1.Height;
-  Stroke([Types.Point(10, 10), Types.Point(W - 10, 10),
-    Types.Point(W - 10, H - 10), Types.Point(10, H - 10), Types.Point(10, 10)]);
+  Stroke([Types.Point(10, 10), Types.Point(W - 10, 10), Types.Point(W - 10, H - 10), Types.Point(10, H - 10), Types.Point(10, 10)]);
   Stroke([Types.Point(10, 10), Types.Point(W - 10, H - 10)]);
   Stroke([Types.Point(W - 10, 10), Types.Point(10, H - 10)]);
   StatusBar1.Panels[2].Text := 'Mouse demo complete';
@@ -669,7 +659,7 @@ begin
   UpdateKeyDisplay(Key, Shift);
 end;
 
-procedure TMainForm.OnGlobalMouseClick(Button: TMouseButton; X, Y: Integer);
+procedure TMainForm.OnGlobalMouseClick(Button: TMouseButton; X, Y: integer);
 var
   ButtonName: string;
 begin
@@ -728,7 +718,7 @@ end;
   and looks like typing. }
 procedure TMainForm.RunTypeToRight(Data: PtrInt);
 var
-  I: Integer;
+  I: integer;
 begin
   StatusBar1.Panels[2].Text := 'Typing the test sheet...';
   for I := 0 to memTestSource.Lines.Count - 1 do
@@ -842,7 +832,7 @@ end;
 
 procedure TMainForm.DrawFinderTarget(ACanvas: TCanvas; ARect: TRect);
 var
-  CenterX, CenterY, Radius: Integer;
+  CenterX, CenterY, Radius: integer;
 begin
   CenterX := (ARect.Left + ARect.Right) div 2;
   CenterY := (ARect.Top + ARect.Bottom) div 2;
@@ -856,7 +846,7 @@ begin
   ACanvas.Brush.Style := bsClear;
   ACanvas.Ellipse(CenterX - Radius, CenterY - Radius, CenterX + Radius, CenterY + Radius);
   ACanvas.Ellipse(CenterX - Radius div 2, CenterY - Radius div 2,
-                  CenterX + Radius div 2, CenterY + Radius div 2);
+    CenterX + Radius div 2, CenterY + Radius div 2);
 
   ACanvas.Brush.Style := bsSolid;
   ACanvas.Brush.Color := clRed;
@@ -876,8 +866,7 @@ begin
   DrawFinderTarget(pnlFinderTarget.Canvas, Types.Rect(0, 0, pnlFinderTarget.Width, pnlFinderTarget.Height));
 end;
 
-procedure TMainForm.pnlFinderTargetMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TMainForm.pnlFinderTargetMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
 begin
   if Button = mbLeft then
   begin
@@ -889,7 +878,7 @@ begin
   end;
 end;
 
-procedure TMainForm.pnlFinderTargetMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+procedure TMainForm.pnlFinderTargetMouseMove(Sender: TObject; Shift: TShiftState; X, Y: integer);
 var
   ScreenPos: TPoint;
   WinHandle: TWindowHandle;
@@ -907,8 +896,7 @@ begin
   end;
 end;
 
-procedure TMainForm.pnlFinderTargetMouseUp(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TMainForm.pnlFinderTargetMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: integer);
 begin
   if Button = mbLeft then
   begin
@@ -933,8 +921,7 @@ begin
   mouseX := Mouse.CursorPos.X;
   mouseY := Mouse.CursorPos.Y;
   if (LastClickPos.X <> 0) or (LastClickPos.Y <> 0) then
-    StatusBar1.Panels[0].Text := Format('Mouse: (%d, %d) | Last Click: (%d, %d)',
-      [mouseX, mouseY, LastClickPos.X, LastClickPos.Y])
+    StatusBar1.Panels[0].Text := Format('Mouse: (%d, %d) | Last Click: (%d, %d)', [mouseX, mouseY, LastClickPos.X, LastClickPos.Y])
   else
     StatusBar1.Panels[0].Text := Format('Mouse: (%d, %d)', [mouseX, mouseY]);
 
@@ -1033,8 +1020,8 @@ end;
 
 procedure TMainForm.ResizeStatusBarPanels;
 var
-  i, TotalWidth: Integer;
-  PanelTextWidth: array of Integer;
+  i, TotalWidth: integer;
+  PanelTextWidth: array of integer;
 begin
   // Guard against being called before form is fully initialized
   if not Assigned(StatusBar1) then Exit;
@@ -1071,7 +1058,7 @@ end;
 procedure TMainForm.RefreshWindowTree;
 var
   WindowList: TList;
-  i: Integer;
+  i: integer;
   WinHandle: TWindowHandle;
 begin
   tvWindows.Items.BeginUpdate;
@@ -1107,9 +1094,9 @@ procedure TMainForm.AddWindowToTree(AHandle: TWindowHandle; AParentNode: TTreeNo
 var
   Info: TWindowInfo;
   Node: TTreeNode;
-  NodeText: String;
+  NodeText: string;
   ChildList: TList;
-  i: Integer;
+  i: integer;
   ChildHandle: TWindowHandle;
 begin
   if WindowMgr.GetWindowInfo(AHandle, Info) then
@@ -1154,12 +1141,12 @@ begin
   edtSpyCaption.Text := Info.Title;
   edtSpyClass.Text := Info.ClassName;
   R := Info.Rect;
-  edtSpyRect.Text := Format('(%d, %d) - (%d, %d) [%dx%d]',
-    [R.Left, R.Top, R.Right, R.Bottom, R.Right - R.Left, R.Bottom - R.Top]);
+  edtSpyRect.Text := Format('(%d, %d) - (%d, %d) [%dx%d]', [R.Left, R.Top, R.Right, R.Bottom, R.Right - R.Left, R.Bottom - R.Top]);
   edtSpyProcess.Text := Format('%s (PID: %d)', [Info.ProcessName, Info.ProcessID]);
   if Info.IsMinimized then State := 'minimized'
   else if Info.IsMaximized then State := 'maximized'
-  else State := 'normal';
+  else
+    State := 'normal';
   if not Info.IsVisible then State := State + ', hidden';
   edtSpyState.Text := State;
 end;
@@ -1183,7 +1170,7 @@ end;
 procedure TMainForm.FlashWindow(AHandle: TWindowHandle);
 var
   R: TRect;
-  I: Integer;
+  I: integer;
 begin
   WindowMgr.ActivateWindow(AHandle);
   R := WindowMgr.GetWindowRect(AHandle);

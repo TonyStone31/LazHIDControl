@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="12"/>
+    <Version Value="13"/>
     <PathDelim Value="\"/>
     <General>
-      <Flags>
-        <CompatibilityMode Value="True"/>
-      </Flags>
       <SessionStorage Value="InProjectDir"/>
       <Title Value="HIDControlDemo"/>
       <Scaled Value="True"/>
@@ -16,9 +13,9 @@
         <DpiAware Value="True"/>
       </XPManifest>
     </General>
-    <BuildModes Count="2">
-      <Item1 Name="Default" Default="True"/>
-      <Item2 Name="Windows64">
+    <BuildModes>
+      <Item Name="Default" Default="True"/>
+      <Item Name="Windows64">
         <CompilerOptions>
           <Version Value="11"/>
           <PathDelim Value="\"/>
@@ -43,7 +40,7 @@
             </Options>
           </Linking>
         </CompilerOptions>
-      </Item2>
+      </Item>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -54,38 +51,38 @@
     <RunParams>
       <FormatVersion Value="2"/>
     </RunParams>
-    <RequiredPackages Count="3">
-      <Item1>
+    <RequiredPackages>
+      <Item>
         <PackageName Value="LazHIDControl"/>
-      </Item1>
-      <Item2>
+      </Item>
+      <Item>
         <PackageName Value="FCL"/>
-      </Item2>
-      <Item3>
+      </Item>
+      <Item>
         <PackageName Value="LCL"/>
-      </Item3>
+      </Item>
     </RequiredPackages>
-    <Units Count="3">
-      <Unit0>
+    <Units>
+      <Unit>
         <Filename Value="HIDControlDemo.lpr"/>
         <IsPartOfProject Value="True"/>
-      </Unit0>
-      <Unit1>
+      </Unit>
+      <Unit>
         <Filename Value="mainform.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="MainForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="MainForm"/>
-      </Unit1>
-      <Unit2>
+      </Unit>
+      <Unit>
         <Filename Value="waylandinfo.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="frmWaylandInfo"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="WaylandInfo"/>
-      </Unit2>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

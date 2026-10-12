@@ -1,21 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="12"/>
-    <General><Title Value="LazHIDControl Automation Demo"/><UseAppBundle Value="False"/></General>
-    <RequiredPackages Count="2">
-      <Item1><PackageName Value="LazHIDControl"/></Item1>
-      <Item2><PackageName Value="LCL"/></Item2>
+    <Version Value="13"/>
+    <General>
+      <Title Value="LazHIDControl Automation Demo"/>
+      <UseAppBundle Value="False"/>
+    </General>
+    <BuildModes>
+      <Item Name="default" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+    <RunParams>
+      <FormatVersion Value="2"/>
+    </RunParams>
+    <RequiredPackages>
+      <Item>
+        <PackageName Value="LazHIDControl"/>
+      </Item>
+      <Item>
+        <PackageName Value="LCL"/>
+      </Item>
     </RequiredPackages>
-    <Units Count="2">
-      <Unit0><Filename Value="AutomationDemo.lpr"/><IsPartOfProject Value="True"/></Unit0>
-      <Unit1><Filename Value="AutomationDemoMain.pas"/><IsPartOfProject Value="True"/><ComponentName Value="AutomationForm"/><HasResources Value="True"/><ResourceBaseClass Value="Form"/></Unit1>
+    <Units>
+      <Unit>
+        <Filename Value="AutomationDemo.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <Loaded Value="True"/>
+        <UsageCount Value="20"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="5" Y="15"/>
+      </Unit>
+      <Unit>
+        <Filename Value="AutomationDemoMain.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="AutomationForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+        <UsageCount Value="20"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="208"/>
+        <CursorPos X="5" Y="318"/>
+      </Unit>
     </Units>
+    <JumpHistory HistoryIndex="3">
+      <Position>
+        <Filename Value="AutomationDemoMain.pas"/>
+        <Caret Line="222" Column="82" TopLine="133"/>
+      </Position>
+      <Position>
+        <Filename Value="AutomationDemoMain.pas"/>
+        <Caret Line="175" Column="7" TopLine="133"/>
+      </Position>
+      <Position>
+        <Filename Value="AutomationDemoMain.pas"/>
+        <Caret Line="198" Column="106" TopLine="133"/>
+      </Position>
+      <Position>
+        <Filename Value="AutomationDemo.lpr"/>
+        <Caret Line="10" Column="82"/>
+      </Position>
+    </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
-    <Target><Filename Value="AutomationDemo"/></Target>
-    <SearchPaths><UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/></SearchPaths>
-    <Linking><Options><Win32><GraphicApplication Value="True"/></Win32></Options></Linking>
+    <Target>
+      <Filename Value="AutomationDemo"/>
+    </Target>
+    <SearchPaths>
+      <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <Linking>
+      <Debugging>
+        <DebugInfoType Value="dsDwarf3"/>
+      </Debugging>
+      <Options>
+        <Win32>
+          <GraphicApplication Value="True"/>
+        </Win32>
+      </Options>
+    </Linking>
   </CompilerOptions>
 </CONFIG>
