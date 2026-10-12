@@ -227,6 +227,11 @@
         <UnitName Value="LinuxPowerInput"/>
       </Item>
       <Item>
+        <Filename Value="macpowerinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="MacPowerInput"/>
+      </Item>
+      <Item>
         <Filename Value="hidpower.pas"/>
         <UnitName Value="HIDPower"/>
       </Item>

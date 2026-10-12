@@ -21,7 +21,7 @@ object AutomationForm: TAutomationForm
       Left = 110
       Top = 12
       Width = 420
-      Text = 'Hello from THIDKeyboard!'
+      Text = 'Hello from THIDKeyboard! € ½ × → 😀'
       TabOrder = 0
     end
     object TypeButton: TButton
@@ -61,6 +61,24 @@ object AutomationForm: TAutomationForm
       Caption = 'Sample click target'
       OnClick = SampleButtonClick
       TabOrder = 4
+    end
+    object DelayInput: TSpinEdit
+      Left = 548
+      Top = 100
+      Width = 56
+      MinValue = 1
+      MaxValue = 60
+      Value = 3
+      TabOrder = 5
+    end
+    object TypeLaterButton: TButton
+      Left = 612
+      Top = 98
+      Width = 266
+      Height = 32
+      Caption = 'seconds, then type at the focus'
+      OnClick = TypeLaterButtonClick
+      TabOrder = 6
     end
   end
   object CapturePanel: TPanel
@@ -347,6 +365,13 @@ object AutomationForm: TAutomationForm
     Filter = 'PNG image|*.png'
     Options = [ofOverwritePrompt, ofPathMustExist]
     Left = 780
+    Top = 110
+  end
+  object Countdown: TTimer
+    Enabled = False
+    Interval = 1000
+    OnTimer = CountdownTick
+    Left = 730
     Top = 110
   end
 end

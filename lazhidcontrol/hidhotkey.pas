@@ -1,5 +1,6 @@
 unit HIDHotkey;
 {$mode objfpc}{$H+}
+{$if defined(windows) or (defined(linux) and (defined(LCLgtk2) or defined(LCLgtk3)))}{$define HOTKEYBACKEND}{$endif}
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
 uses Classes, SysUtils, LCLType, Menus, HotkeyInputIntf;
@@ -27,25 +28,19 @@ type
     property Registered: Boolean read GetRegistered;
     property LastError: string read ErrorText;
   published
-    // Global shortcut, such as Ctrl+Shift+F9. Click the property's ... button,
-    // then press the combination in the capture box and click OK.
-    // The existing backends support Ctrl, Alt, and Shift combinations.
+    // Global shortcut, such as Ctrl+Shift+F9. Supported modifiers: Ctrl, Alt, Shift.
     property ShortCut: TShortCut read ShortcutValue write SetShortCut default 0;
-    // Default False. True registers after the form loads; False releases it.
-    // The designer never registers hotkeys. Check Registered for actual success.
+    // Registers after the form loads; never in the designer. Registered reports success.
     property Enabled: Boolean read Requested write SetEnabled default False;
-    // Runs on the GUI thread when the registered shortcut is pressed.
-    // Modifiers may still be held; release them before replaying input.
     property OnHotkey: TNotifyEvent read Handler write Handler;
-    // Reports an unavailable shortcut or backend. LastError also holds the message.
-    // No dialog is shown automatically, so your application controls presentation.
+    // An unavailable shortcut or backend; the message is also in LastError.
     property OnError: THIDHotkeyErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation
-{$if defined(windows) or (defined(linux) and (defined(LCLgtk2) or defined(LCLgtk3)))}uses HotkeyInput;{$endif}
+{$ifdef HOTKEYBACKEND}uses HotkeyInput;{$endif}
 function THIDHotkey.CreateBinding(Key: Word; Shift: TShiftState): THotkey;
 begin
-  {$if defined(windows) or (defined(linux) and (defined(LCLgtk2) or defined(LCLgtk3)))}Result := CreateHotkey(Key, Shift, @KeyPressed);
+  {$ifdef HOTKEYBACKEND}Result := CreateHotkey(Key, Shift, @KeyPressed);
   {$else}Result := nil;{$endif}
 end;
 destructor THIDHotkey.Destroy;

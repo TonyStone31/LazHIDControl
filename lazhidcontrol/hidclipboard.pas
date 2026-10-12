@@ -27,31 +27,29 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    // Detect changes without reading contents. Use LCL Clipboard in your event handler.
+    // Detects a change without reading contents; read data with the LCL Clipboard.
     function Check: Boolean;
     property LastError: string read ErrorText;
   published
-    // Start after loading. Default False; never subscribes in the designer.
     property Enabled: Boolean read Requested write SetEnabled default False;
-    // Change check interval in milliseconds. Default 250; must be positive.
-    // Multiple changes between checks can produce one event.
+    // Several changes between checks can land as one event.
     property PollInterval: Cardinal read GetInterval write SetInterval default 250;
-    // Clipboard ownership/change notification. Includes non-text formats; read data with LCL.
-    // Enabling establishes a baseline and does not fire this event for existing contents.
+    // Enabling sets the baseline; the contents already there do not fire this.
     property OnChanged: TNotifyEvent read ChangeHandler write ChangeHandler;
-    // A failed query disables monitoring and sets LastError; no automatic dialogs.
+    // A failed query disables monitoring; the message is also in LastError.
     property OnError: THIDClipboardErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation
 {$if defined(windows)}uses Windows;
 {$elseif defined(darwin)}uses CocoaAll;
+{$elseif defined(LCLgtk2)}uses glib2, gdk2, gtk2;
 {$elseif defined(LCLgtk3)}uses LazGtk3, LazGdk3, LazGObject2;
 {$endif}
 {$ifdef windows}
 function GetClipboardSequenceNumber: DWORD; stdcall;
   external 'user32.dll' name 'GetClipboardSequenceNumber';
 {$endif}
-{$ifdef LCLgtk3}
+{$if defined(LCLgtk2) or defined(LCLgtk3)}
 procedure ClipboardChanged(Clipboard, Event, Data: Pointer); cdecl;
 begin Inc(THIDClipboardMonitor(Data).Serial); end;
 {$endif}
@@ -67,7 +65,7 @@ destructor THIDClipboardMonitor.Destroy;
 begin Disconnect; inherited Destroy; end;
 procedure THIDClipboardMonitor.Disconnect;
 begin
-  {$ifdef LCLgtk3}
+  {$if defined(LCLgtk2) or defined(LCLgtk3)}
   if (NativeClipboard <> nil) and (SignalID <> 0) then
     g_signal_handler_disconnect(NativeClipboard, SignalID);
   {$endif}
@@ -121,6 +119,15 @@ begin
   {$elseif defined(darwin)}
   Value := NSPasteboard.generalPasteboard.changeCount;
   Result := True;
+  {$elseif defined(LCLgtk2)}
+  if NativeClipboard = nil then begin
+    NativeClipboard := gtk_clipboard_get(gdk_atom_intern('CLIPBOARD', False));
+    if NativeClipboard <> nil then
+      SignalID := g_signal_connect(NativeClipboard, 'owner-change', TGCallback(@ClipboardChanged), Self);
+  end;
+  Result := (NativeClipboard <> nil) and (SignalID <> 0);
+  Value := Serial;
+  if not Result then Message := 'Cannot subscribe to GTK clipboard changes.';
   {$elseif defined(LCLgtk3)}
   if NativeClipboard = nil then begin
     NativeClipboard := gtk_clipboard_get(gdk_atom_intern('CLIPBOARD', False));
@@ -129,7 +136,7 @@ begin
   end;
   Result := (NativeClipboard <> nil) and (SignalID <> 0);
   Value := Serial;
-  if not Result then Message := 'Cannot subscribe to GTK3 clipboard changes.';
+  if not Result then Message := 'Cannot subscribe to GTK clipboard changes.';
   {$else}
   Result := False;
   Message := 'Clipboard change monitoring is not implemented for this widgetset.';

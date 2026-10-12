@@ -36,18 +36,16 @@ type
     property Charging: Boolean read GetCharging;
     property LastError: string read ErrorText;
   published
-    // Subscribe after loading. Default False; no activity in the form designer.
     property Enabled: Boolean read Requested write SetEnabled default False;
-    // Event queue check interval in milliseconds. Default 250; must be positive.
     property PollInterval: Cardinal read GetInterval write SetInterval default 250;
-    // Reports the OS sleep notification. Informational; does not delay or veto sleep.
+    // Informational only; nothing here delays or vetoes sleep.
     property OnSuspend: TNotifyEvent read SuspendHandler write SuspendHandler;
-    // Reports a wake notification. Power status is refreshed before this event.
+    // Power status is refreshed before this event.
     property OnResume: TNotifyEvent read ResumeHandler write ResumeHandler;
-    // Fires when source, battery percentage, or charging changes. Read the public properties.
-    // Initial status is available after enabling; it does not fire a change event.
+    // Source, battery percentage, or charging changed; read the public properties.
+    // The status present at enabling is the baseline and fires nothing.
     property OnPowerChanged: TNotifyEvent read ChangeHandler write ChangeHandler;
-    // A failed subscription/query disables monitoring and sets LastError; no automatic dialog.
+    // A failure disables monitoring; the message is also in LastError.
     property OnError: THIDPowerErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation

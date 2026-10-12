@@ -27,6 +27,4 @@ begin
 end;
 procedure THotkeyDemoForm.HotkeyError(Sender: TObject; const Message: string);
 begin Status.Caption := Message; end;
-initialization
-  RegisterClass(THIDHotkey);
 end.

@@ -47,7 +47,10 @@ HIDMouse1.Click(mbLeft);
 Ctrl, Alt, and Shift to `PressKey`; `TypeText` sends literal text. Existing
 UTF-8 handling and line-ending normalization stay in the keyboard backend.
 Text entry does not automatically focus a target: the demo explicitly focuses
-its output edit first.
+its output edit first. The demo's countdown button types after a chosen delay
+into whatever then holds the focus - the way to hand text to an application
+that takes typing but not a paste - and its sample text exercises the Unicode
+path, currency to emoji.
 
 `MovementDuration` controls mouse movement timing. Set `RelativeTo` to a form
 or control to make `MoveTo` use its client coordinates. For external windows,
@@ -163,11 +166,11 @@ Windows uses the current session's `GetLastInputInfo`. Linux/X11 queries the
 screen-saver extension using `libXss.so.1` (an optional runtime dependency, loaded
 only when checking). macOS uses FPC's Core Graphics binding; this implementation
 needs testing on a Mac. Backend selection is automatic: X11 sessions use the
-X11 query, with GNOME IdleMonitor as a fallback; Wayland sessions query the
-GNOME IdleMonitor service directly. Other Wayland sessions currently report
-unsupported until native idle-notify is implemented. No XWayland idle fallback
-is used. GNOME dispatch has been checked against an isolated D-Bus test service;
-a real GNOME/Wayland desktop still needs testing. OS-reported activity
+X11 query; Wayland sessions, and X11 sessions whose query fails, ask the GNOME
+Mutter IdleMonitor and then the freedesktop ScreenSaver service that KDE
+provides. Other Wayland sessions currently report unsupported until native
+idle-notify is implemented. No XWayland idle fallback is used. A real
+GNOME or KDE Wayland desktop still needs testing. OS-reported activity
 may include synthetic input. This detects session inactivity, not application
 inactivity or whether an application is busy.
 
@@ -190,8 +193,10 @@ and `LastError`; re-enable to retry.
 Windows uses a hidden LCL notification window and `GetSystemPowerStatus`.
 Linux uses logind sleep/wake signals and optional UPower status on the system
 D-Bus. With logind but no UPower, sleep events still work and status remains
-unknown. Both X11 and Wayland use these same Linux services. macOS power
-monitoring is a marked backend placeholder and reports unsupported.
+unknown. Both X11 and Wayland use these same Linux services. macOS listens for
+`NSWorkspace` sleep/wake notifications - which also cover waking from
+hibernation - and reads battery status from IOKit power sources; this backend
+still needs testing on a Mac.
 
 Events run when the application processes them. `OnSuspend` is informational:
 it does not delay sleep or guarantee your handler finishes before suspension.
@@ -214,7 +219,7 @@ Enabling establishes a baseline; existing clipboard contents do not fire an
 initial event. **PollInterval** defaults to 250 milliseconds, and multiple
 changes between checks may produce one event. `Check` supports manual checking.
 
-Windows uses its clipboard sequence counter. GTK3 uses its existing clipboard
+Windows uses its clipboard sequence counter. GTK2 and GTK3 use the clipboard
 owner-change signal; macOS uses `NSPasteboard.changeCount` (untested).
 GTK3 on Wayland is subject to the clipboard visibility provided by GTK and the
 compositor; unrestricted background clipboard access is not promised. Other
@@ -240,7 +245,7 @@ its **Move pointer to window offset X, Y** button moves without clicking.
 ## Possible future work
 
 - Session lock/unlock notifications.
-- Native Wayland idle-notification support outside the GNOME service path.
-- macOS power monitoring and platform testing.
+- Native Wayland idle-notification support outside the GNOME and KDE services.
+- macOS platform testing.
 
 These are future options, not implemented features or release commitments.

@@ -30,17 +30,15 @@ type
     property IdleMilliseconds: QWord read Elapsed;
     property LastError: string read ErrorText;
   published
-    // Start checking after the form loads. Default False; never runs in the designer.
     property Enabled: Boolean read Requested write SetEnabled default False;
-    // Inactivity in milliseconds before OnIdle. Default 60000 (one minute).
+    // Milliseconds of inactivity that count as idle.
     property IdleThreshold: Cardinal read Threshold write SetThreshold default 60000;
-    // Polling interval in milliseconds. Default 1000; must be greater than zero.
     property PollInterval: Cardinal read GetInterval write SetInterval default 1000;
     // Fires once on entering idle, including the first check if already idle.
     property OnIdle: TNotifyEvent read IdleHandler write IdleHandler;
-    // Fires once when activity resumes after idle; not on an initially active check.
+    // Fires once when activity resumes; not on an initially active check.
     property OnActive: TNotifyEvent read ActiveHandler write ActiveHandler;
-    // Reports a failed query once, stops Enabled monitoring, and sets LastError.
+    // A failed query stops monitoring; the message is also in LastError.
     property OnError: THIDSystemIdleErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation

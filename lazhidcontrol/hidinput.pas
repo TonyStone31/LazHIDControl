@@ -15,8 +15,7 @@ type
     procedure KeyDown(Key: Word);
     procedure KeyUp(Key: Word);
   published
-    // Extra milliseconds between typed characters. Default 0 uses backend timing.
-    // TypeText is synchronous and sends text to the currently focused application.
+    // Extra milliseconds between typed characters; text goes to the focused application.
     property TypingInterval: Cardinal read Delay write Delay default 0;
     // Ctrl, Alt, and Shift applied around PressKey. TypeText types literal text.
     property Modifiers: TShiftState read KeyModifiers write KeyModifiers default [];
@@ -42,16 +41,14 @@ type
     procedure ButtonUp(Button: TMouseButton = mbLeft);
     procedure Scroll(Steps: Integer);
   published
-    // Movement duration in milliseconds. Default 0 moves immediately.
+    // Milliseconds the pointer takes to arrive. Default 0 teleports.
     property MovementDuration: Cardinal read Duration write Duration default 0;
-    // Ctrl, Alt, and Shift applied during mouse actions.
+    // Ctrl, Alt, and Shift held during mouse actions.
     property Modifiers: TShiftState read MouseModifiers write MouseModifiers default [];
-    // Optional control whose client coordinates MoveTo uses, unless RelativeWindow is set.
-    // With neither reference assigned, MoveTo uses screen coordinates.
-    // Click and scrolling act at the current pointer position; nothing runs when the form loads.
+    // MoveTo coordinates are client coordinates of this control when assigned,
+    // screen coordinates otherwise. Clicks and scrolls act wherever the pointer is.
     property RelativeTo: TControl read RelativeControl write SetRelativeControl;
-    // Optional THIDWindow target. Takes precedence over RelativeTo; call its Find first.
-    // MoveTo uses offsets from the target's reported screen rectangle, including native borders.
+    // Found window whose rectangle MoveTo offsets from; wins over RelativeTo.
     property RelativeWindow: THIDWindow read TargetWindow write SetRelativeWindow;
   end;
 implementation
@@ -89,7 +86,6 @@ begin
   if Modifiers - [ssCtrl, ssAlt, ssShift] <> [] then
     raise EInvalidOperation.Create('Supported modifiers are Ctrl, Alt, and Shift.');
   if not Assigned(MouseInput) then raise EInvalidOperation.Create('Mouse input is unavailable.');
-  if MovementDuration > Cardinal(High(Integer)) then raise ERangeError.Create('Movement duration is too large.');
 end;
 procedure THIDMouse.SetRelativeControl(Value: TControl);
 begin

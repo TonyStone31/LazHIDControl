@@ -9,7 +9,9 @@ type
     InputPanel, CapturePanel, IdlePanel, PowerPanel, ClipboardPanel: TPanel;
     TextLabel, OutputLabel, WindowLabel, MonitorLabel, Status: TLabel;
     TextInput, Output, WindowInput: TEdit;
-    TypeButton, MouseButton, SampleButton, CaptureButton, SaveButton: TButton;
+    TypeButton, TypeLaterButton, MouseButton, SampleButton, CaptureButton, SaveButton: TButton;
+    DelayInput: TSpinEdit;
+    Countdown: TTimer;
     SourceBox: TComboBox;
     MonitorInput: TSpinEdit;
     Preview: TImage;
@@ -51,6 +53,8 @@ type
     procedure WindowFound(Sender: TObject);
     procedure WindowTimeout(Sender: TObject);
     procedure TypeButtonClick(Sender: TObject);
+    procedure TypeLaterButtonClick(Sender: TObject);
+    procedure CountdownTick(Sender: TObject);
     procedure MouseButtonClick(Sender: TObject);
     procedure SampleButtonClick(Sender: TObject);
     procedure CaptureButtonClick(Sender: TObject);
@@ -65,6 +69,27 @@ procedure TAutomationForm.TypeButtonClick(Sender: TObject);
 begin
   Output.SetFocus;
   Keyboard.TypeText(TextInput.Text);
+end;
+{ Time to put the focus in some other application - handy for the ones that
+  take typing but not a paste. }
+procedure TAutomationForm.TypeLaterButtonClick(Sender: TObject);
+begin
+  Countdown.Tag := DelayInput.Value;
+  Countdown.Enabled := True;
+  TypeLaterButton.Enabled := False;
+  Status.Caption := Format('Typing wherever the focus is in %d...', [Countdown.Tag]);
+end;
+procedure TAutomationForm.CountdownTick(Sender: TObject);
+begin
+  Countdown.Tag := Countdown.Tag - 1;
+  if Countdown.Tag > 0 then begin
+    Status.Caption := Format('Typing wherever the focus is in %d...', [Countdown.Tag]);
+    Exit;
+  end;
+  Countdown.Enabled := False;
+  TypeLaterButton.Enabled := True;
+  Keyboard.TypeText(TextInput.Text);
+  Status.Caption := 'Typed into the focused control.';
 end;
 procedure TAutomationForm.MouseButtonClick(Sender: TObject);
 begin
@@ -177,13 +202,4 @@ begin
 end;
 procedure TAutomationForm.Error(Sender: TObject; const Message: string);
 begin Status.Caption := Message; end;
-initialization
-  RegisterClass(THIDHotkey);
-  RegisterClass(THIDKeyboard);
-  RegisterClass(THIDMouse);
-  RegisterClass(THIDScreenshot);
-  RegisterClass(THIDWindow);
-  RegisterClass(THIDSystemIdle);
-  RegisterClass(THIDPowerMonitor);
-  RegisterClass(THIDClipboardMonitor);
 end.

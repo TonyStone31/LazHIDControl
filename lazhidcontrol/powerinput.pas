@@ -26,7 +26,8 @@ function CreatePowerInput: TPowerInput;
 implementation
 uses
   {$ifdef windows}WinPowerInput{$else}
-  {$ifdef linux}LinuxPowerInput{$else}SysUtils{$endif}{$endif};
+  {$ifdef linux}LinuxPowerInput{$else}
+  {$ifdef darwin}MacPowerInput{$else}SysUtils{$endif}{$endif}{$endif};
 procedure TPowerInput.AddEvent(Event: TPowerEvent);
 begin SetLength(Pending, Length(Pending) + 1); Pending[High(Pending)] := Event; end;
 function TPowerInput.Poll(out Events: TPowerEvents): Boolean;
@@ -35,7 +36,7 @@ function CreatePowerInput: TPowerInput;
 begin
   {$ifdef windows}Result := TWinPowerInput.Create;{$else}
   {$ifdef linux}Result := TLinuxPowerInput.Create;{$else}
-  // TODO: macOS NSWorkspace sleep/wake and IOKit power-source notifications.
-  Result := nil;{$endif}{$endif}
+  {$ifdef darwin}Result := TMacPowerInput.Create;{$else}
+  Result := nil;{$endif}{$endif}{$endif}
 end;
 end.

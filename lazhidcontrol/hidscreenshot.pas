@@ -29,30 +29,24 @@ type
     property Bitmap: TBitmap read Image;
     property LastError: string read ErrorText;
   published
-    // Capture all monitors, one monitor, a window, a configured rectangle, or a drag selection.
-    // Capture is explicit; the component never takes screenshots when the form loads.
     property Source: THIDCaptureSource read CaptureSource write CaptureSource default hcsDesktop;
-    // -1 (default) selects the primary monitor. Otherwise use a zero-based Screen.Monitors index.
+    // -1 is the primary monitor; otherwise a Screen.Monitors index.
     property MonitorIndex: Integer read MonitorNumber write MonitorNumber default -1;
-    // Window title to find using the existing window manager. Blank uses the active window.
-    // Window capture records its visible screen area; overlapping windows are included.
+    // For hcsWindow; blank captures the active window. What is grabbed is the
+    // window's screen area, so anything overlapping it is in the picture.
     property WindowTitle: string read Title write Title;
-    // Screen coordinates for hcsRegion. Negative coordinates support monitors left of the primary.
+    // The hcsRegion rectangle, in screen coordinates.
     property RegionLeft: Integer read AreaLeft write AreaLeft default 0;
-    // Top screen coordinate for hcsRegion.
     property RegionTop: Integer read AreaTop write AreaTop default 0;
-    // Width in pixels for hcsRegion; must be positive when capturing.
     property RegionWidth: Integer read AreaWidth write AreaWidth default 0;
-    // Height in pixels for hcsRegion; must be positive when capturing.
     property RegionHeight: Integer read AreaHeight write AreaHeight default 0;
-    // Runs after a successful capture. Bitmap belongs to the component; copy it to retain an image.
+    // Bitmap belongs to the component; copy it to keep the image.
     property OnCaptured: TNotifyEvent read CapturedHandler write CapturedHandler;
-    // Reports failure through a message; LastError also holds it. No automatic dialog is shown.
-    // Canceling the selection returns False with an empty LastError and does not raise this event.
+    // A canceled selection is not an error: Capture returns False with LastError empty.
     property OnError: THIDCaptureErrorEvent read ErrorHandler write ErrorHandler;
   end;
 implementation
-uses Forms, Controls, LCLIntf, LCLType, Math, WindowManager;
+uses Forms, Controls, LCLIntf, LCLType, GraphType, Math, WindowManager;
 type
   TRegionSelector = class(TForm)
   private
@@ -154,20 +148,27 @@ begin
   Result := True;
 end;
 function THIDScreenshot.GrabArea(const Area: TRect; Destination: TBitmap): Boolean;
-var DC: HDC;
+var DC: HDC; Raw: TRawImage; Whole: TBitmap;
 begin
   Result := False;
   DC := GetDC(0);
   if DC = 0 then Exit;
+  // BitBlt from the screen DC reads back black on GTK; the raw image road works.
   try
-    Destination.PixelFormat := pf24bit;
-    Destination.SetSize(Area.Right - Area.Left, Area.Bottom - Area.Top);
-    // Notify the bitmap so previews and image exports see the new pixels.
-    Destination.Canvas.Changing;
-    Result := BitBlt(Destination.Canvas.Handle, 0, 0, Destination.Width, Destination.Height,
-      DC, Area.Left, Area.Top, SRCCOPY);
-    Destination.Canvas.Changed;
+    if not RawImage_FromDevice(Raw, DC, Area) then Exit;
   finally ReleaseDC(0, DC); end;
+  Whole := TBitmap.Create;
+  try
+    Whole.LoadFromRawImage(Raw, True);
+    // Some widgetsets hand back the whole screen whatever rectangle was asked.
+    if (Whole.Width = Area.Right - Area.Left) and (Whole.Height = Area.Bottom - Area.Top) then
+      Destination.Assign(Whole)
+    else begin
+      Destination.SetSize(Area.Right - Area.Left, Area.Bottom - Area.Top);
+      Destination.Canvas.CopyRect(Rect(0, 0, Destination.Width, Destination.Height), Whole.Canvas, Area);
+    end;
+    Result := True;
+  finally Whole.Free; end;
 end;
 function THIDScreenshot.Complete(Value: Boolean): Boolean;
 begin
