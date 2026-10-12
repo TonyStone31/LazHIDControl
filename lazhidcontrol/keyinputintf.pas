@@ -46,7 +46,7 @@ type
     procedure Down(Key: word);
     procedure Up(Key: word);
     procedure Press(Key: word);
-    procedure PressString(StringValue: string);
+    procedure PressString(StringValue: string; Interval: Cardinal = 0);
     procedure Apply(Shift: TShiftState);
     procedure Unapply(Shift: TShiftState);
     procedure PressUnicodeChar(unicode: cardinal); virtual;
@@ -155,7 +155,7 @@ begin
   // This fallback does nothing - Unicode input requires platform-specific handling
 end;
 
-procedure TKeyInput.PressString(StringValue: string);
+procedure TKeyInput.PressString(StringValue: string; Interval: Cardinal);
 var
   p: PChar;
   unicode: cardinal;
@@ -182,6 +182,7 @@ begin
         Inc(p, 1);
       PressASCIIChar(#10);
       Sleep(5);
+      if (Interval > 0) and (p^ <> #0) then Sleep(Interval);
       Continue;
     end;
 
@@ -195,6 +196,7 @@ begin
     end;
 
     Inc(p, CPLen);
+    if (Interval > 0) and (p^ <> #0) then Sleep(Interval);
   end;
 end;
 

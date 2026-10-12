@@ -3,6 +3,7 @@
   <Package Version="5">
     <PathDelim Value="\"/>
     <Name Value="LazHIDControl"/>
+    <Type Value="RunAndDesignTime"/>
     <AddToProjectUsesSection Value="True"/>
     <Author Value="Tony Stone - Original input implementation by Tom Gregorovic; hotkey support adapted from Codebot"/>
     <CompilerOptions>
@@ -170,6 +171,68 @@
       <Item>
         <Filename Value="windowmanager.pas"/>
         <UnitName Value="WindowManager"/>
+      </Item>
+      <Item>
+        <Filename Value="hidhotkey.pas"/>
+        <UnitName Value="HIDHotkey"/>
+      </Item>
+      <Item>
+        <Filename Value="hidregister.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="HIDRegister"/>
+      </Item>
+      <Item><Filename Value="hidinput.pas"/><UnitName Value="HIDInput"/></Item>
+      <Item><Filename Value="hidscreenshot.pas"/><UnitName Value="HIDScreenshot"/></Item>
+      <Item>
+        <Filename Value="cocoawindowmanager.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CocoaWindowManager"/>
+      </Item>
+      <Item>
+        <Filename Value="waylandwindowmanager.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WaylandWindowManager"/>
+      </Item>
+      <Item>
+        <Filename Value="hidwindow.pas"/>
+        <UnitName Value="HIDWindow"/>
+      </Item>
+      <Item>
+        <Filename Value="hididle.pas"/>
+        <UnitName Value="HIDIdle"/>
+      </Item>
+      <Item>
+        <Filename Value="idleinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="IdleInput"/>
+      </Item>
+      <Item>
+        <Filename Value="linuxidle.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="LinuxIdle"/>
+      </Item>
+      <Item>
+        <Filename Value="powerinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="PowerInput"/>
+      </Item>
+      <Item>
+        <Filename Value="winpowerinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="WinPowerInput"/>
+      </Item>
+      <Item>
+        <Filename Value="linuxpowerinput.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="LinuxPowerInput"/>
+      </Item>
+      <Item>
+        <Filename Value="hidpower.pas"/>
+        <UnitName Value="HIDPower"/>
+      </Item>
+      <Item>
+        <Filename Value="hidclipboard.pas"/>
+        <UnitName Value="HIDClipboard"/>
       </Item>
     </Files>
     <RequiredPkgs>

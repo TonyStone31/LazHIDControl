@@ -103,7 +103,11 @@ end;
 procedure TWinHotkey.DoRegister;
 var
   Modifiers: UINT;
+  I: Integer;
 begin
+  for I := 0 to GlobalHotkeys.Count - 1 do
+    if (TWinHotkey(GlobalHotkeys[I]).Key = Key) and
+      (TWinHotkey(GlobalHotkeys[I]).Shift = Shift) then Exit;
   Modifiers := MOD_NOREPEAT;
   if ssShift in Shift then Modifiers := Modifiers or MOD_SHIFT;
   if ssCtrl in Shift then Modifiers := Modifiers or MOD_CONTROL;
@@ -115,8 +119,10 @@ begin
     GlobalHotkeys.Add(Self);
     Registered := True;
   end
-  else
+  else begin
+    GlobalDeleteAtom(AtomID);
     AtomID := 0;
+  end;
 end;
 
 procedure TWinHotkey.DoUnregister;

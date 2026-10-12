@@ -1,7 +1,7 @@
 # LazHIDControl OPM maintainer notes
 
-- Package: `LazHIDControl`, runtime (the `.lpk` omits Type, whose default is
-  runtime); 31 listed units and the generated `lazhidcontrol.pas` entry point.
+- Package: `LazHIDControl`, runtime and design time (`RunAndDesignTime`); 46 listed units and the generated `lazhidcontrol.pas` entry point.
+- Palette components: `THIDHotkey`, `THIDKeyboard`, `THIDMouse`, `THIDScreenshot`, `THIDWindow`, `THIDIdle`, `THIDPowerMonitor`, `THIDClipboardMonitor`.
 - Package file: `lazhidcontrol/lazhidcontrol.lpk`.
 - Version: **1.0.0.0**; unchanged for submission.
 - Maintainer: Tony Stone; original input code by Tom Gregorovic, Cocoa input
@@ -17,7 +17,8 @@
   The unfinished Wayland backend targets uinput; access permissions alone
   do not make it functional.
 - Examples: `HIDControlDemo.lpi`, `lazhidcontrol/example/project1.lpi`, and
-  `hidctl/hidctl.lpi`; all require `LazHIDControl`.
+  `hidctl/hidctl.lpi`, `examples/hotkey/HotkeyDemo.lpi`, and
+  `examples/automation/AutomationDemo.lpi`; all require `LazHIDControl`.
 - Verified here: Linux x86-64, GTK3, Lazarus **4.99** (trunk), FPC **3.3.1**.
   Windows support is reported in the README but was not tested in this review.
   GTK2/Qt and release compiler/IDE versions were not verified here.
@@ -49,7 +50,7 @@ The Lazarus-generated `lazhidcontrol.pas` entry point is useful source.
 
 Exclude `lib` directories, backups, sessions, generated project `.res` files,
 compiled programs (`HIDControlDemo`, `hidctl/hidctl`, and example `project1`),
-local `.claude` settings, local build scripts and local patch files from the
+local configuration, local build scripts and local patch files from the
 staging copy. No tracked build artifacts were found. Do not remove useful
 repository files merely to reduce the release archive.
 

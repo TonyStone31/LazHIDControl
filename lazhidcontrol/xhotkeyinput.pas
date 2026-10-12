@@ -83,6 +83,13 @@ const
 var
   GlobalHotkeys: TList = nil;
   FilterInstalled: Boolean = False;
+  GrabFailed: Boolean = False;
+
+function GrabError(Display: PDisplay; Event: PXErrorEvent): Integer; cdecl;
+begin
+  GrabFailed := True;
+  Result := 0;
+end;
 
 function ShiftToMod(ShiftState: TShiftState): Integer;
 begin
@@ -199,6 +206,8 @@ var
   KeySym, ShiftedSym: TKeySym;
   XKeyCode: LongWord;
   Window: TWindow;
+  I: Integer;
+  PreviousHandler: TXErrorHandler;
 
   procedure CaptureKey(Disp: PDisplay; KC: LongWord; Modif: LongWord; Win: TWindow);
   begin
@@ -213,12 +222,20 @@ var
   end;
 
 begin
+  for I := 0 to GlobalHotkeys.Count - 1 do
+    if (TXHotkey(GlobalHotkeys[I]).Key = Key) and
+      (TXHotkey(GlobalHotkeys[I]).Shift = Shift) then Exit;
+  if not Assigned(Display) or not Assigned(RootWindow) then Exit;
   Modifier := ShiftToMod(Shift);
   KeySym := KeyToSym(Key);
   if KeySym = 0 then Exit;
 
   XKeyCode := XKeysymToKeycode(Display, KeySym);
   Window := RootXid(RootWindow);
+  if XKeyCode = 0 then Exit;
+  XSync(Display, False);
+  GrabFailed := False;
+  PreviousHandler := XSetErrorHandler(@GrabError);
   CaptureKey(Display, XKeyCode, Modifier, Window);
 
   { Also capture the shifted variant if it's different (e.g., lowercase vs uppercase) }
@@ -229,6 +246,14 @@ begin
     CaptureKey(Display, XKeyCode, Modifier, Window);
   end;
 
+  XSync(Display, False);
+  XSetErrorHandler(PreviousHandler);
+  if GrabFailed then begin
+    // Release any variants that succeeded before the conflicting grab.
+    Registered := True;
+    DoUnregister;
+    Exit;
+  end;
   GlobalHotkeys.Add(Self);
 
   if not FilterInstalled then

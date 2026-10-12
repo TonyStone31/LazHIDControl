@@ -287,7 +287,7 @@ begin
   Result := False;
   if GetWindowProperty(AWindow, AtomNetWMState, Pointer(Data), Count) then
   begin
-    for i := 0 to Count - 1 do
+    for i := 0 to Integer(Count) - 1 do
     begin
       if PAtom(pbyte(Data) + i * SizeOf(TAtom))^ = AState then
       begin
@@ -469,17 +469,28 @@ end;
 function TXWindowManager.DoEnumerateWindows: TList;
 var
   Data: PWindow;
-  Count: culong;
+  Count, BytesAfter: culong;
+  ActualType: TAtom;
+  ActualFormat: cint;
   i: integer;
 begin
   Result := TList.Create;
-
-  if GetWindowProperty(RootWindowHandle, AtomNetClientList, Pointer(Data), Count) then
+  Data := nil;
+  if (XGetWindowProperty(XDisplayHandle, RootWindowHandle, AtomNetClientList,
+    0, $7FFFFFFF, False, XA_WINDOW, @ActualType, @ActualFormat,
+    @Count, @BytesAfter, @Data) = Success) and (ActualType = XA_WINDOW) and
+    (ActualFormat = 32) then
   begin
-    for i := 0 to Count - 1 do
+    for i := 0 to Integer(Count) - 1 do
       Result.Add(Pointer(PWindow(pbyte(Data) + i * SizeOf(TWindow))^));
-    XFree(Data);
+  end
+  else
+  begin
+    // Bare X servers may have no EWMH client list.
+    Result.Free;
+    Result := GetWindowChildren(RootWindowHandle);
   end;
+  if Data <> nil then XFree(Data);
 end;
 
 function TXWindowManager.DoGetWindowChildren(AHandle: TWindowHandle): TList;
@@ -674,7 +685,7 @@ begin
 
   if XQueryTree(XDisplayHandle, TWindow(AHandle), @RootReturn, @ParentReturn, @Children, @NumChildren) <> 0 then
   begin
-    for i := 0 to NumChildren - 1 do
+    for i := 0 to Integer(NumChildren) - 1 do
       Result.Add(Pointer(PWindow(pbyte(Children) + i * SizeOf(TWindow))^));
 
     if Children <> nil then

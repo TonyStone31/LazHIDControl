@@ -8,9 +8,17 @@ unit LazHIDControl;
 interface
 
 uses
-  MouseAndKeyInput, HotkeyInput, GlobalKeyMonitor, GlobalMouseMonitor, 
-  WindowManagerIntf, WindowManager;
+  MouseAndKeyInput, HotkeyInput, GlobalKeyMonitor, GlobalMouseMonitor,
+  WindowManagerIntf, WindowManager, HIDHotkey, HIDRegister, HIDInput,
+  HIDScreenshot, HIDWindow, HIDIdle, HIDPower, HIDClipboard, LazarusPackageIntf;
 
 implementation
 
+procedure Register;
+begin
+  RegisterUnit('HIDRegister', @HIDRegister.Register);
+end;
+
+initialization
+  RegisterPackage('LazHIDControl', @Register);
 end.

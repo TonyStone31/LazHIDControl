@@ -29,9 +29,12 @@ uses
   {$IFDEF WINDOWS}
   , WinWindowManager
   {$ENDIF}
+  {$IFDEF DARWIN}
+  , CocoaWindowManager
+  {$ENDIF}
   {$IFDEF UNIX}
     {$IFNDEF DARWIN}
-    , XWindowManager
+    , XWindowManager, WaylandWindowManager
     {$ENDIF}
   {$ENDIF}
   ;
@@ -72,11 +75,13 @@ begin
   {$ELSE}
     {$IFDEF UNIX}
       {$IFDEF DARWIN}
-      // macOS - not yet implemented
-      Result := nil;
+      Result := CocoaWindowManager.InitializeWindowManager;
       {$ELSE}
-      // Linux/BSD - X11
-      Result := XWindowManager.InitializeWindowManager;
+      // Do not use X11 as a substitute for native Wayland window control.
+      if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
+        Result := WaylandWindowManager.InitializeWindowManager
+      else
+        Result := XWindowManager.InitializeWindowManager;
       {$ENDIF}
     {$ELSE}
     Result := nil;

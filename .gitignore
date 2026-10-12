@@ -65,3 +65,7 @@ hidctl/*.lps
 # Small example executable and local assistant settings
 lazhidcontrol/example/project1
 .claude/
+
+# Nonvisual hotkey demo executable
+/examples/hotkey/HotkeyDemo
+/examples/automation/AutomationDemo

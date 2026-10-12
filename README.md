@@ -4,26 +4,29 @@ Mouse and keyboard automation for Lazarus / Free Pascal, with global hotkeys
 and window management. The working backends target Windows and Linux/X11.
 Wayland support is unfinished; macOS is not a supported target for this release.
 
-Package version: **1.0.0.0**. This is a runtime package, with no components to
-install on the IDE palette.
+Package version: **1.0.0.0**. Use the library directly or install its eight
+nonvisual components on the **LazHIDControl** palette.
 
 ## Install and build
 
 Open `lazhidcontrol/lazhidcontrol.lpk` in Lazarus, click **Compile**, then
-**Use → Add to Project**. Open `HIDControlDemo.lpi` to try the main demo.
+**Use → Install** to add the components to the palette and rebuild Lazarus.
+For library-only use, choose **Use → Add to Project** instead.
+Open `examples/hotkey/HotkeyDemo.lpi` for the small component demo, or
+`HIDControlDemo.lpi` for the existing automation demo.
 Keep the repository layout intact; the package belongs in its subdirectory.
 
 From the repository root, with Lazarus tools on your PATH:
 
 ```sh
 lazbuild --add-package-link lazhidcontrol/lazhidcontrol.lpk
-lazbuild HIDControlDemo.lpi
-lazbuild lazhidcontrol/example/project1.lpi
-lazbuild hidctl/hidctl.lpi
+lazbuild --ws=gtk3 HIDControlDemo.lpi
+lazbuild --ws=gtk3 lazhidcontrol/example/project1.lpi
+lazbuild --ws=gtk3 hidctl/hidctl.lpi
 ```
 
 Package dependencies are `LCL` and `FCL` (declared FCL minimum: 1.0.0.0).
-Linux builds also need the FPC X11 and D-Bus units and linkable X11, Xtst and
+GTK3 is the Linux target for the component demos. Linux builds also need the FPC X11 and D-Bus units and linkable X11, Xtst and
 D-Bus libraries, plus the usual libraries for your LCL widgetset. The demo's
 X11 event support also loads `libXi` at runtime.
 
@@ -31,6 +34,23 @@ The package and all three projects compiled on Linux x86-64 with GTK3,
 Lazarus 4.99 and FPC 3.3.1 during packaging review. That is a build check;
 it does not establish runtime support on every platform or older IDE versions.
 See [OPM.md](OPM.md) for submission notes.
+
+## Drop-on-form components
+
+| Component | Quick setup |
+|---|---|
+| `THIDHotkey` | Record a shortcut in the Object Inspector, enable it, and assign `OnHotkey`. |
+| `THIDKeyboard` | Set typing timing or modifiers, then call `TypeText` or `PressKey`. |
+| `THIDMouse` | Configure movement timing and a relative control or external window, then move, click, or scroll. |
+| `THIDPowerMonitor` | Enable sleep/wake events and watch power source, battery level, and charging. |
+| `THIDClipboardMonitor` | Enable clipboard-change events; use LCL to read the copied data. |
+| `THIDIdle` | Set an inactivity threshold and handle `OnIdle` / `OnActive`. |
+| `THIDWindow` | Find a window by title, class, or process; wait for it, activate, move, or resize. |
+| `THIDScreenshot` | Choose desktop, monitor, window, rectangle, or drag selection; call `Capture`. |
+
+[Component guide and Object Inspector settings](COMPONENTS.md) ·
+[Small hotkey demo](examples/hotkey/HotkeyDemo.lpi) ·
+[Automation and capture demo](examples/automation/AutomationDemo.lpi)
 
 ## Using it
 
