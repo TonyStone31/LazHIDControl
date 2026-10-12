@@ -54,18 +54,20 @@ const
 
 type
   PXIEventMask = ^TXIEventMask;
+
   TXIEventMask = record
     deviceid: cint;
     mask_len: cint;
-    mask: PByte;
+    mask: pbyte;
   end;
 
   // Simplified XIRawEvent structure - we only need the detail field
   PXIRawEvent = ^TXIRawEvent;
+
   TXIRawEvent = record
     _type: cint;
     serial: culong;
-    send_event: LongBool;
+    send_event: longbool;
     display: PDisplay;
     extension: cint;
     evtype: cint;
@@ -77,7 +79,7 @@ type
     // ... rest of structure omitted, we only need detail
   end;
 
-// XInput2 functions - we'll load them dynamically
+  // XInput2 functions - we'll load them dynamically
 var
   XISelectEvents: function(dpy: PDisplay; win: TWindow; masks: PXIEventMask; num_masks: cint): cint; cdecl = nil;
   LibXI2: TLibHandle = NilHandle;
@@ -87,7 +89,7 @@ type
   TKeyMonitorThread = class(TThread)
   private
     Listener: TXGlobalKeyListener;
-    DetectedKey: Word;
+    DetectedKey: word;
     DetectedShift: TShiftState;
     procedure NotifyKeyPress;
   public
@@ -96,7 +98,7 @@ type
   end;
 
 // Convert X KeySym to LCL VK code
-function SymToKey(Sym: TKeySym): Word;
+function SymToKey(Sym: TKeySym): word;
 begin
   case Sym of
     XK_TAB: Result := VK_TAB;
@@ -114,26 +116,26 @@ begin
     XK_RIGHT: Result := VK_RIGHT;
     XK_DOWN: Result := VK_DOWN;
     XK_INSERT: Result := VK_INSERT;
-    XK_F1..XK_F12: Result := VK_F1 + Word(Sym - XK_F1);
+    XK_F1..XK_F12: Result := VK_F1 + word(Sym - XK_F1);
     XK_SHIFT_L, XK_SHIFT_R: Result := VK_SHIFT;
     XK_CONTROL_L, XK_CONTROL_R: Result := VK_CONTROL;
     XK_ALT_L, XK_ALT_R: Result := VK_MENU;
-  else
-    // For printable ASCII characters (letters, numbers, symbols), convert to uppercase VK code
-    if (Sym >= $20) and (Sym <= $7E) then
-    begin
-      // If lowercase letter, convert to uppercase for VK code
-      if (Sym >= Ord('a')) and (Sym <= Ord('z')) then
-        Result := Sym - 32
-      else
-        Result := Sym;  // Numbers, uppercase letters, and symbols stay as-is
-    end
     else
-      Result := Sym and $FF;  // Fallback for other keysyms
+      // For printable ASCII characters (letters, numbers, symbols), convert to uppercase VK code
+      if (Sym >= $20) and (Sym <= $7E) then
+      begin
+        // If lowercase letter, convert to uppercase for VK code
+        if (Sym >= Ord('a')) and (Sym <= Ord('z')) then
+          Result := Sym - 32
+        else
+          Result := Sym;  // Numbers, uppercase letters, and symbols stay as-is
+      end
+      else
+        Result := Sym and $FF;  // Fallback for other keysyms
   end;
 end;
 
-function ModToShift(Modifiers: Cardinal): TShiftState;
+function ModToShift(Modifiers: cardinal): TShiftState;
 begin
   Result := [];
   if (ShiftMask and Modifiers) > 0 then
@@ -178,11 +180,10 @@ begin
         // Get the event data
         if XGetEventData(Listener.Display, @Event.xcookie) then
         begin
-          if (Event.xcookie.extension = Listener.XI2Opcode) and
-             (Event.xcookie.evtype = XI_RawKeyPress) then
+          if (Event.xcookie.extension = Listener.XI2Opcode) and (Event.xcookie.evtype = XI_RawKeyPress) then
           begin
             // Cast the data to XIRawEvent structure
-            RawEvent := PXIRawEvent(Event.xcookie.data);
+            RawEvent := PXIRawEvent(Event.xcookie.Data);
 
             // Extract keycode from detail field
             keycode := RawEvent^.detail;
@@ -209,7 +210,7 @@ begin
   end;
 end;
 
-function LoadXI2Library: Boolean;
+function LoadXI2Library: boolean;
 begin
   Result := False;
   LibXI2 := LoadLibrary('libXi.so.6');
@@ -263,7 +264,7 @@ end;
 
 procedure TXGlobalKeyListener.DoStartMonitoring;
 var
-  mask: array[0..3] of Byte;
+  mask: array[0..3] of byte;
   evmask: TXIEventMask;
 begin
   if Active or (Display = nil) or not Assigned(XISelectEvents) then

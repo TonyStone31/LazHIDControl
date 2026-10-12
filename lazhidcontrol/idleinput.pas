@@ -2,8 +2,11 @@ unit IdleInput;
 {$mode objfpc}{$H+}
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
-function QuerySystemIdle(out Milliseconds: QWord; out Message: string): Boolean;
+
+function QuerySystemIdle(out Milliseconds: QWord; out Message: string): boolean;
+
 implementation
+
 uses Math
   {$ifdef windows}, Windows{$endif}
   {$ifdef linux}, LinuxIdle{$endif}
@@ -16,9 +19,14 @@ type
 function GetLastInputInfo(var Info: TIdleInputInfo): BOOL; stdcall;
   external 'user32.dll' name 'GetLastInputInfo';
 {$endif}
-function QuerySystemIdle(out Milliseconds: QWord; out Message: string): Boolean;
-{$ifdef windows}var Info: TIdleInputInfo; CurrentTick: DWORD;{$endif}
-{$ifdef darwin}var Seconds: Double;{$endif}
+
+function QuerySystemIdle(out Milliseconds: QWord; out Message: string): boolean;
+  {$ifdef windows}
+var Info: TIdleInputInfo; CurrentTick: DWORD;
+  {$endif}
+  {$ifdef darwin}
+var Seconds: Double;
+  {$endif}
 begin
   Milliseconds := 0;
   Message := 'System idle detection is not implemented on this platform.';
@@ -43,4 +51,5 @@ begin
   {$endif}
   if Result then Message := '';
 end;
+
 end.

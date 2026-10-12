@@ -24,32 +24,32 @@ uses
   Classes, SysUtils, LCLType;
 
 type
-  TKeyNotifyEvent = procedure(Sender: TObject; Key: Word; Shift: TShiftState) of object;
+  TKeyNotifyEvent = procedure(Sender: TObject; Key: word; Shift: TShiftState) of object;
 
   { THotkey - Abstract base class for global hotkey registration }
   THotkey = class
   protected
-    KeyCode: Word;
+    KeyCode: word;
     ShiftState: TShiftState;
     OnHotkeyEvent: TKeyNotifyEvent;
-    IsRegistered: Boolean;
+    IsRegistered: boolean;
     procedure DoRegister; virtual; abstract;
     procedure DoUnregister; virtual; abstract;
   public
-    constructor Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); virtual;
+    constructor Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); virtual;
     destructor Destroy; override;
     procedure Register;
     procedure Unregister;
-    property Key: Word read KeyCode;
+    property Key: word read KeyCode;
     property Shift: TShiftState read ShiftState;
-    property Registered: Boolean read IsRegistered write IsRegistered;
+    property Registered: boolean read IsRegistered write IsRegistered;
   end;
 
 implementation
 
 { THotkey }
 
-constructor THotkey.Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
+constructor THotkey.Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
 begin
   inherited Create;
   KeyCode := AKey;

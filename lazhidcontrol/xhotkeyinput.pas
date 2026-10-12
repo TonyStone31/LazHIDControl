@@ -40,10 +40,10 @@ type
     procedure DoRegister; override;
     procedure DoUnregister; override;
   public
-    constructor Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
+    constructor Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
   end;
 
-function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 
 implementation
 
@@ -78,20 +78,20 @@ const
   AltMask = Mod1Mask;
   CapLock = LockMask;
   NumLock = Mod2Mask;
-  NotLock = Integer(not (CapLock or NumLock));
+  NotLock = integer(not (CapLock or NumLock));
 
 var
   GlobalHotkeys: TList = nil;
-  FilterInstalled: Boolean = False;
-  GrabFailed: Boolean = False;
+  FilterInstalled: boolean = False;
+  GrabFailed: boolean = False;
 
-function GrabError(Display: PDisplay; Event: PXErrorEvent): Integer; cdecl;
+function GrabError(Display: PDisplay; Event: PXErrorEvent): integer; cdecl;
 begin
   GrabFailed := True;
   Result := 0;
 end;
 
-function ShiftToMod(ShiftState: TShiftState): Integer;
+function ShiftToMod(ShiftState: TShiftState): integer;
 begin
   Result := 0;
   if ssShift in ShiftState then
@@ -102,7 +102,7 @@ begin
     Result := Result or ControlMask;
 end;
 
-function ModToShift(Modifiers: Integer): TShiftState;
+function ModToShift(Modifiers: integer): TShiftState;
 begin
   Result := [];
   if (ShiftMask and Modifiers) > 0 then
@@ -113,7 +113,7 @@ begin
     Include(Result, ssCtrl);
 end;
 
-function KeyToSym(Key: Word): TKeySym;
+function KeyToSym(Key: word): TKeySym;
 begin
   case Key of
     VK_F1..VK_F12: Result := XK_F1 + (Key - VK_F1);
@@ -123,12 +123,12 @@ begin
     VK_RETURN: Result := XK_RETURN;
     VK_ESCAPE: Result := XK_ESCAPE;
     VK_TAB: Result := XK_TAB;
-  else
-    Result := 0;
+    else
+      Result := 0;
   end;
 end;
 
-function SymToKey(Sym: TKeySym): Word;
+function SymToKey(Sym: TKeySym): word;
 begin
   if (Sym >= XK_F1) and (Sym <= XK_F12) then
     Result := VK_F1 + (Sym - XK_F1)
@@ -144,8 +144,8 @@ begin
       XK_RETURN: Result := VK_RETURN;
       XK_ESCAPE: Result := VK_ESCAPE;
       XK_TAB: Result := VK_TAB;
-    else
-      Result := 0;
+      else
+        Result := 0;
     end;
 end;
 
@@ -154,9 +154,9 @@ var
   AnyEvent: PXAnyEvent absolute XEvent;
   KeyEvent: PXKeyEvent absolute XEvent;
   Sym: TKeySym;
-  Key: Word;
+  Key: word;
   ShiftState: TShiftState;
-  I: Integer;
+  I: integer;
   Hotkey: TXHotkey;
   Display: PDisplay;
 begin
@@ -182,14 +182,14 @@ begin
   Result := GDK_FILTER_CONTINUE;
 end;
 
-function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 begin
   Result := TXHotkey.Create(AKey, AShift, AOnHotkey);
 end;
 
 { TXHotkey }
 
-constructor TXHotkey.Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
+constructor TXHotkey.Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
 begin
   inherited Create(AKey, AShift, AOnHotkey);
 
@@ -202,14 +202,14 @@ end;
 
 procedure TXHotkey.DoRegister;
 var
-  Modifier: LongWord;
+  Modifier: longword;
   KeySym, ShiftedSym: TKeySym;
-  XKeyCode: LongWord;
+  XKeyCode: longword;
   Window: TWindow;
-  I: Integer;
+  I: integer;
   PreviousHandler: TXErrorHandler;
 
-  procedure CaptureKey(Disp: PDisplay; KC: LongWord; Modif: LongWord; Win: TWindow);
+  procedure CaptureKey(Disp: PDisplay; KC: longword; Modif: longword; Win: TWindow);
   begin
     { Capture keys without cap or num lock }
     XGrabKey(Disp, KC, Modif and NotLock, Win, 1, GrabModeAsync, GrabModeAsync);
@@ -223,8 +223,7 @@ var
 
 begin
   for I := 0 to GlobalHotkeys.Count - 1 do
-    if (TXHotkey(GlobalHotkeys[I]).Key = Key) and
-      (TXHotkey(GlobalHotkeys[I]).Shift = Shift) then Exit;
+    if (TXHotkey(GlobalHotkeys[I]).Key = Key) and (TXHotkey(GlobalHotkeys[I]).Shift = Shift) then Exit;
   if not Assigned(Display) or not Assigned(RootWindow) then Exit;
   Modifier := ShiftToMod(Shift);
   KeySym := KeyToSym(Key);
@@ -248,7 +247,8 @@ begin
 
   XSync(Display, False);
   XSetErrorHandler(PreviousHandler);
-  if GrabFailed then begin
+  if GrabFailed then
+  begin
     // Release any variants that succeeded before the conflicting grab.
     Registered := True;
     DoUnregister;
@@ -267,12 +267,12 @@ end;
 
 procedure TXHotkey.DoUnregister;
 var
-  Modifier: LongWord;
+  Modifier: longword;
   KeySym, ShiftedSym: TKeySym;
-  XKeyCode: LongWord;
+  XKeyCode: longword;
   Window: TWindow;
 
-  procedure ReleaseKey(Disp: PDisplay; KC: LongWord; Modif: LongWord; Win: TWindow);
+  procedure ReleaseKey(Disp: PDisplay; KC: longword; Modif: longword; Win: TWindow);
   begin
     { Release keys without cap or num lock }
     XUngrabKey(Disp, KC, Modif and NotLock, Win);

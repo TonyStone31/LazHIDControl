@@ -58,7 +58,7 @@ type
 var
   GlobalListener: TWinGlobalMouseListener = nil;
 
-function LowLevelMouseProc(nCode: Integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
+function LowLevelMouseProc(nCode: integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
 var
   MouseInfo: ^MSLLHOOKSTRUCT;
   Button: TMouseButton;
@@ -78,16 +78,16 @@ begin
       WM_MBUTTONDOWN:
         Button := mbMiddle;
       WM_XBUTTONDOWN:
-        begin
-          // Extract which X button was pressed (1 = back, 2 = forward)
-          XButton := (MouseInfo^.mouseData shr 16) and $FFFF;
-          if XButton = 1 then
-            Button := mbExtra1  // Back button
-          else
-            Button := mbExtra2; // Forward button
-        end;
-    else
-      Exit;
+      begin
+        // Extract which X button was pressed (1 = back, 2 = forward)
+        XButton := (MouseInfo^.mouseData shr 16) and $FFFF;
+        if XButton = 1 then
+          Button := mbExtra1  // Back button
+        else
+          Button := mbExtra2; // Forward button
+      end;
+      else
+        Exit;
     end;
 
     if Assigned(GlobalListener.OnMouseClick) then

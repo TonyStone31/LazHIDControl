@@ -34,7 +34,7 @@ type
   private
     procedure UnapplyAllKeys;
   protected
-    CapsLockStateAtStringStart: Boolean;
+    CapsLockStateAtStringStart: boolean;
     procedure DoDown(Key: word); dynamic; abstract;
     procedure DoUp(Key: word); dynamic; abstract;
     procedure capsLockGetSaveState; dynamic; abstract;
@@ -46,14 +46,14 @@ type
     procedure Down(Key: word);
     procedure Up(Key: word);
     procedure Press(Key: word);
-    procedure PressString(StringValue: string; Interval: Cardinal = 0);
+    procedure PressString(StringValue: string; Interval: cardinal = 0);
     procedure Apply(Shift: TShiftState);
     procedure Unapply(Shift: TShiftState);
     procedure PressUnicodeChar(unicode: cardinal); virtual;
     procedure PressASCIIChar(ch: char); virtual;
-    function GetCapsLockState: Boolean; dynamic; abstract;
-    function GetNumLockState: Boolean; dynamic; abstract;
-    function GetScrollLockState: Boolean; dynamic; abstract;
+    function GetCapsLockState: boolean; dynamic; abstract;
+    function GetNumLockState: boolean; dynamic; abstract;
+    function GetScrollLockState: boolean; dynamic; abstract;
     procedure ToggleCapsLock; dynamic; abstract;
     procedure ToggleNumLock; dynamic; abstract;
     procedure ToggleScrollLock; dynamic; abstract;
@@ -61,7 +61,7 @@ type
 
 implementation
 
-  { TKeyInput }
+{ TKeyInput }
 
 procedure TKeyInput.Down(Key: word);
 begin
@@ -151,11 +151,11 @@ begin
   //   - TXKeyInput (Linux): Uses Ctrl+Shift+U + hex digits
   //   - TWinKeyInput (Windows): Uses KEYEVENTF_UNICODE with SendInput
   //   - TCarbonKeyInput (macOS): Uses Option key combinations
-  //
+
   // This fallback does nothing - Unicode input requires platform-specific handling
 end;
 
-procedure TKeyInput.PressString(StringValue: string; Interval: Cardinal);
+procedure TKeyInput.PressString(StringValue: string; Interval: cardinal);
 var
   p: PChar;
   unicode: cardinal;
@@ -190,7 +190,8 @@ begin
     begin
       PressASCIIChar(char(unicode));
       Sleep(5);
-    end else if unicode > 0 then
+    end
+    else if unicode > 0 then
     begin
       PressUnicodeChar(unicode);
     end;

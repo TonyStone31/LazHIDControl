@@ -29,16 +29,16 @@ type
   { TWinHotkey }
   TWinHotkey = class(THotkey)
   private
-    AtomID: Word;
+    AtomID: word;
     WindowHandle: HWND;
   protected
     procedure DoRegister; override;
     procedure DoUnregister; override;
   public
-    constructor Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
+    constructor Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
   end;
 
-function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 
 implementation
 
@@ -51,7 +51,7 @@ var
 
 function HotkeyWindowProc(hWnd: HWND; Msg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
 var
-  I: Integer;
+  I: integer;
   Hotkey: TWinHotkey;
 begin
   if Msg = WM_HOTKEY then
@@ -70,14 +70,14 @@ begin
   Result := DefWindowProc(hWnd, Msg, wParam, lParam);
 end;
 
-function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 begin
   Result := TWinHotkey.Create(AKey, AShift, AOnHotkey);
 end;
 
 { TWinHotkey }
 
-constructor TWinHotkey.Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
+constructor TWinHotkey.Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
 var
   WndClass: TWNDCLASSA;
 begin
@@ -103,11 +103,10 @@ end;
 procedure TWinHotkey.DoRegister;
 var
   Modifiers: UINT;
-  I: Integer;
+  I: integer;
 begin
   for I := 0 to GlobalHotkeys.Count - 1 do
-    if (TWinHotkey(GlobalHotkeys[I]).Key = Key) and
-      (TWinHotkey(GlobalHotkeys[I]).Shift = Shift) then Exit;
+    if (TWinHotkey(GlobalHotkeys[I]).Key = Key) and (TWinHotkey(GlobalHotkeys[I]).Shift = Shift) then Exit;
   Modifiers := MOD_NOREPEAT;
   if ssShift in Shift then Modifiers := Modifiers or MOD_SHIFT;
   if ssCtrl in Shift then Modifiers := Modifiers or MOD_CONTROL;
@@ -119,7 +118,8 @@ begin
     GlobalHotkeys.Add(Self);
     Registered := True;
   end
-  else begin
+  else
+  begin
     GlobalDeleteAtom(AtomID);
     AtomID := 0;
   end;

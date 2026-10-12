@@ -36,9 +36,9 @@ type
     procedure capsLockGetSaveState; override;
     procedure capsLockRestoreState; override;
   public
-    function GetCapsLockState: Boolean; override;
-    function GetNumLockState: Boolean; override;
-    function GetScrollLockState: Boolean; override;
+    function GetCapsLockState: boolean; override;
+    function GetNumLockState: boolean; override;
+    function GetScrollLockState: boolean; override;
     procedure ToggleCapsLock; override;
     procedure ToggleNumLock; override;
     procedure ToggleScrollLock; override;
@@ -159,19 +159,19 @@ begin
   // Wayland uinput doesn't support querying lock key state
 end;
 
-function TWaylandKeyInput.GetCapsLockState: Boolean;
+function TWaylandKeyInput.GetCapsLockState: boolean;
 begin
   // Wayland uinput doesn't support querying lock key state
   Result := False;
 end;
 
-function TWaylandKeyInput.GetNumLockState: Boolean;
+function TWaylandKeyInput.GetNumLockState: boolean;
 begin
   // Wayland uinput doesn't support querying lock key state
   Result := False;
 end;
 
-function TWaylandKeyInput.GetScrollLockState: Boolean;
+function TWaylandKeyInput.GetScrollLockState: boolean;
 begin
   // Wayland uinput doesn't support querying lock key state
   Result := False;

@@ -24,13 +24,13 @@ uses
   Classes, SysUtils, LCLType;
 
 type
-  TKeyEvent = procedure(Key: Word; Shift: TShiftState) of object;
+  TKeyEvent = procedure(Key: word; Shift: TShiftState) of object;
 
   { TGlobalKeyListener - Abstract base class for system-wide key monitoring }
   TGlobalKeyListener = class
   protected
     OnKeyPressEvent: TKeyEvent;
-    IsActive: Boolean;
+    IsActive: boolean;
     procedure DoStartMonitoring; virtual; abstract;
     procedure DoStopMonitoring; virtual; abstract;
   public
@@ -39,7 +39,7 @@ type
     procedure StartMonitoring;
     procedure StopMonitoring;
     property OnKeyPress: TKeyEvent read OnKeyPressEvent write OnKeyPressEvent;
-    property Active: Boolean read IsActive write IsActive;
+    property Active: boolean read IsActive write IsActive;
   end;
 
 implementation

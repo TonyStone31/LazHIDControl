@@ -22,45 +22,45 @@ interface
 
 uses
   Classes, SysUtils, Controls, Forms;
-  
+
 type
   { TMouseInput }
 
   TMouseInput = class
   protected
     procedure DoDown(Button: TMouseButton); dynamic; abstract;
-    procedure DoMove(ScreenX, ScreenY: Integer); dynamic; abstract;
+    procedure DoMove(ScreenX, ScreenY: integer); dynamic; abstract;
     procedure DoUp(Button: TMouseButton); dynamic; abstract;
     procedure DoScrollUp; dynamic; abstract;
     procedure DoScrollDown; dynamic; abstract;
   public
     procedure Down(Button: TMouseButton; Shift: TShiftState);
-    procedure Down(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: Integer);
-    procedure Down(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: Integer);
-    
-    procedure Move(Shift: TShiftState; Control: TControl; X, Y: Integer; Duration: Integer = 0);
-    procedure MoveBy(Shift: TShiftState; DX, DY: Integer; Duration: Integer = 0);
-    procedure Move(Shift: TShiftState; ScreenX, ScreenY: Integer; Duration: Integer);
-    procedure Move(Shift: TShiftState; ScreenX, ScreenY: Integer);
+    procedure Down(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
+    procedure Down(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
+
+    procedure Move(Shift: TShiftState; Control: TControl; X, Y: integer; Duration: integer = 0);
+    procedure MoveBy(Shift: TShiftState; DX, DY: integer; Duration: integer = 0);
+    procedure Move(Shift: TShiftState; ScreenX, ScreenY: integer; Duration: integer);
+    procedure Move(Shift: TShiftState; ScreenX, ScreenY: integer);
 
     procedure ScrollUp(Shift: TShiftState);
-    procedure ScrollUp(Shift: TShiftState; Control: TControl; X, Y: Integer);
-    procedure ScrollUp(Shift: TShiftState; ScreenX, ScreenY: Integer);
+    procedure ScrollUp(Shift: TShiftState; Control: TControl; X, Y: integer);
+    procedure ScrollUp(Shift: TShiftState; ScreenX, ScreenY: integer);
     procedure ScrollDown(Shift: TShiftState);
-    procedure ScrollDown(Shift: TShiftState; Control: TControl; X, Y: Integer);
-    procedure ScrollDown(Shift: TShiftState; ScreenX, ScreenY: Integer);
+    procedure ScrollDown(Shift: TShiftState; Control: TControl; X, Y: integer);
+    procedure ScrollDown(Shift: TShiftState; ScreenX, ScreenY: integer);
 
     procedure Up(Button: TMouseButton; Shift: TShiftState);
-    procedure Up(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: Integer);
-    procedure Up(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: Integer);
-    
+    procedure Up(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
+    procedure Up(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
+
     procedure Click(Button: TMouseButton; Shift: TShiftState);
-    procedure Click(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: Integer);
-    procedure Click(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: Integer);
-    
+    procedure Click(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
+    procedure Click(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
+
     procedure DblClick(Button: TMouseButton; Shift: TShiftState);
-    procedure DblClick(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: Integer);
-    procedure DblClick(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: Integer);
+    procedure DblClick(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
+    procedure DblClick(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
   end;
 
 implementation
@@ -68,7 +68,7 @@ implementation
 uses
   Math, HIDMouseAndKeyInput;
 
-{ TMouseInput }
+  { TMouseInput }
 
 procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState);
 begin
@@ -81,8 +81,7 @@ begin
   Application.ProcessMessages;
 end;
 
-procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState;
-  Control: TControl; X, Y: Integer);
+procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
 var
   P: TPoint;
 begin
@@ -90,8 +89,7 @@ begin
   Down(Button, Shift, P.X, P.Y);
 end;
 
-procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState;
-  ScreenX, ScreenY: Integer);
+procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
   KeyInput.Apply(Shift);
   try
@@ -102,7 +100,7 @@ begin
   end;
 end;
 
-procedure TMouseInput.Move(Shift: TShiftState; Control: TControl; X, Y: Integer; Duration: Integer = 0);
+procedure TMouseInput.Move(Shift: TShiftState; Control: TControl; X, Y: integer; Duration: integer = 0);
 var
   P: TPoint;
 begin
@@ -110,7 +108,7 @@ begin
   Move(Shift, P.X, P.Y, Duration);
 end;
 
-procedure TMouseInput.MoveBy(Shift: TShiftState; DX, DY: Integer; Duration: Integer = 0);
+procedure TMouseInput.MoveBy(Shift: TShiftState; DX, DY: integer; Duration: integer = 0);
 var
   P: TPoint;
 begin
@@ -118,17 +116,17 @@ begin
   Move(Shift, P.X + DX, P.Y + DY, Duration);
 end;
 
-procedure TMouseInput.Move(Shift: TShiftState; ScreenX, ScreenY: Integer; Duration: Integer);
+procedure TMouseInput.Move(Shift: TShiftState; ScreenX, ScreenY: integer; Duration: integer);
 const
   Interval = 20;
 var
-  TimeStep: Integer;
-  X, Y: Integer;
+  TimeStep: integer;
+  X, Y: integer;
   Start: TPoint;
   S: QWord;
 begin
   Start := Mouse.CursorPos;
-  
+
   while Duration > 0 do
   begin
     TimeStep := Min(Interval, Duration);
@@ -136,7 +134,7 @@ begin
     S := GetTickCount64;
     while GetTickCount64 - S < TimeStep do
       Application.ProcessMessages;
-    
+
     X := Start.X + ((ScreenX - Start.X) * TimeStep) div Duration;
     Y := Start.Y + ((ScreenY - Start.Y) * TimeStep) div Duration;
     Move(Shift, X, Y);
@@ -144,11 +142,11 @@ begin
     Duration := Duration - TimeStep;
     Start := Point(X, Y);
   end;
-  
+
   Move(Shift, ScreenX, ScreenY);
 end;
 
-procedure TMouseInput.Move(Shift: TShiftState; ScreenX, ScreenY: Integer);
+procedure TMouseInput.Move(Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
   KeyInput.Apply(Shift);
   try
@@ -170,8 +168,7 @@ begin
   Application.ProcessMessages;
 end;
 
-procedure TMouseInput.ScrollUp(Shift: TShiftState; Control: TControl;
-  X, Y: Integer);
+procedure TMouseInput.ScrollUp(Shift: TShiftState; Control: TControl; X, Y: integer);
 var
   P: TPoint;
 begin
@@ -179,7 +176,7 @@ begin
   ScrollUp(Shift, P.X, P.Y);
 end;
 
-procedure TMouseInput.ScrollUp(Shift: TShiftState; ScreenX, ScreenY: Integer);
+procedure TMouseInput.ScrollUp(Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
   Move(Shift, ScreenX, ScreenY);
   ScrollUp(Shift);
@@ -196,8 +193,7 @@ begin
   Application.ProcessMessages;
 end;
 
-procedure TMouseInput.ScrollDown(Shift: TShiftState; Control: TControl;
-  X, Y: Integer);
+procedure TMouseInput.ScrollDown(Shift: TShiftState; Control: TControl; X, Y: integer);
 var
   P: TPoint;
 begin
@@ -205,7 +201,7 @@ begin
   ScrollDown(Shift, P.X, P.Y);
 end;
 
-procedure TMouseInput.ScrollDown(Shift: TShiftState; ScreenX, ScreenY: Integer);
+procedure TMouseInput.ScrollDown(Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
   Move(Shift, ScreenX, ScreenY);
   ScrollDown(Shift);
@@ -222,8 +218,7 @@ begin
   Application.ProcessMessages;
 end;
 
-procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState;
-  Control: TControl; X, Y: Integer);
+procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
 var
   P: TPoint;
 begin
@@ -231,8 +226,7 @@ begin
   Up(Button, Shift, P.X, P.Y);
 end;
 
-procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState;
-  ScreenX, ScreenY: Integer);
+procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
   Move(Shift, ScreenX, ScreenY);
   Up(Button, Shift);
@@ -244,8 +238,7 @@ begin
   Up(Button, Shift);
 end;
 
-procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState;
-  Control: TControl; X, Y: Integer);
+procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
 var
   P: TPoint;
 begin
@@ -253,8 +246,7 @@ begin
   Click(Button, Shift, P.X, P.Y);
 end;
 
-procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState;
-  ScreenX, ScreenY: Integer);
+procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
   Move(Shift, ScreenX, ScreenY);
   Click(Button, Shift);
@@ -266,8 +258,7 @@ begin
   Click(Button, Shift);
 end;
 
-procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState;
-  Control: TControl; X, Y: Integer);
+procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
 var
   P: TPoint;
 begin
@@ -275,12 +266,10 @@ begin
   DblClick(Button, Shift, P.X, P.Y);
 end;
 
-procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState;
-  ScreenX, ScreenY: Integer);
+procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
   Move(Shift, ScreenX, ScreenY);
   DblClick(Button, Shift);
 end;
 
 end.
-

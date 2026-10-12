@@ -10,15 +10,17 @@ uses
   athreads,
   {$ENDIF}
   Interfaces,
-  Forms, MainForm, WaylandInfo, LazHIDControl;
+  Forms,
+  MainForm,
+  WaylandInfo,
+  LazHIDControl;
 
-{$R *.res}
+  {$R *.res}
 
 begin
-  RequireDerivedFormResource:=True;
-  Application.Scaled:=True;
+  RequireDerivedFormResource := True;
+  Application.Scaled := True;
   Application.Initialize;
   Application.CreateForm(TMainForm, frmMain);
   Application.Run;
 end.
-

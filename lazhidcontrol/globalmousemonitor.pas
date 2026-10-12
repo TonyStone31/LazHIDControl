@@ -17,7 +17,7 @@ interface
 uses
   GlobalMouseMonitorIntf, Controls;
 
-// Re-export the base type and event for convenience
+  // Re-export the base type and event for convenience
 type
   TMouseClickEvent = GlobalMouseMonitorIntf.TMouseClickEvent;
   TGlobalMouseListener = GlobalMouseMonitorIntf.TGlobalMouseListener;

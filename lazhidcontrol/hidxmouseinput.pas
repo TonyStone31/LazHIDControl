@@ -24,7 +24,7 @@ interface
 uses
   Classes, SysUtils, Controls, Forms,
   XLib, HIDMouseInputIntf;
-  
+
 type
 
   { TXMouseInput }
@@ -32,19 +32,17 @@ type
   TXMouseInput = class(TMouseInput)
   protected
     procedure DoDown(Button: TMouseButton); override;
-    procedure DoMove(ScreenX, ScreenY: Integer); override;
+    procedure DoMove(ScreenX, ScreenY: integer); override;
     procedure DoUp(Button: TMouseButton); override;
     procedure DoScrollUp; override;
     procedure DoScrollDown; override;
   end;
-  
+
 function InitializeMouseInput: TMouseInput;
 
-function XTestFakeButtonEvent(dpy: PDisplay; button: dword; is_press: Boolean32;
-  delay: dword): longint; cdecl; external;
+function XTestFakeButtonEvent(dpy: PDisplay; button: dword; is_press: Boolean32; delay: dword): longint; cdecl; external;
 
-function XTestFakeMotionEvent(dpy: PDisplay; screen: longint; x: longint; y: longint;
-  delay: dword): longint; cdecl; external;
+function XTestFakeMotionEvent(dpy: PDisplay; screen: longint; x: longint; y: longint; delay: dword): longint; cdecl; external;
 
 implementation
 
@@ -54,9 +52,9 @@ begin
 end;
 
 const
-  MouseButtonToXButton: array [TMouseButton] of Integer = (1, 3, 2, 4, 5);
+  MouseButtonToXButton: array [TMouseButton] of integer = (1, 3, 2, 4, 5);
 
-{ TXMouseInput }
+  { TXMouseInput }
 
 procedure TXMouseInput.DoDown(Button: TMouseButton);
 var
@@ -68,7 +66,7 @@ begin
   XCloseDisplay(Display);
 end;
 
-procedure TXMouseInput.DoMove(ScreenX, ScreenY: Integer);
+procedure TXMouseInput.DoMove(ScreenX, ScreenY: integer);
 var
   Display: PDisplay;
 begin
@@ -111,4 +109,3 @@ begin
 end;
 
 end.
-

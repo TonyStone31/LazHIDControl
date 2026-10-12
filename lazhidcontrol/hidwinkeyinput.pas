@@ -24,31 +24,31 @@ uses
   Classes, SysUtils, Forms,
   Windows, JwaWinUser,
   HIDKeyInputIntf;
-  
+
 type
 
   { TWinKeyInput }
 
   TWinKeyInput = class(TKeyInput)
   private
-    capsLockBeginState: Boolean;
-    function GetKeyStateVK(Key: Byte): Boolean;
+    capsLockBeginState: boolean;
+    function GetKeyStateVK(Key: byte): boolean;
   protected
-    procedure DoDown(Key: Word); override;
-    procedure DoUp(Key: Word); override;
+    procedure DoDown(Key: word); override;
+    procedure DoUp(Key: word); override;
     procedure capsLockGetSaveState; override;
     procedure capsLockRestoreState; override;
   public
     procedure PressUnicodeChar(unicode: cardinal); override;
     procedure PressASCIIChar(ch: char); override;
-    function GetCapsLockState: Boolean; override;
-    function GetNumLockState: Boolean; override;
-    function GetScrollLockState: Boolean; override;
+    function GetCapsLockState: boolean; override;
+    function GetNumLockState: boolean; override;
+    function GetScrollLockState: boolean; override;
     procedure ToggleCapsLock; override;
     procedure ToggleNumLock; override;
     procedure ToggleScrollLock; override;
   end;
-  
+
 function InitializeKeyInput: TKeyInput;
 
 implementation
@@ -58,7 +58,7 @@ begin
   Result := TWinKeyInput.Create;
 end;
 
-function MakeScanCodeInput(Scan: Word; KeyUp: Boolean): TInput;
+function MakeScanCodeInput(Scan: word; KeyUp: boolean): TInput;
 begin
   FillChar(Result, SizeOf(Result), 0);
   Result.type_ := INPUT_KEYBOARD;
@@ -76,9 +76,9 @@ end;
 
 { TWinKeyInput }
 
-procedure TWinKeyInput.DoDown(Key: Word);
+procedure TWinKeyInput.DoDown(Key: word);
 var
-  Sc: Word;
+  Sc: word;
   Inp: TInput;
 begin
   Sc := MapVirtualKey(Key, 0);
@@ -88,9 +88,9 @@ begin
   Sleep(1);
 end;
 
-procedure TWinKeyInput.DoUp(Key: Word);
+procedure TWinKeyInput.DoUp(Key: word);
 var
-  Sc: Word;
+  Sc: word;
   Inp: TInput;
 begin
   Sc := MapVirtualKey(Key, 0);
@@ -111,7 +111,7 @@ begin
   end;
 end;
 
-function TWinKeyInput.GetKeyStateVK(Key: Byte): Boolean;
+function TWinKeyInput.GetKeyStateVK(Key: byte): boolean;
 begin
   Result := (GetKeyState(Key) and $01) <> 0;
 end;
@@ -128,8 +128,8 @@ end;
 procedure TWinKeyInput.PressUnicodeChar(unicode: cardinal);
 var
   Inputs: array[0..3] of TInput;
-  InputCount: Integer;
-  HighSurrogate, LowSurrogate: Word;
+  InputCount: integer;
+  HighSurrogate, LowSurrogate: word;
 begin
   FillChar(Inputs, SizeOf(Inputs), 0);
 
@@ -184,12 +184,12 @@ end;
 procedure TWinKeyInput.PressASCIIChar(ch: char);
 var
   VkResult: SHORT;
-  VK: Byte;
-  ShiftState: Byte;
+  VK: byte;
+  ShiftState: byte;
   Inputs: array[0..7] of TInput;
-  InputCount: Integer;
-  Sc: Word;
-  requiresShift: Boolean;
+  InputCount: integer;
+  Sc: word;
+  requiresShift: boolean;
 begin
   VkResult := VkKeyScan(ch);
 
@@ -260,17 +260,17 @@ begin
   Sleep(1);
 end;
 
-function TWinKeyInput.GetCapsLockState: Boolean;
+function TWinKeyInput.GetCapsLockState: boolean;
 begin
   Result := GetKeyStateVK(VK_CAPITAL);
 end;
 
-function TWinKeyInput.GetNumLockState: Boolean;
+function TWinKeyInput.GetNumLockState: boolean;
 begin
   Result := GetKeyStateVK(VK_NUMLOCK);
 end;
 
-function TWinKeyInput.GetScrollLockState: Boolean;
+function TWinKeyInput.GetScrollLockState: boolean;
 begin
   Result := GetKeyStateVK(VK_SCROLL);
 end;
@@ -294,4 +294,3 @@ begin
 end;
 
 end.
-

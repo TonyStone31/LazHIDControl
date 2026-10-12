@@ -24,13 +24,13 @@ uses
   Classes, SysUtils, Controls;
 
 type
-  TMouseClickEvent = procedure(Button: TMouseButton; X, Y: Integer) of object;
+  TMouseClickEvent = procedure(Button: TMouseButton; X, Y: integer) of object;
 
   { TGlobalMouseListener - Abstract base class for system-wide mouse monitoring }
   TGlobalMouseListener = class
   protected
     OnMouseClickEvent: TMouseClickEvent;
-    IsActive: Boolean;
+    IsActive: boolean;
     procedure DoStartMonitoring; virtual; abstract;
     procedure DoStopMonitoring; virtual; abstract;
   public
@@ -39,7 +39,7 @@ type
     procedure StartMonitoring;
     procedure StopMonitoring;
     property OnMouseClick: TMouseClickEvent read OnMouseClickEvent write OnMouseClickEvent;
-    property Active: Boolean read IsActive write IsActive;
+    property Active: boolean read IsActive write IsActive;
   end;
 
 implementation

@@ -64,157 +64,174 @@ program hidctl;
 
 uses
   {$IFDEF UNIX}cthreads,{$ENDIF}
-  Interfaces, Classes, SysUtils, Math, Controls, Forms, LCLType, Graphics,
-  Clipbrd, HIDMouseAndKeyInput, WindowManager, WindowManagerIntf,
-  HIDScreenshot, IdleInput, PowerInput;
+  Interfaces,
+  Classes,
+  SysUtils,
+  Math,
+  Controls,
+  Forms,
+  LCLType,
+  Graphics,
+  Clipbrd,
+  HIDMouseAndKeyInput,
+  WindowManager,
+  WindowManagerIntf,
+  HIDScreenshot,
+  IdleInput,
+  PowerInput;
 
 var
   Win: TWindowHandle = 0;
   Client: TRect;
-  Failed: Boolean = False;
+  Failed: boolean = False;
   { How long to rest after moving the pointer.  Long enough by default that a
     program with a hover of its own keeps up; a generated path of a hundred
     points wants it far shorter, and says so. }
-  Dwell: Integer = 120;
+  Dwell: integer = 120;
 
 { The client area in screen coordinates.  Every at/drag is relative to this,
   so a script does not care where the window landed. }
-procedure Refresh;
-begin
-  if Win = 0 then Exit;
-  Client := WindowMgr.GetWindowRect(Win);
-end;
+  procedure Refresh;
+  begin
+    if Win = 0 then Exit;
+    Client := WindowMgr.GetWindowRect(Win);
+  end;
 
-function Btn(const S: string): TMouseButton;
-begin
-  if (S = 'r') or (S = 'right') then Result := mbRight
-  else if (S = 'm') or (S = 'middle') then Result := mbMiddle
-  else Result := mbLeft;
-end;
+  function Btn(const S: string): TMouseButton;
+  begin
+    if (S = 'r') or (S = 'right') then Result := mbRight
+    else if (S = 'm') or (S = 'middle') then Result := mbMiddle
+    else
+      Result := mbLeft;
+  end;
 
 { Names a script can use for a key.  Anything not listed is taken as a single
   character and pressed as itself, which covers letters and digits. }
-function KeyOf(S: string): Word;
-begin
-  S := LowerCase(S);
-  if S = 'return' then Exit(VK_RETURN);
-  if S = 'enter' then Exit(VK_RETURN);
-  if S = 'escape' then Exit(VK_ESCAPE);
-  if S = 'esc' then Exit(VK_ESCAPE);
-  if S = 'tab' then Exit(VK_TAB);
-  if S = 'space' then Exit(VK_SPACE);
-  if S = 'back' then Exit(VK_BACK);
-  if S = 'delete' then Exit(VK_DELETE);
-  if S = 'up' then Exit(VK_UP);
-  if S = 'down' then Exit(VK_DOWN);
-  if S = 'left' then Exit(VK_LEFT);
-  if S = 'right' then Exit(VK_RIGHT);
-  if S = 'pgup' then Exit(VK_PRIOR);
-  if S = 'pgdn' then Exit(VK_NEXT);
-  if S = 'home' then Exit(VK_HOME);
-  if S = 'end' then Exit(VK_END);
-  if S = 'ctrl' then Exit(VK_CONTROL);
-  if S = 'shift' then Exit(VK_SHIFT);
-  if S = 'alt' then Exit(VK_MENU);
-  if S = 'slash' then Exit(VK_DIVIDE);
-  if (Length(S) = 2) and (S[1] = 'f') then Exit(VK_F1 + Ord(S[2]) - Ord('1'));
-  if (Length(S) = 3) and (S[1] = 'f') then Exit(VK_F10 + Ord(S[3]) - Ord('0'));
-  if Length(S) = 1 then Exit(Ord(UpCase(S[1])));
-  Result := 0;
-end;
+  function KeyOf(S: string): word;
+  begin
+    S := LowerCase(S);
+    if S = 'return' then Exit(VK_RETURN);
+    if S = 'enter' then Exit(VK_RETURN);
+    if S = 'escape' then Exit(VK_ESCAPE);
+    if S = 'esc' then Exit(VK_ESCAPE);
+    if S = 'tab' then Exit(VK_TAB);
+    if S = 'space' then Exit(VK_SPACE);
+    if S = 'back' then Exit(VK_BACK);
+    if S = 'delete' then Exit(VK_DELETE);
+    if S = 'up' then Exit(VK_UP);
+    if S = 'down' then Exit(VK_DOWN);
+    if S = 'left' then Exit(VK_LEFT);
+    if S = 'right' then Exit(VK_RIGHT);
+    if S = 'pgup' then Exit(VK_PRIOR);
+    if S = 'pgdn' then Exit(VK_NEXT);
+    if S = 'home' then Exit(VK_HOME);
+    if S = 'end' then Exit(VK_END);
+    if S = 'ctrl' then Exit(VK_CONTROL);
+    if S = 'shift' then Exit(VK_SHIFT);
+    if S = 'alt' then Exit(VK_MENU);
+    if S = 'slash' then Exit(VK_DIVIDE);
+    if (Length(S) = 2) and (S[1] = 'f') then Exit(VK_F1 + Ord(S[2]) - Ord('1'));
+    if (Length(S) = 3) and (S[1] = 'f') then Exit(VK_F10 + Ord(S[3]) - Ord('0'));
+    if Length(S) = 1 then Exit(Ord(UpCase(S[1])));
+    Result := 0;
+  end;
 
 { A picture of the window.  The capture itself lives in LazHIDControl, beside
   the rest of the window management, because grabbing a window is the same
   problem on every platform as finding or moving one. }
-procedure Shot(const FileName: string);
-begin
-  Refresh;
-  if WindowMgr.CaptureWindowToFile(Win, FileName) then
-    WriteLn('shot ', FileName, ' ',
-      Client.Right - Client.Left, 'x', Client.Bottom - Client.Top)
-  else
+  procedure Shot(const FileName: string);
   begin
-    WriteLn('could not capture the window');
-    Failed := True;
+    Refresh;
+    if WindowMgr.CaptureWindowToFile(Win, FileName) then
+      WriteLn('shot ', FileName, ' ',
+        Client.Right - Client.Left, 'x', Client.Bottom - Client.Top)
+    else
+    begin
+      WriteLn('could not capture the window');
+      Failed := True;
+    end;
   end;
-end;
 
-{ Report the window just found, which every way of finding one wants to do. }
-procedure Announce;
-begin
-  Refresh;
-  WriteLn('found "', WindowMgr.GetWindowTitle(Win), '" at ',
-    Client.Left, ',', Client.Top, ' ',
-    Client.Right - Client.Left, 'x', Client.Bottom - Client.Top);
-end;
+  { Report the window just found, which every way of finding one wants to do. }
+  procedure Announce;
+  begin
+    Refresh;
+    WriteLn('found "', WindowMgr.GetWindowTitle(Win), '" at ',
+      Client.Left, ',', Client.Top, ' ',
+      Client.Right - Client.Left, 'x', Client.Bottom - Client.Top);
+  end;
 
 { The desktop, or a piece of the window, through the package's own
   THIDScreenshot - the same road the dropped component takes. }
-procedure AreaShot(const FileName: string; const Area: TRect; Whole: Boolean);
-var
-  S: THIDScreenshot;
-  Png: TPortableNetworkGraphic;
-  Ok: Boolean;
-begin
-  S := THIDScreenshot.Create(nil);
-  try
-    if Whole then Ok := S.Capture else Ok := S.CaptureArea(Area);
-    if not Ok then
-    begin
-      WriteLn('could not capture: ', S.LastError);
-      Failed := True;
-      Exit;
-    end;
-    Png := TPortableNetworkGraphic.Create;
+  procedure AreaShot(const FileName: string; const Area: TRect; Whole: boolean);
+  var
+    S: THIDScreenshot;
+    Png: TPortableNetworkGraphic;
+    Ok: boolean;
+  begin
+    S := THIDScreenshot.Create(nil);
     try
-      Png.Assign(S.Bitmap);
-      Png.SaveToFile(FileName);
+      if Whole then Ok := S.Capture
+      else
+        Ok := S.CaptureArea(Area);
+      if not Ok then
+      begin
+        WriteLn('could not capture: ', S.LastError);
+        Failed := True;
+        Exit;
+      end;
+      Png := TPortableNetworkGraphic.Create;
+      try
+        Png.Assign(S.Bitmap);
+        Png.SaveToFile(FileName);
+      finally
+        Png.Free;
+      end;
+      WriteLn('shot ', FileName, ' ', S.Bitmap.Width, 'x', S.Bitmap.Height);
     finally
-      Png.Free;
+      S.Free;
     end;
-    WriteLn('shot ', FileName, ' ', S.Bitmap.Width, 'x', S.Bitmap.Height);
-  finally
-    S.Free;
   end;
-end;
 
-procedure PowerLine;
-const
-  Names: array[TPowerSource] of string = ('unknown source', 'ac', 'battery');
-var
-  P: TPowerInput;
-  St: TPowerStatus;
-  Line: string;
-begin
-  P := CreatePowerInput;
-  if (P = nil) or not P.Start or not P.ReadStatus(St) then
+  procedure PowerLine;
+  const
+    Names: array[TPowerSource] of string = ('unknown source', 'ac', 'battery');
+  var
+    P: TPowerInput;
+    St: TPowerStatus;
+    Line: string;
   begin
-    if P = nil then WriteLn('power is not implemented on this platform')
-    else WriteLn('power: ', P.ErrorText);
-    Failed := True;
-  end
-  else
-  begin
-    Line := 'power ' + Names[St.Source];
-    if St.BatteryPercent >= 0 then Line := Line + ' ' + IntToStr(St.BatteryPercent) + '%'
-    else Line := Line + ' no battery';
-    if St.Charging then Line := Line + ' charging';
-    WriteLn(Line);
+    P := CreatePowerInput;
+    if (P = nil) or not P.Start or not P.ReadStatus(St) then
+    begin
+      if P = nil then WriteLn('power is not implemented on this platform')
+      else
+        WriteLn('power: ', P.ErrorText);
+      Failed := True;
+    end
+    else
+    begin
+      Line := 'power ' + Names[St.Source];
+      if St.BatteryPercent >= 0 then Line := Line + ' ' + IntToStr(St.BatteryPercent) + '%'
+      else
+        Line := Line + ' no battery';
+      if St.Charging then Line := Line + ' charging';
+      WriteLn(Line);
+    end;
+    P.Free;
   end;
-  P.Free;
-end;
 
-procedure Settle(Ms: Integer);
-var
-  Until_: QWord;
-begin
-  Until_ := GetTickCount64 + QWord(Max(0, Ms));
-  while GetTickCount64 < Until_ do
+  procedure Settle(Ms: integer);
+  var
+    Until_: QWord;
   begin
-    Application.ProcessMessages;
-    Sleep(5);
+    Until_ := GetTickCount64 + QWord(Max(0, Ms));
+    while GetTickCount64 < Until_ do
+    begin
+      Application.ProcessMessages;
+      Sleep(5);
+    end;
   end;
-end;
 
 { A drag, optionally over a given number of milliseconds.
 
@@ -226,106 +243,106 @@ end;
   walks the pointer in twenty millisecond steps for exactly that long.  That
   is the one to use when somebody is going to watch it - a recording of a
   drag that teleports shows nothing about where the hand went. }
-procedure Drag(X1, Y1, X2, Y2: Integer; B: TMouseButton; Ms: Integer = 0);
-var
-  I: Integer;
-begin
-  MouseInput.Move([], Client.Left + X1, Client.Top + Y1);
-  Settle(80);
-  MouseInput.Down(B, []);
-  Settle(60);
-  if Ms > 0 then
-    MouseInput.Move([], Client.Left + X2, Client.Top + Y2, Ms)
-  else
-    for I := 1 to 24 do
-    begin
-      MouseInput.Move([], Client.Left + X1 + (X2 - X1) * I div 24,
-                          Client.Top + Y1 + (Y2 - Y1) * I div 24);
-      Settle(12);
-    end;
-  MouseInput.Up(B, []);
-  Settle(80);
-end;
-
-procedure Run(const Line: string);
-var
-  P: TStringList;
-  Cmd, Rest, Msg: string;
-  K: Word;
-  Steps, Ms: Integer;
-  Btm: TMouseButton;
-  Deadline, Q: QWord;
-begin
-  if (Trim(Line) = '') or (Copy(Trim(Line), 1, 1) = '#') then Exit;
-
-  P := TStringList.Create;
-  try
-    P.Delimiter := ' ';
-    P.StrictDelimiter := True;
-    P.DelimitedText := Trim(Line);
-    if P.Count = 0 then Exit;
-    Cmd := LowerCase(P[0]);
-    { everything after the first word, spaces kept - type and echo want it }
-    Rest := Trim(Copy(Trim(Line), Length(P[0]) + 1, MaxInt));
-
-    if Cmd = 'find' then
-    begin
-      Win := WindowMgr.FindWindow(Rest);
-      if Win = 0 then
+  procedure Drag(X1, Y1, X2, Y2: integer; B: TMouseButton; Ms: integer = 0);
+  var
+    I: integer;
+  begin
+    MouseInput.Move([], Client.Left + X1, Client.Top + Y1);
+    Settle(80);
+    MouseInput.Down(B, []);
+    Settle(60);
+    if Ms > 0 then
+      MouseInput.Move([], Client.Left + X2, Client.Top + Y2, Ms)
+    else
+      for I := 1 to 24 do
       begin
-        WriteLn('no window titled "', Rest, '"');
-        Failed := True;
-      end
-      else
-        Announce;
-    end
-    else if Cmd = 'waitfor' then
-    begin
-      { waitfor 5000 Some App - for the window that is not up yet }
-      Ms := StrToInt(P[1]);
-      Rest := Trim(Copy(Rest, Length(P[1]) + 1, MaxInt));
-      Deadline := GetTickCount64 + QWord(Max(0, Ms));
-      repeat
+        MouseInput.Move([], Client.Left + X1 + (X2 - X1) * I div 24,
+          Client.Top + Y1 + (Y2 - Y1) * I div 24);
+        Settle(12);
+      end;
+    MouseInput.Up(B, []);
+    Settle(80);
+  end;
+
+  procedure Run(const Line: string);
+  var
+    P: TStringList;
+    Cmd, Rest, Msg: string;
+    K: word;
+    Steps, Ms: integer;
+    Btm: TMouseButton;
+    Deadline, Q: QWord;
+  begin
+    if (Trim(Line) = '') or (Copy(Trim(Line), 1, 1) = '#') then Exit;
+
+    P := TStringList.Create;
+    try
+      P.Delimiter := ' ';
+      P.StrictDelimiter := True;
+      P.DelimitedText := Trim(Line);
+      if P.Count = 0 then Exit;
+      Cmd := LowerCase(P[0]);
+      { everything after the first word, spaces kept - type and echo want it }
+      Rest := Trim(Copy(Trim(Line), Length(P[0]) + 1, MaxInt));
+
+      if Cmd = 'find' then
+      begin
         Win := WindowMgr.FindWindow(Rest);
-        if Win <> 0 then Break;
-        Settle(100);
-      until GetTickCount64 >= Deadline;
-      if Win = 0 then
-      begin
-        WriteLn('no window titled "', Rest, '" after ', Ms, ' ms');
-        Failed := True;
+        if Win = 0 then
+        begin
+          WriteLn('no window titled "', Rest, '"');
+          Failed := True;
+        end
+        else
+          Announce;
       end
-      else
-        Announce;
-    end
-    else if Cmd = 'title' then
-      WriteLn('title ', WindowMgr.GetWindowTitle(Win))
-    else if Cmd = 'activate' then
-    begin
-      WindowMgr.ActivateWindow(Win);
-      Settle(250);
-      Refresh;
-    end
-    else if Cmd = 'geometry' then
-    begin
-      WindowMgr.MoveResizeWindow(Win, StrToInt(P[1]), StrToInt(P[2]),
-        StrToInt(P[3]), StrToInt(P[4]));
-      Settle(400);
-      Refresh;
-    end
-    else if Cmd = 'minimize' then
-    begin
-      WindowMgr.MinimizeWindow(Win);
-      Settle(250);
-    end
-    else if Cmd = 'restore' then
-    begin
-      WindowMgr.RestoreWindow(Win);
-      Settle(250);
-      Refresh;
-    end
-    else if Cmd = 'at' then
-    begin
+      else if Cmd = 'waitfor' then
+      begin
+        { waitfor 5000 Some App - for the window that is not up yet }
+        Ms := StrToInt(P[1]);
+        Rest := Trim(Copy(Rest, Length(P[1]) + 1, MaxInt));
+        Deadline := GetTickCount64 + QWord(Max(0, Ms));
+        repeat
+          Win := WindowMgr.FindWindow(Rest);
+          if Win <> 0 then Break;
+          Settle(100);
+        until GetTickCount64 >= Deadline;
+        if Win = 0 then
+        begin
+          WriteLn('no window titled "', Rest, '" after ', Ms, ' ms');
+          Failed := True;
+        end
+        else
+          Announce;
+      end
+      else if Cmd = 'title' then
+        WriteLn('title ', WindowMgr.GetWindowTitle(Win))
+      else if Cmd = 'activate' then
+      begin
+        WindowMgr.ActivateWindow(Win);
+        Settle(250);
+        Refresh;
+      end
+      else if Cmd = 'geometry' then
+      begin
+        WindowMgr.MoveResizeWindow(Win, StrToInt(P[1]), StrToInt(P[2]),
+          StrToInt(P[3]), StrToInt(P[4]));
+        Settle(400);
+        Refresh;
+      end
+      else if Cmd = 'minimize' then
+      begin
+        WindowMgr.MinimizeWindow(Win);
+        Settle(250);
+      end
+      else if Cmd = 'restore' then
+      begin
+        WindowMgr.RestoreWindow(Win);
+        Settle(250);
+        Refresh;
+      end
+      else if Cmd = 'at' then
+      begin
       { "at x y" puts the pointer there.  "at x y 400" walks it there over
         four hundred milliseconds instead, which is what the package's timed
         Move has always been for and what this never offered.
@@ -334,135 +351,144 @@ begin
         a demonstration, or an application that only starts a hover after the
         pointer has been still for a moment.  A jump is one event and there
         is nothing in between it and the last one. }
-      if P.Count > 3 then
-        MouseInput.Move([], Client.Left + StrToInt(P[1]),
-                            Client.Top + StrToInt(P[2]), Max(0, StrToInt(P[3])))
-      else
-        MouseInput.Move([], Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]));
-      Settle(Dwell);
-    end
-    else if Cmd = 'dwell' then
-      Dwell := Max(0, StrToInt(P[1]))
-    else if Cmd = 'scroll' then
-    begin
-      K := 1;
-      if P.Count > 2 then K := Max(1, StrToInt(P[2]));
-      for Steps := 1 to K do
-      begin
-        if (P.Count > 1) and (LowerCase(P[1]) = 'down') then
-          MouseInput.ScrollDown([])
+        if P.Count > 3 then
+          MouseInput.Move([], Client.Left + StrToInt(P[1]),
+            Client.Top + StrToInt(P[2]), Max(0, StrToInt(P[3])))
         else
-          MouseInput.ScrollUp([]);
-        Settle(60);
-      end;
-    end
-    else if Cmd = 'click' then
-    begin
-      if P.Count > 1 then MouseInput.Click(Btn(P[1]), []) else MouseInput.Click(mbLeft, []);
-      Settle(150);
-    end
-    else if Cmd = 'dblclick' then
-    begin
-      if P.Count > 1 then MouseInput.DblClick(Btn(P[1]), []) else MouseInput.DblClick(mbLeft, []);
-      Settle(150);
-    end
-    else if Cmd = 'press' then
-    begin
-      if P.Count > 1 then MouseInput.Down(Btn(P[1]), []) else MouseInput.Down(mbLeft, []);
-      Settle(80);
-    end
-    else if Cmd = 'release' then
-    begin
-      if P.Count > 1 then MouseInput.Up(Btn(P[1]), []) else MouseInput.Up(mbLeft, []);
-      Settle(80);
-    end
-    else if Cmd = 'drag' then
-    begin
+          MouseInput.Move([], Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]));
+        Settle(Dwell);
+      end
+      else if Cmd = 'dwell' then
+        Dwell := Max(0, StrToInt(P[1]))
+      else if Cmd = 'scroll' then
+      begin
+        K := 1;
+        if P.Count > 2 then K := Max(1, StrToInt(P[2]));
+        for Steps := 1 to K do
+        begin
+          if (P.Count > 1) and (LowerCase(P[1]) = 'down') then
+            MouseInput.ScrollDown([])
+          else
+            MouseInput.ScrollUp([]);
+          Settle(60);
+        end;
+      end
+      else if Cmd = 'click' then
+      begin
+        if P.Count > 1 then MouseInput.Click(Btn(P[1]), [])
+        else
+          MouseInput.Click(mbLeft, []);
+        Settle(150);
+      end
+      else if Cmd = 'dblclick' then
+      begin
+        if P.Count > 1 then MouseInput.DblClick(Btn(P[1]), [])
+        else
+          MouseInput.DblClick(mbLeft, []);
+        Settle(150);
+      end
+      else if Cmd = 'press' then
+      begin
+        if P.Count > 1 then MouseInput.Down(Btn(P[1]), [])
+        else
+          MouseInput.Down(mbLeft, []);
+        Settle(80);
+      end
+      else if Cmd = 'release' then
+      begin
+        if P.Count > 1 then MouseInput.Up(Btn(P[1]), [])
+        else
+          MouseInput.Up(mbLeft, []);
+        Settle(80);
+      end
+      else if Cmd = 'drag' then
+      begin
       { "drag x1 y1 x2 y2", then optionally a button, then optionally how
         many milliseconds it should take.  The two are told apart by whether
         it is a number - buttons are l, r and m - so either can be left out
         and neither has to be remembered in order. }
-      Btm := mbLeft;
-      Ms := 0;
-      if (P.Count > 5) and not TryStrToInt(P[5], Ms) then
-      begin
-        Btm := Btn(P[5]);
+        Btm := mbLeft;
         Ms := 0;
-        if P.Count > 6 then TryStrToInt(P[6], Ms);
-      end;
-      Drag(StrToInt(P[1]), StrToInt(P[2]), StrToInt(P[3]), StrToInt(P[4]), Btm, Ms);
-    end
-    else if Cmd = 'key' then
-    begin
-      K := KeyOf(P[1]);
-      if K = 0 then WriteLn('unknown key ', P[1]) else KeyInput.Press(K);
-      Settle(90);
-    end
-    else if Cmd = 'hold' then
-    begin
-      K := KeyOf(P[1]);
-      if K <> 0 then KeyInput.Down(K);
-      Settle(60);
-    end
-    else if Cmd = 'let' then
-    begin
-      K := KeyOf(P[1]);
-      if K <> 0 then KeyInput.Up(K);
-      Settle(60);
-    end
-    else if Cmd = 'type' then
-    begin
-      KeyInput.PressString(Rest);
-      Settle(150);
-    end
-    else if Cmd = 'wait' then
-      Settle(StrToInt(P[1]))
-    else if Cmd = 'shot' then
-      Shot(Rest)
-    else if Cmd = 'shotdesk' then
-      AreaShot(Rest, Rect(0, 0, 0, 0), True)
-    else if Cmd = 'shotarea' then
-    begin
-      Refresh;
-      AreaShot(P[5], Rect(Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]),
-        Client.Left + StrToInt(P[1]) + StrToInt(P[3]),
-        Client.Top + StrToInt(P[2]) + StrToInt(P[4])), False);
-    end
-    else if Cmd = 'clipset' then
-    begin
-      { held only while hidctl runs, unless a clipboard manager keeps it }
-      Clipboard.AsText := Rest;
-      Settle(100);
-    end
-    else if Cmd = 'clipget' then
-      WriteLn('clip ', Clipboard.AsText)
-    else if Cmd = 'idle' then
-    begin
-      if QuerySystemIdle(Q, Msg) then
-        WriteLn('idle ', Q)
+        if (P.Count > 5) and not TryStrToInt(P[5], Ms) then
+        begin
+          Btm := Btn(P[5]);
+          Ms := 0;
+          if P.Count > 6 then TryStrToInt(P[6], Ms);
+        end;
+        Drag(StrToInt(P[1]), StrToInt(P[2]), StrToInt(P[3]), StrToInt(P[4]), Btm, Ms);
+      end
+      else if Cmd = 'key' then
+      begin
+        K := KeyOf(P[1]);
+        if K = 0 then WriteLn('unknown key ', P[1])
+        else
+          KeyInput.Press(K);
+        Settle(90);
+      end
+      else if Cmd = 'hold' then
+      begin
+        K := KeyOf(P[1]);
+        if K <> 0 then KeyInput.Down(K);
+        Settle(60);
+      end
+      else if Cmd = 'let' then
+      begin
+        K := KeyOf(P[1]);
+        if K <> 0 then KeyInput.Up(K);
+        Settle(60);
+      end
+      else if Cmd = 'type' then
+      begin
+        KeyInput.PressString(Rest);
+        Settle(150);
+      end
+      else if Cmd = 'wait' then
+        Settle(StrToInt(P[1]))
+      else if Cmd = 'shot' then
+        Shot(Rest)
+      else if Cmd = 'shotdesk' then
+        AreaShot(Rest, Rect(0, 0, 0, 0), True)
+      else if Cmd = 'shotarea' then
+      begin
+        Refresh;
+        AreaShot(P[5], Rect(Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]), Client.Left + StrToInt(P[1]) + StrToInt(P[3]),
+          Client.Top + StrToInt(P[2]) + StrToInt(P[4])), False);
+      end
+      else if Cmd = 'clipset' then
+      begin
+        { held only while hidctl runs, unless a clipboard manager keeps it }
+        Clipboard.AsText := Rest;
+        Settle(100);
+      end
+      else if Cmd = 'clipget' then
+        WriteLn('clip ', Clipboard.AsText)
+      else if Cmd = 'idle' then
+      begin
+        if QuerySystemIdle(Q, Msg) then
+          WriteLn('idle ', Q)
+        else
+        begin
+          WriteLn('idle: ', Msg);
+          Failed := True;
+        end;
+      end
+      else if Cmd = 'power' then
+        PowerLine
+      else if Cmd = 'echo' then
+        WriteLn(Rest)
       else
       begin
-        WriteLn('idle: ', Msg);
+        WriteLn('unknown command: ', Cmd);
         Failed := True;
       end;
-    end
-    else if Cmd = 'power' then
-      PowerLine
-    else if Cmd = 'echo' then
-      WriteLn(Rest)
-    else
-    begin
-      WriteLn('unknown command: ', Cmd);
-      Failed := True;
+    finally
+      P.Free;
     end;
-  finally
-    P.Free;
   end;
-end;
 
 var
   Script: TStringList;
-  I: Integer;
+  I: integer;
   Arg, ScriptFile, WantTitle: string;
 begin
   Application.Initialize;

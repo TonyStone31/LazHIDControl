@@ -54,18 +54,20 @@ const
 
 type
   PXIEventMask = ^TXIEventMask;
+
   TXIEventMask = record
     deviceid: cint;
     mask_len: cint;
-    mask: PByte;
+    mask: pbyte;
   end;
 
   // Simplified XIRawEvent structure
   PXIRawEvent = ^TXIRawEvent;
+
   TXIRawEvent = record
     _type: cint;
     serial: culong;
-    send_event: LongBool;
+    send_event: longbool;
     display: PDisplay;
     extension: cint;
     evtype: cint;
@@ -76,12 +78,12 @@ type
     flags: cint;
   end;
 
-// XInput2 functions - we'll load them dynamically
+  // XInput2 functions - we'll load them dynamically
 var
   XI2Lib: TLibHandle = NilHandle;
   XIQueryVersion: function(dpy: PDisplay; major_version_inout, minor_version_inout: pcint): cint; cdecl;
   XISelectEvents: function(dpy: PDisplay; win: TWindow; masks: PXIEventMask; num_masks: cint): cint; cdecl;
-  XGetEventData: function(dpy: PDisplay; cookie: pointer): Boolean; cdecl;
+  XGetEventData: function(dpy: PDisplay; cookie: pointer): boolean; cdecl;
   XFreeEventData: procedure(dpy: PDisplay; cookie: pointer); cdecl;
 
 type
@@ -89,15 +91,15 @@ type
   private
     Listener: TXGlobalMouseListener;
     DetectedButton: TMouseButton;
-    DetectedX: Integer;
-    DetectedY: Integer;
+    DetectedX: integer;
+    DetectedY: integer;
     procedure NotifyMouseClick;
   public
     constructor Create(AListener: TXGlobalMouseListener);
     procedure Execute; override;
   end;
 
-function LoadXInput2Functions: Boolean;
+function LoadXInput2Functions: boolean;
 begin
   Result := False;
 
@@ -112,8 +114,7 @@ begin
   Pointer(XGetEventData) := GetProcAddress(XI2Lib, 'XGetEventData');
   Pointer(XFreeEventData) := GetProcAddress(XI2Lib, 'XFreeEventData');
 
-  Result := Assigned(XIQueryVersion) and Assigned(XISelectEvents) and
-            Assigned(XGetEventData) and Assigned(XFreeEventData);
+  Result := Assigned(XIQueryVersion) and Assigned(XISelectEvents) and Assigned(XGetEventData) and Assigned(XFreeEventData);
 end;
 
 function ButtonToMouseButton(ButtonNum: cint): TMouseButton;
@@ -126,8 +127,8 @@ begin
     // Buttons 6-9 are extra mouse buttons
     8: Result := mbExtra1;  // Back button
     9: Result := mbExtra2;  // Forward button
-  else
-    Result := mbLeft;  // Default for unknown buttons
+    else
+      Result := mbLeft;  // Default for unknown buttons
   end;
 end;
 
@@ -164,15 +165,13 @@ begin
         // Get the event data
         if XGetEventData(Listener.Display, @Event.xcookie) then
         begin
-          if (Event.xcookie.extension = Listener.XI2Opcode) and
-             (Event.xcookie.evtype = XI_RawButtonPress) then
+          if (Event.xcookie.extension = Listener.XI2Opcode) and (Event.xcookie.evtype = XI_RawButtonPress) then
           begin
             // Cast the data to XIRawEvent structure
-            RawEvent := PXIRawEvent(Event.xcookie.data);
+            RawEvent := PXIRawEvent(Event.xcookie.Data);
 
             // Get mouse position
-            XQueryPointer(Listener.Display, Listener.RootWindow,
-                         @root, @child, @rootX, @rootY, @winX, @winY, @mask);
+            XQueryPointer(Listener.Display, Listener.RootWindow, @root, @child, @rootX, @rootY, @winX, @winY, @mask);
 
             DetectedButton := ButtonToMouseButton(RawEvent^.detail);
             DetectedX := rootX;
@@ -197,7 +196,7 @@ constructor TXGlobalMouseListener.Create;
 var
   major, minor: cint;
   event_base, error_base: cint;
-  mask: array[0..1] of Byte;
+  mask: array[0..1] of byte;
   eventmask: TXIEventMask;
 begin
   inherited Create;

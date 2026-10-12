@@ -58,10 +58,10 @@ type
 var
   GlobalListener: TWinGlobalKeyListener = nil;
 
-function LowLevelKeyboardProc(nCode: Integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
+function LowLevelKeyboardProc(nCode: integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
 var
   KeyInfo: ^KBDLLHOOKSTRUCT;
-  vk: Word;
+  vk: word;
   modifiers: TShiftState;
 begin
   Result := CallNextHookEx(0, nCode, wParam, lParam);

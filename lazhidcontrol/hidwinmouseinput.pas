@@ -24,7 +24,7 @@ uses
   Classes, SysUtils, Controls, Forms,
   Windows, JwaWinUser,
   HIDMouseInputIntf;
-  
+
 type
 
   { TWinMouseInput }
@@ -32,12 +32,12 @@ type
   TWinMouseInput = class(TMouseInput)
   protected
     procedure DoDown(Button: TMouseButton); override;
-    procedure DoMove(ScreenX, ScreenY: Integer); override;
+    procedure DoMove(ScreenX, ScreenY: integer); override;
     procedure DoUp(Button: TMouseButton); override;
     procedure DoScrollUp; override;
     procedure DoScrollDown; override;
   end;
-  
+
 function InitializeMouseInput: TMouseInput;
 
 implementation
@@ -51,11 +51,11 @@ procedure SendMouseInput(Flag: DWORD; MouseData: DWORD = 0);
 var
   Input: TInput;
 begin
-{$IFDEF VER2_6}
+  {$IFDEF VER2_6}
   FillChar(Input, SizeOf(Input), 0);
-{$ELSE}
+  {$ELSE}
   Input := Default(TInput);
-{$ENDIF}
+  {$ENDIF}
   Input.mi.mouseData := MouseData;
   Input.type_ := INPUT_MOUSE;
   Input.mi.dwFlags := Flag;
@@ -63,15 +63,15 @@ begin
   SendInput(1, @Input, SizeOf(Input));
 end;
 
-procedure SendMouseInput(Flag: DWORD; X, Y: Integer);
+procedure SendMouseInput(Flag: DWORD; X, Y: integer);
 var
   Input: TInput;
 begin
-{$IFDEF VER2_6}
+  {$IFDEF VER2_6}
   FillChar(Input, SizeOf(Input), 0);
-{$ELSE}
+  {$ELSE}
   Input := Default(TInput);
-{$ENDIF}
+  {$ENDIF}
   Input.type_ := INPUT_MOUSE;
   Input.mi.dx := MulDiv(X, 65535, Screen.Width - 1); // screen horizontal coordinates: 0 - 65535
   Input.mi.dy := MulDiv(Y, 65535, Screen.Height - 1); // screen vertical coordinates: 0 - 65535
@@ -88,13 +88,13 @@ begin
   case Button of
     mbRight: Flag := MOUSEEVENTF_RIGHTDOWN;
     mbMiddle: Flag := MOUSEEVENTF_MIDDLEDOWN;
-  else
-    Flag := MOUSEEVENTF_LEFTDOWN;
+    else
+      Flag := MOUSEEVENTF_LEFTDOWN;
   end;
   SendMouseInput(Flag);
 end;
 
-procedure TWinMouseInput.DoMove(ScreenX, ScreenY: Integer);
+procedure TWinMouseInput.DoMove(ScreenX, ScreenY: integer);
 begin
   SendMouseInput(MOUSEEVENTF_MOVE, ScreenX, ScreenY);
 end;
@@ -106,8 +106,8 @@ begin
   case Button of
     mbRight: Flag := MOUSEEVENTF_RIGHTUP;
     mbMiddle: Flag := MOUSEEVENTF_MIDDLEUP;
-  else
-    Flag := MOUSEEVENTF_LEFTUP;
+    else
+      Flag := MOUSEEVENTF_LEFTUP;
   end;
   SendMouseInput(Flag);
 end;
@@ -123,4 +123,3 @@ begin
 end;
 
 end.
-

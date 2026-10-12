@@ -292,7 +292,7 @@ begin
   Result := False;
   if GetWindowProperty(AWindow, AtomNetWMState, Pointer(Data), Count) then
   begin
-    for i := 0 to Integer(Count) - 1 do
+    for i := 0 to integer(Count) - 1 do
     begin
       if PAtom(pbyte(Data) + i * SizeOf(TAtom))^ = AState then
       begin
@@ -481,12 +481,10 @@ var
 begin
   Result := TList.Create;
   Data := nil;
-  if (XGetWindowProperty(XDisplayHandle, RootWindowHandle, AtomNetClientList,
-    0, $7FFFFFFF, False, XA_WINDOW, @ActualType, @ActualFormat,
-    @Count, @BytesAfter, @Data) = Success) and (ActualType = XA_WINDOW) and
-    (ActualFormat = 32) then
+  if (XGetWindowProperty(XDisplayHandle, RootWindowHandle, AtomNetClientList, 0, $7FFFFFFF, False, XA_WINDOW, @ActualType, @ActualFormat,
+    @Count, @BytesAfter, @Data) = Success) and (ActualType = XA_WINDOW) and (ActualFormat = 32) then
   begin
-    for i := 0 to Integer(Count) - 1 do
+    for i := 0 to integer(Count) - 1 do
       Result.Add(Pointer(PWindow(pbyte(Data) + i * SizeOf(TWindow))^));
   end
   else
@@ -548,8 +546,7 @@ end;
 function TXWindowManager.DoMoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean;
 begin
   if EwmhManaged then
-    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow,
-      10 or (1 shl 8) or (1 shl 9) or (1 shl 12), X, Y, 0, 0)
+    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow, 10 or (1 shl 8) or (1 shl 9) or (1 shl 12), X, Y, 0, 0)
   else
   begin
     XMoveWindow(XDisplayHandle, TWindow(AHandle), X, Y);
@@ -561,8 +558,7 @@ end;
 function TXWindowManager.DoResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean;
 begin
   if EwmhManaged then
-    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow,
-      10 or (1 shl 10) or (1 shl 11) or (1 shl 12), 0, 0, Width, Height)
+    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow, 10 or (1 shl 10) or (1 shl 11) or (1 shl 12), 0, 0, Width, Height)
   else
   begin
     XResizeWindow(XDisplayHandle, TWindow(AHandle), Width, Height);
@@ -574,8 +570,7 @@ end;
 function TXWindowManager.DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean;
 begin
   if EwmhManaged then
-    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow,
-      10 or (1 shl 8) or (1 shl 9) or (1 shl 10) or (1 shl 11) or (1 shl 12), X, Y, Width, Height)
+    Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow, 10 or (1 shl 8) or (1 shl 9) or (1 shl 10) or (1 shl 11) or (1 shl 12), X, Y, Width, Height)
   else
   begin
     XMoveResizeWindow(XDisplayHandle, TWindow(AHandle), X, Y, Width, Height);
@@ -726,7 +721,7 @@ begin
 
   if XQueryTree(XDisplayHandle, TWindow(AHandle), @RootReturn, @ParentReturn, @Children, @NumChildren) <> 0 then
   begin
-    for i := 0 to Integer(NumChildren) - 1 do
+    for i := 0 to integer(NumChildren) - 1 do
       Result.Add(Pointer(PWindow(pbyte(Children) + i * SizeOf(TWindow))^));
 
     if Children <> nil then

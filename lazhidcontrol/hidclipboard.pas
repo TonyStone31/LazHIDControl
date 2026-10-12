@@ -3,39 +3,42 @@ unit HIDClipboard;
 {$ifdef darwin}{$modeswitch objectivec1}{$endif}
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
+
 uses Classes, SysUtils, ExtCtrls;
+
 type
   THIDClipboardErrorEvent = procedure(Sender: TObject; const Message: string) of object;
+
   THIDClipboardMonitor = class(TComponent)
   private
     Poll: TTimer;
-    Requested, Known: Boolean;
+    Requested, Known: boolean;
     LastSerial, Serial: QWord;
     NativeClipboard: Pointer;
     SignalID: PtrUInt;
     ErrorText: string;
     ChangeHandler: TNotifyEvent;
     ErrorHandler: THIDClipboardErrorEvent;
-    procedure SetEnabled(Value: Boolean);
+    procedure SetEnabled(Value: boolean);
     procedure Disconnect;
     procedure Tick(Sender: TObject);
-    function GetInterval: Cardinal;
-    procedure SetInterval(Value: Cardinal);
+    function GetInterval: cardinal;
+    procedure SetInterval(Value: cardinal);
   protected
     procedure Loaded; override;
-    function QuerySerial(out Value: QWord; out Message: string): Boolean; virtual;
+    function QuerySerial(out Value: QWord; out Message: string): boolean; virtual;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     // Detects a change without reading contents; read data with the LCL Clipboard.
-    function Check: Boolean;
+    function Check: boolean;
     property LastError: string read ErrorText;
   published
     // True watches the clipboard once the form loads. Nothing runs in the designer.
-    property Enabled: Boolean read Requested write SetEnabled default False;
+    property Enabled: boolean read Requested write SetEnabled default False;
     // Milliseconds between change checks. Default 250; several changes inside
     // one interval can land as a single event.
-    property PollInterval: Cardinal read GetInterval write SetInterval default 250;
+    property PollInterval: cardinal read GetInterval write SetInterval default 250;
     // Something new is on the clipboard, text or not; read it with the LCL
     // Clipboard if wanted. Enabling takes the contents already there as the
     // baseline without firing.
@@ -44,7 +47,9 @@ type
     // stays in LastError.
     property OnError: THIDClipboardErrorEvent read ErrorHandler write ErrorHandler;
   end;
+
 implementation
+
 {$if defined(windows)}uses Windows;
 {$elseif defined(darwin)}uses CocoaAll;
 {$elseif defined(LCLgtk2)}uses glib2, gdk2, gtk2;
@@ -58,6 +63,7 @@ function GetClipboardSequenceNumber: DWORD; stdcall;
 procedure ClipboardChanged(Clipboard, Event, Data: Pointer); cdecl;
 begin Inc(THIDClipboardMonitor(Data).Serial); end;
 {$endif}
+
 constructor THIDClipboardMonitor.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
@@ -66,8 +72,13 @@ begin
   Poll.Interval := 250;
   Poll.OnTimer := @Tick;
 end;
+
 destructor THIDClipboardMonitor.Destroy;
-begin Disconnect; inherited Destroy; end;
+begin
+  Disconnect;
+  inherited Destroy;
+end;
+
 procedure THIDClipboardMonitor.Disconnect;
 begin
   {$if defined(LCLgtk2) or defined(LCLgtk3)}
@@ -77,9 +88,14 @@ begin
   NativeClipboard := nil;
   SignalID := 0;
 end;
+
 procedure THIDClipboardMonitor.Loaded;
-begin inherited Loaded; if Enabled then SetEnabled(True); end;
-procedure THIDClipboardMonitor.SetEnabled(Value: Boolean);
+begin
+  inherited Loaded;
+  if Enabled then SetEnabled(True);
+end;
+
+procedure THIDClipboardMonitor.SetEnabled(Value: boolean);
 begin
   Requested := Value;
   Poll.Enabled := False;
@@ -88,21 +104,33 @@ begin
   Disconnect;
   if Value and Check then Poll.Enabled := Enabled;
 end;
-function THIDClipboardMonitor.GetInterval: Cardinal;
-begin Result := Poll.Interval; end;
-procedure THIDClipboardMonitor.SetInterval(Value: Cardinal);
+
+function THIDClipboardMonitor.GetInterval: cardinal;
+begin
+  Result := Poll.Interval;
+end;
+
+procedure THIDClipboardMonitor.SetInterval(Value: cardinal);
 begin
   if Value = 0 then raise ERangeError.Create('PollInterval must be greater than zero.');
   Poll.Interval := Value;
 end;
+
 procedure THIDClipboardMonitor.Tick(Sender: TObject);
-begin Check; end;
-function THIDClipboardMonitor.Check: Boolean;
-var Value: QWord; Message: string; Changed: Boolean;
+begin
+  Check;
+end;
+
+function THIDClipboardMonitor.Check: boolean;
+var
+  Value: QWord;
+  Message: string;
+  Changed: boolean;
 begin
   if csDesigning in ComponentState then Exit(False);
   Result := QuerySerial(Value, Message);
-  if not Result then begin
+  if not Result then
+  begin
     SetEnabled(False);
     ErrorText := Message;
     if Assigned(ErrorHandler) then ErrorHandler(Self, Message);
@@ -114,7 +142,8 @@ begin
   ErrorText := '';
   if Changed and Assigned(ChangeHandler) then ChangeHandler(Self);
 end;
-function THIDClipboardMonitor.QuerySerial(out Value: QWord; out Message: string): Boolean;
+
+function THIDClipboardMonitor.QuerySerial(out Value: QWord; out Message: string): boolean;
 begin
   Value := 0;
   Message := '';
@@ -147,4 +176,5 @@ begin
   Message := 'Clipboard change monitoring is not implemented for this widgetset.';
   {$endif}
 end;
+
 end.

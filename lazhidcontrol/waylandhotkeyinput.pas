@@ -39,8 +39,8 @@ uses
 type
   TWaylandHotkeyData = record
     Conn: PDBusConnection;
-    SessionHandle: UTF8String;
-    ShortcutToken: UTF8String;
+    SessionHandle: utf8string;
+    ShortcutToken: utf8string;
     Hotkey: THotkey;
   end;
   PWaylandHotkeyData = ^TWaylandHotkeyData;
@@ -53,24 +53,24 @@ type
     procedure DoRegister; override;
     procedure DoUnregister; override;
   public
-    constructor Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
+    constructor Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
   end;
 
-function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 
 implementation
 
 const
   PORTAL = 'org.freedesktop.portal.Desktop';
-  PATH   = '/org/freedesktop/portal/desktop';
-  IFACE  = 'org.freedesktop.portal.GlobalShortcuts';
+  PATH = '/org/freedesktop/portal/desktop';
+  IFACE = 'org.freedesktop.portal.GlobalShortcuts';
 
 var
   GlobalHotkeys: TList = nil;
   PortalConn: PDBusConnection = nil;
-  MonitorActive: Boolean = False;
+  MonitorActive: boolean = False;
 
-function KeyToWaylandAccelerator(Key: Word; Shift: TShiftState): UTF8String;
+function KeyToWaylandAccelerator(Key: word; Shift: TShiftState): utf8string;
 var
   Modifiers: string;
   KeyName: string;
@@ -88,8 +88,8 @@ begin
     VK_RETURN: KeyName := 'Return';
     VK_ESCAPE: KeyName := 'Escape';
     VK_TAB: KeyName := 'Tab';
-  else
-    KeyName := '';
+    else
+      KeyName := '';
   end;
 
   if KeyName = '' then
@@ -106,14 +106,14 @@ begin
   Result := 0;
 end;
 
-function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 begin
   Result := TWaylandHotkey.Create(AKey, AShift, AOnHotkey);
 end;
 
 { TWaylandHotkey }
 
-constructor TWaylandHotkey.Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
+constructor TWaylandHotkey.Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
 begin
   inherited Create(AKey, AShift, AOnHotkey);
   HotkeyData := nil;
@@ -142,7 +142,7 @@ end;
 
 procedure TWaylandHotkey.DoUnregister;
 var
-  I: Integer;
+  I: integer;
   Data: PWaylandHotkeyData;
 begin
   if not Registered then Exit;

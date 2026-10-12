@@ -48,10 +48,10 @@ type
 function CreateWindowManager: TWindowManager;
 
 // Get window at specific screen coordinates
-function GetWindowAtPoint(X, Y: Integer): TWindowHandle;
+function GetWindowAtPoint(X, Y: integer): TWindowHandle;
 
 // Get information about window at point
-function GetWindowInfoAtPoint(X, Y: Integer; out AInfo: TWindowInfo): Boolean;
+function GetWindowInfoAtPoint(X, Y: integer; out AInfo: TWindowInfo): boolean;
 
 // Convenience: Get window at current mouse position
 function GetWindowUnderMouse: TWindowHandle;
@@ -73,7 +73,7 @@ begin
   {$IFDEF WINDOWS}
   Result := WinWindowManager.InitializeWindowManager;
   {$ELSE}
-    {$IFDEF UNIX}
+  {$IFDEF UNIX}
       {$IFDEF DARWIN}
       Result := CocoaWindowManager.InitializeWindowManager;
       {$ELSE}
@@ -83,9 +83,9 @@ begin
       else
         Result := XWindowManager.InitializeWindowManager;
       {$ENDIF}
-    {$ELSE}
-    Result := nil;
-    {$ENDIF}
+  {$ELSE}
+  Result := nil;
+  {$ENDIF}
   {$ENDIF}
 end;
 
@@ -95,7 +95,7 @@ begin
     WindowMgr := CreateWindowManager;
 end;
 
-function GetWindowAtPoint(X, Y: Integer): TWindowHandle;
+function GetWindowAtPoint(X, Y: integer): TWindowHandle;
 begin
   Result := 0;
   EnsureWindowManager;
@@ -104,15 +104,15 @@ begin
   {$IFDEF WINDOWS}
   Result := TWinWindowManager(WindowMgr).GetWindowAtPoint(X, Y);
   {$ELSE}
-    {$IFDEF UNIX}
+  {$IFDEF UNIX}
       {$IFNDEF DARWIN}
       Result := TXWindowManager(WindowMgr).GetWindowAtPoint(X, Y);
       {$ENDIF}
-    {$ENDIF}
+  {$ENDIF}
   {$ENDIF}
 end;
 
-function GetWindowInfoAtPoint(X, Y: Integer; out AInfo: TWindowInfo): Boolean;
+function GetWindowInfoAtPoint(X, Y: integer; out AInfo: TWindowInfo): boolean;
 var
   Handle: TWindowHandle;
 begin

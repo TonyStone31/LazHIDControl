@@ -31,17 +31,17 @@ type
 
   TCarbonKeyInput = class(TKeyInput)
   private
-    capsLockBeginState: Boolean;
-    function IsCapsLockOn: Boolean;
+    capsLockBeginState: boolean;
+    function IsCapsLockOn: boolean;
   protected
-    procedure DoDown(Key: Word); override;
-    procedure DoUp(Key: Word); override;
+    procedure DoDown(Key: word); override;
+    procedure DoUp(Key: word); override;
     procedure capsLockGetSaveState; override;
     procedure capsLockRestoreState; override;
   public
-    function GetCapsLockState: Boolean; override;
-    function GetNumLockState: Boolean; override;
-    function GetScrollLockState: Boolean; override;
+    function GetCapsLockState: boolean; override;
+    function GetNumLockState: boolean; override;
+    function GetScrollLockState: boolean; override;
     procedure ToggleCapsLock; override;
     procedure ToggleNumLock; override;
     procedure ToggleScrollLock; override;
@@ -60,26 +60,26 @@ begin
   Result := TCarbonKeyInput.Create;
 end;
 
-procedure SendKeyInput(Key: Word; Down: Boolean);
+procedure SendKeyInput(Key: word; Down: boolean);
 var
-  Char: Word;
+  char: word;
 begin
-  Char := 0;
+  char := 0;
   if Key in [VK_A .. VK_Z] then
   begin
-    Char := Ord('A') + Key - VK_A;
+    char := Ord('A') + Key - VK_A;
     Key := 0;
   end;
   if Key in [VK_0 .. VK_9] then
   begin
     Key := VK_NUMPAD0 + Key - VK_0;
   end;
-  CGPostKeyboardEvent(Char, VirtualKeyCodeToMac(Key), Integer(Down));
+  CGPostKeyboardEvent(char, VirtualKeyCodeToMac(Key), integer(Down));
 end;
 
 { TCarbonKeyInput }
 
-function TCarbonKeyInput.IsCapsLockOn: Boolean;
+function TCarbonKeyInput.IsCapsLockOn: boolean;
 var
   ModifierState: CGEventFlags;
 begin
@@ -87,12 +87,12 @@ begin
   Result := (ModifierState and kCGEventFlagMaskAlphaShift) <> 0;
 end;
 
-procedure TCarbonKeyInput.DoDown(Key: Word);
+procedure TCarbonKeyInput.DoDown(Key: word);
 begin
   SendKeyInput(Key, True);
 end;
 
-procedure TCarbonKeyInput.DoUp(Key: Word);
+procedure TCarbonKeyInput.DoUp(Key: word);
 begin
   SendKeyInput(Key, False);
 end;
@@ -117,19 +117,19 @@ begin
   end;
 end;
 
-function TCarbonKeyInput.GetCapsLockState: Boolean;
+function TCarbonKeyInput.GetCapsLockState: boolean;
 begin
   Result := IsCapsLockOn;
 end;
 
-function TCarbonKeyInput.GetNumLockState: Boolean;
+function TCarbonKeyInput.GetNumLockState: boolean;
 begin
   // macOS keyboards typically don't have NumLock
   // This always returns False
   Result := False;
 end;
 
-function TCarbonKeyInput.GetScrollLockState: Boolean;
+function TCarbonKeyInput.GetScrollLockState: boolean;
 begin
   // macOS keyboards typically don't have ScrollLock
   // This always returns False
@@ -167,11 +167,12 @@ begin
   unicodestring := IntToHex(unicode, 4); // Convert to hex string
 
   Apply([ssAlt]);
-  for j := 1 to Length(unicodeString) do begin
-    if unicodeString[j] in ['0'..'9'] then
-      keyCode := VK_0 + Ord(unicodeString[j]) - Ord('0')
-    else if unicodeString[j] in ['A'..'F'] then
-      keyCode := VK_A + Ord(unicodeString[j]) - Ord('A');
+  for j := 1 to Length(unicodestring) do
+  begin
+    if unicodestring[j] in ['0'..'9'] then
+      keyCode := VK_0 + Ord(unicodestring[j]) - Ord('0')
+    else if unicodestring[j] in ['A'..'F'] then
+      keyCode := VK_A + Ord(unicodestring[j]) - Ord('A');
     Press(keyCode);
   end;
   Unapply([ssAlt]);

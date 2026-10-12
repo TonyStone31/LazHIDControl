@@ -45,14 +45,14 @@ type
 
   TWindowInfo = record
     Handle: TWindowHandle;
-    Title: String;
-    ClassName: String;
-    ProcessID: LongWord;
-    ProcessName: String;
+    Title: string;
+    ClassName: string;
+    ProcessID: longword;
+    ProcessName: string;
     Rect: TRect;
-    IsVisible: Boolean;
-    IsMinimized: Boolean;
-    IsMaximized: Boolean;
+    IsVisible: boolean;
+    IsMinimized: boolean;
+    IsMaximized: boolean;
   end;
 
   { TWindowManager - Abstract base class for window management operations }
@@ -60,98 +60,98 @@ type
   protected
     // Window query methods
     function DoGetActiveWindow: TWindowHandle; virtual; abstract;
-    function DoGetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): Boolean; virtual; abstract;
-    function DoGetWindowTitle(AHandle: TWindowHandle): String; virtual; abstract;
-    function DoGetWindowPID(AHandle: TWindowHandle): LongWord; virtual; abstract;
+    function DoGetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean; virtual; abstract;
+    function DoGetWindowTitle(AHandle: TWindowHandle): string; virtual; abstract;
+    function DoGetWindowPID(AHandle: TWindowHandle): longword; virtual; abstract;
     function DoGetWindowRect(AHandle: TWindowHandle): TRect; virtual; abstract;
 
     { Not abstract: the generic way works everywhere the LCL does, so a
       platform only overrides it to do something better. }
-    function DoCaptureWindow(AHandle: TWindowHandle; ABitmap: TBitmap): Boolean; virtual;
+    function DoCaptureWindow(AHandle: TWindowHandle; ABitmap: TBitmap): boolean; virtual;
 
     // Window search methods
-    function DoFindWindow(const ATitle: String): TWindowHandle; virtual; abstract;
-    function DoFindWindowByClass(const AClassName: String): TWindowHandle; virtual; abstract;
-    function DoFindWindowByPID(APID: LongWord): TWindowHandle; virtual; abstract;
+    function DoFindWindow(const ATitle: string): TWindowHandle; virtual; abstract;
+    function DoFindWindowByClass(const AClassName: string): TWindowHandle; virtual; abstract;
+    function DoFindWindowByPID(APID: longword): TWindowHandle; virtual; abstract;
     function DoEnumerateWindows: TList; virtual; abstract;  // Returns list of TWindowHandle
     function DoGetWindowChildren(AHandle: TWindowHandle): TList; virtual;  // Returns list of child window handles
 
     // Window activation and focus
-    function DoActivateWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
-    function DoFocusWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
-    function DoRaiseWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
+    function DoActivateWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
+    function DoFocusWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
+    function DoRaiseWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
 
     // Window positioning and sizing
-    function DoMoveWindow(AHandle: TWindowHandle; X, Y: Integer): Boolean; virtual; abstract;
-    function DoResizeWindow(AHandle: TWindowHandle; Width, Height: Integer): Boolean; virtual; abstract;
-    function DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: Integer): Boolean; virtual; abstract;
+    function DoMoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean; virtual; abstract;
+    function DoResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean; virtual; abstract;
+    function DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean; virtual; abstract;
 
     // Window state management
-    function DoMinimizeWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
-    function DoMaximizeWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
-    function DoRestoreWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
-    function DoCloseWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
+    function DoMinimizeWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
+    function DoMaximizeWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
+    function DoRestoreWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
+    function DoCloseWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
 
     // Window visibility
-    function DoShowWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
-    function DoHideWindow(AHandle: TWindowHandle): Boolean; virtual; abstract;
-    function DoIsWindowVisible(AHandle: TWindowHandle): Boolean; virtual; abstract;
+    function DoShowWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
+    function DoHideWindow(AHandle: TWindowHandle): boolean; virtual; abstract;
+    function DoIsWindowVisible(AHandle: TWindowHandle): boolean; virtual; abstract;
 
     // Desktop and workspace management (X11/macOS specific)
-    function DoGetDesktopCount: Integer; virtual; abstract;
-    function DoGetCurrentDesktop: Integer; virtual; abstract;
-    function DoSetCurrentDesktop(ADesktop: Integer): Boolean; virtual; abstract;
-    function DoGetWindowDesktop(AHandle: TWindowHandle): Integer; virtual; abstract;
-    function DoSetWindowDesktop(AHandle: TWindowHandle; ADesktop: Integer): Boolean; virtual; abstract;
+    function DoGetDesktopCount: integer; virtual; abstract;
+    function DoGetCurrentDesktop: integer; virtual; abstract;
+    function DoSetCurrentDesktop(ADesktop: integer): boolean; virtual; abstract;
+    function DoGetWindowDesktop(AHandle: TWindowHandle): integer; virtual; abstract;
+    function DoSetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean; virtual; abstract;
   public
     // Window query methods
     function GetActiveWindow: TWindowHandle;
-    function GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): Boolean;
-    function GetWindowTitle(AHandle: TWindowHandle): String;
-    function GetWindowPID(AHandle: TWindowHandle): LongWord;
+    function GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean;
+    function GetWindowTitle(AHandle: TWindowHandle): string;
+    function GetWindowPID(AHandle: TWindowHandle): longword;
     function GetWindowRect(AHandle: TWindowHandle): TRect;
 
     // Window search methods
-    function FindWindow(const ATitle: String): TWindowHandle;
-    function FindWindowByClass(const AClassName: String): TWindowHandle;
-    function FindWindowByPID(APID: LongWord): TWindowHandle;
+    function FindWindow(const ATitle: string): TWindowHandle;
+    function FindWindowByClass(const AClassName: string): TWindowHandle;
+    function FindWindowByPID(APID: longword): TWindowHandle;
     function EnumerateWindows: TList;  // Returns list of TWindowHandle - caller must free
     function GetWindowChildren(AHandle: TWindowHandle): TList;  // Returns list of child handles - caller must free
 
     // Window activation and focus
-    function ActivateWindow(AHandle: TWindowHandle): Boolean;
-    function FocusWindow(AHandle: TWindowHandle): Boolean;
-    function RaiseWindow(AHandle: TWindowHandle): Boolean;
+    function ActivateWindow(AHandle: TWindowHandle): boolean;
+    function FocusWindow(AHandle: TWindowHandle): boolean;
+    function RaiseWindow(AHandle: TWindowHandle): boolean;
 
     // Window positioning and sizing
-    function MoveWindow(AHandle: TWindowHandle; X, Y: Integer): Boolean;
-    function ResizeWindow(AHandle: TWindowHandle; Width, Height: Integer): Boolean;
-    function MoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: Integer): Boolean;
+    function MoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean;
+    function ResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean;
+    function MoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean;
 
     // Window state management
-    function MinimizeWindow(AHandle: TWindowHandle): Boolean;
-    function MaximizeWindow(AHandle: TWindowHandle): Boolean;
-    function RestoreWindow(AHandle: TWindowHandle): Boolean;
-    function CloseWindow(AHandle: TWindowHandle): Boolean;
+    function MinimizeWindow(AHandle: TWindowHandle): boolean;
+    function MaximizeWindow(AHandle: TWindowHandle): boolean;
+    function RestoreWindow(AHandle: TWindowHandle): boolean;
+    function CloseWindow(AHandle: TWindowHandle): boolean;
 
     // Window visibility
-    function ShowWindow(AHandle: TWindowHandle): Boolean;
-    function HideWindow(AHandle: TWindowHandle): Boolean;
-    function IsWindowVisible(AHandle: TWindowHandle): Boolean;
+    function ShowWindow(AHandle: TWindowHandle): boolean;
+    function HideWindow(AHandle: TWindowHandle): boolean;
+    function IsWindowVisible(AHandle: TWindowHandle): boolean;
 
     { Capture a window into a bitmap - the picture half of an xdotool
       replacement, and the thing that lets a test show its result rather than
       describe it.  ABitmap is resized to the window and must not be nil.
       Pass 0 for AHandle to take the whole screen. }
-    function CaptureWindow(AHandle: TWindowHandle; ABitmap: TBitmap): Boolean;
-    function CaptureWindowToFile(AHandle: TWindowHandle; const AFileName: String): Boolean;
+    function CaptureWindow(AHandle: TWindowHandle; ABitmap: TBitmap): boolean;
+    function CaptureWindowToFile(AHandle: TWindowHandle; const AFileName: string): boolean;
 
     // Desktop and workspace management
-    function GetDesktopCount: Integer;
-    function GetCurrentDesktop: Integer;
-    function SetCurrentDesktop(ADesktop: Integer): Boolean;
-    function GetWindowDesktop(AHandle: TWindowHandle): Integer;
-    function SetWindowDesktop(AHandle: TWindowHandle; ADesktop: Integer): Boolean;
+    function GetDesktopCount: integer;
+    function GetCurrentDesktop: integer;
+    function SetCurrentDesktop(ADesktop: integer): boolean;
+    function GetWindowDesktop(AHandle: TWindowHandle): integer;
+    function SetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean;
   end;
 
 implementation
@@ -164,17 +164,17 @@ begin
   Result := DoGetActiveWindow;
 end;
 
-function TWindowManager.GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): Boolean;
+function TWindowManager.GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean;
 begin
   Result := DoGetWindowInfo(AHandle, AInfo);
 end;
 
-function TWindowManager.GetWindowTitle(AHandle: TWindowHandle): String;
+function TWindowManager.GetWindowTitle(AHandle: TWindowHandle): string;
 begin
   Result := DoGetWindowTitle(AHandle);
 end;
 
-function TWindowManager.GetWindowPID(AHandle: TWindowHandle): LongWord;
+function TWindowManager.GetWindowPID(AHandle: TWindowHandle): longword;
 begin
   Result := DoGetWindowPID(AHandle);
 end;
@@ -195,8 +195,7 @@ end;
 
   A platform with something better - XComposite here, PrintWindow on
   Windows - can override DoCaptureWindow and say so. }
-function TWindowManager.DoCaptureWindow(AHandle: TWindowHandle;
-  ABitmap: TBitmap): Boolean;
+function TWindowManager.DoCaptureWindow(AHandle: TWindowHandle; ABitmap: TBitmap): boolean;
 var
   Screen: TBitmap;
   R: TRect;
@@ -238,15 +237,13 @@ begin
   end;
 end;
 
-function TWindowManager.CaptureWindow(AHandle: TWindowHandle;
-  ABitmap: TBitmap): Boolean;
+function TWindowManager.CaptureWindow(AHandle: TWindowHandle; ABitmap: TBitmap): boolean;
 begin
   Result := DoCaptureWindow(AHandle, ABitmap);
 end;
 
 { The extension decides the format, the way every other Save does. }
-function TWindowManager.CaptureWindowToFile(AHandle: TWindowHandle;
-  const AFileName: String): Boolean;
+function TWindowManager.CaptureWindowToFile(AHandle: TWindowHandle; const AFileName: string): boolean;
 var
   Bmp: TBitmap;
   Pic: TPicture;
@@ -270,17 +267,17 @@ begin
 end;
 
 // Window search methods
-function TWindowManager.FindWindow(const ATitle: String): TWindowHandle;
+function TWindowManager.FindWindow(const ATitle: string): TWindowHandle;
 begin
   Result := DoFindWindow(ATitle);
 end;
 
-function TWindowManager.FindWindowByClass(const AClassName: String): TWindowHandle;
+function TWindowManager.FindWindowByClass(const AClassName: string): TWindowHandle;
 begin
   Result := DoFindWindowByClass(AClassName);
 end;
 
-function TWindowManager.FindWindowByPID(APID: LongWord): TWindowHandle;
+function TWindowManager.FindWindowByPID(APID: longword): TWindowHandle;
 begin
   Result := DoFindWindowByPID(APID);
 end;
@@ -302,96 +299,96 @@ begin
 end;
 
 // Window activation and focus
-function TWindowManager.ActivateWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.ActivateWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoActivateWindow(AHandle);
 end;
 
-function TWindowManager.FocusWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.FocusWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoFocusWindow(AHandle);
 end;
 
-function TWindowManager.RaiseWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.RaiseWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoRaiseWindow(AHandle);
 end;
 
 // Window positioning and sizing
-function TWindowManager.MoveWindow(AHandle: TWindowHandle; X, Y: Integer): Boolean;
+function TWindowManager.MoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean;
 begin
   Result := DoMoveWindow(AHandle, X, Y);
 end;
 
-function TWindowManager.ResizeWindow(AHandle: TWindowHandle; Width, Height: Integer): Boolean;
+function TWindowManager.ResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean;
 begin
   Result := DoResizeWindow(AHandle, Width, Height);
 end;
 
-function TWindowManager.MoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: Integer): Boolean;
+function TWindowManager.MoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean;
 begin
   Result := DoMoveResizeWindow(AHandle, X, Y, Width, Height);
 end;
 
 // Window state management
-function TWindowManager.MinimizeWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.MinimizeWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoMinimizeWindow(AHandle);
 end;
 
-function TWindowManager.MaximizeWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.MaximizeWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoMaximizeWindow(AHandle);
 end;
 
-function TWindowManager.RestoreWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.RestoreWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoRestoreWindow(AHandle);
 end;
 
-function TWindowManager.CloseWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.CloseWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoCloseWindow(AHandle);
 end;
 
 // Window visibility
-function TWindowManager.ShowWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.ShowWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoShowWindow(AHandle);
 end;
 
-function TWindowManager.HideWindow(AHandle: TWindowHandle): Boolean;
+function TWindowManager.HideWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := DoHideWindow(AHandle);
 end;
 
-function TWindowManager.IsWindowVisible(AHandle: TWindowHandle): Boolean;
+function TWindowManager.IsWindowVisible(AHandle: TWindowHandle): boolean;
 begin
   Result := DoIsWindowVisible(AHandle);
 end;
 
 // Desktop and workspace management
-function TWindowManager.GetDesktopCount: Integer;
+function TWindowManager.GetDesktopCount: integer;
 begin
   Result := DoGetDesktopCount;
 end;
 
-function TWindowManager.GetCurrentDesktop: Integer;
+function TWindowManager.GetCurrentDesktop: integer;
 begin
   Result := DoGetCurrentDesktop;
 end;
 
-function TWindowManager.SetCurrentDesktop(ADesktop: Integer): Boolean;
+function TWindowManager.SetCurrentDesktop(ADesktop: integer): boolean;
 begin
   Result := DoSetCurrentDesktop(ADesktop);
 end;
 
-function TWindowManager.GetWindowDesktop(AHandle: TWindowHandle): Integer;
+function TWindowManager.GetWindowDesktop(AHandle: TWindowHandle): integer;
 begin
   Result := DoGetWindowDesktop(AHandle);
 end;
 
-function TWindowManager.SetWindowDesktop(AHandle: TWindowHandle; ADesktop: Integer): Boolean;
+function TWindowManager.SetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean;
 begin
   Result := DoSetWindowDesktop(AHandle, ADesktop);
 end;

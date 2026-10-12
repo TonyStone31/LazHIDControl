@@ -52,14 +52,14 @@ end;
 
 initialization
 
-{$IFDEF UNIX}
+  {$IFDEF UNIX}
   if IsWayland then
   begin
     MouseInput := InitializeWaylandMouseInput;
     KeyInput := InitializeWaylandKeyInput;
   end
   else
-{$ENDIF}
+  {$ENDIF}
   begin
     MouseInput := InitializeMouseInput;
     KeyInput := InitializeKeyInput;
@@ -71,4 +71,3 @@ finalization
   FreeAndNil(KeyInput);
 
 end.
-

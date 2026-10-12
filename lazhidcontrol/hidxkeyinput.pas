@@ -35,11 +35,11 @@ type
   private
     xDisplayConnection: PDisplay;
     capsLockBeginState: boolean;
-    ScratchKC: array[0..31] of Integer;
+    ScratchKC: array[0..31] of integer;
     ScratchSym: array[0..31] of TKeySym;
     ScratchSaved: array[0..31] of array of TKeySym;
-    ScratchPerKC: Integer;
-    ScratchReady: Boolean;
+    ScratchPerKC: integer;
+    ScratchReady: boolean;
     function VirtualKeyToXKeySym(Key: word): TKeySym;
     procedure FindScratchKeycodes;
   protected
@@ -50,9 +50,9 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    function GetCapsLockState: Boolean; override;
-    function GetNumLockState: Boolean; override;
-    function GetScrollLockState: Boolean; override;
+    function GetCapsLockState: boolean; override;
+    function GetNumLockState: boolean; override;
+    function GetScrollLockState: boolean; override;
     procedure ToggleCapsLock; override;
     procedure ToggleNumLock; override;
     procedure ToggleScrollLock; override;
@@ -244,7 +244,7 @@ end;
 destructor TXKeyInput.Destroy;
 var
   Gone: TKeySym;
-  I: Integer;
+  I: integer;
 begin
   if xDisplayConnection <> nil then
   begin
@@ -283,7 +283,7 @@ begin
   XFlush(xDisplayConnection);
 end;
 
-function TXKeyInput.GetCapsLockState: Boolean;
+function TXKeyInput.GetCapsLockState: boolean;
 var
   keyboardState: TXKeyboardState;
 begin
@@ -297,7 +297,7 @@ procedure TXKeyInput.PressASCIIChar(ch: char);
 var
   keySym: TKeySym;
   keyCode: cardinal;
-  requiresShift: Boolean;
+  requiresShift: boolean;
   upperCh: char;
   vk: word;
 begin
@@ -339,14 +339,14 @@ end;
   with their original rows saved for the destructor to put back. }
 procedure TXKeyInput.FindScratchKeycodes;
 var
-  MinKC, MaxKC, KC, I, N: Integer;
+  MinKC, MaxKC, KC, I, N: integer;
   Syms: PKeySym;
   Mods: PXModifierKeymap;
-  Used, IsMod: Boolean;
+  Used, IsMod: boolean;
 
-  procedure Take(KC: Integer; Borrowed: Boolean);
+  procedure Take(KC: integer; Borrowed: boolean);
   var
-    J: Integer;
+    J: integer;
   begin
     ScratchKC[N] := KC;
     if Borrowed then
@@ -413,12 +413,13 @@ end;
 procedure TXKeyInput.PressUnicodeChar(unicode: cardinal);
 var
   Sym: TKeySym;
-  I, Slot: Integer;
+  I, Slot: integer;
 begin
   if xDisplayConnection = nil then Exit;
   // Latin-1 keysyms are their codepoints; the rest live in the Unicode range.
   if unicode < $100 then Sym := unicode
-  else Sym := TKeySym($01000000) or TKeySym(unicode);
+  else
+    Sym := TKeySym($01000000) or TKeySym(unicode);
   if not ScratchReady then FindScratchKeycodes;
   if ScratchKC[0] = 0 then Exit;
   Slot := -1;
@@ -449,7 +450,7 @@ begin
   Sleep(5);
 end;
 
-function TXKeyInput.GetNumLockState: Boolean;
+function TXKeyInput.GetNumLockState: boolean;
 var
   keyboardState: TXKeyboardState;
 begin
@@ -459,7 +460,7 @@ begin
   Result := (keyboardState.led_mask and 2) <> 0;  // Bit 1 is NumLock LED
 end;
 
-function TXKeyInput.GetScrollLockState: Boolean;
+function TXKeyInput.GetScrollLockState: boolean;
 var
   keyboardState: TXKeyboardState;
 begin

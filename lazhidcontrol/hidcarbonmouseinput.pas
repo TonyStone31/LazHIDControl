@@ -24,7 +24,7 @@ uses
   Classes, SysUtils, Controls, Forms,
   FPCMacOSAll, CarbonProc,
   HIDMouseInputIntf;
-  
+
 type
 
   { TCarbonMouseInput }
@@ -32,10 +32,10 @@ type
   TCarbonMouseInput = class(TMouseInput)
   protected
     procedure DoDown(Button: TMouseButton); override;
-    procedure DoMove(ScreenX, ScreenY: Integer); override;
+    procedure DoMove(ScreenX, ScreenY: integer); override;
     procedure DoUp(Button: TMouseButton); override;
   end;
-  
+
 function InitializeMouseInput: TMouseInput;
 
 
@@ -47,18 +47,18 @@ begin
 end;
 
 const
-  MouseButtonToCarbonButton: array [TMouseButton] of Integer =
+  MouseButtonToCarbonButton: array [TMouseButton] of integer =
     (kCGMouseButtonLeft, kCGMouseButtonRight, kCGMouseButtonCenter);
-  
 
-{ TCarbonMouseInput }
+
+  { TCarbonMouseInput }
 
 procedure TCarbonMouseInput.DoDown(Button: TMouseButton);
 begin
   CGPostMouseEvent(PointToHIPoint(Mouse.CursorPos), 0, 1, 1, MouseButtonToCarbonButton[Button]);
 end;
 
-procedure TCarbonMouseInput.DoMove(ScreenX, ScreenY: Integer);
+procedure TCarbonMouseInput.DoMove(ScreenX, ScreenY: integer);
 begin
   CGPostMouseEvent(GetHIPoint(ScreenX, ScreenY), 1, 1, 0, 0);
 end;
@@ -69,4 +69,3 @@ begin
 end;
 
 end.
-

@@ -307,9 +307,9 @@ begin
   if WindowMgr.GetWindowInfo(h, Info) then
   begin
     R := Info.Rect;
-    InfoText := Format('Handle: 0x%x' + LineEnding + 'Title: %s' + LineEnding + 'Class: %s' + LineEnding +
-      'Rect: (%d, %d) - (%d, %d) [%dx%d]' + LineEnding + 'PID: %d' + LineEnding + 'Process: %s', [h, Info.Title, Info.ClassName,
-      R.Left, R.Top, R.Right, R.Bottom, R.Right - R.Left, R.Bottom - R.Top, Info.ProcessID, Info.ProcessName]);
+    InfoText := Format('Handle: 0x%x' + LineEnding + 'Title: %s' + LineEnding + 'Class: %s' + LineEnding + 'Rect: (%d, %d) - (%d, %d) [%dx%d]' +
+      LineEnding + 'PID: %d' + LineEnding + 'Process: %s', [h, Info.Title, Info.ClassName, R.Left, R.Top, R.Right, R.Bottom, R.Right -
+      R.Left, R.Bottom - R.Top, Info.ProcessID, Info.ProcessName]);
     Clipboard.AsText := InfoText;
     StatusBar1.Panels[2].Text := 'Window info copied to clipboard';
   end;

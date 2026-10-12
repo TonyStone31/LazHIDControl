@@ -32,21 +32,21 @@ type
     procedure DoRegister; override;
     procedure DoUnregister; override;
   public
-    constructor Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
+    constructor Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
   end;
 
-function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 
 implementation
 
 { TCocoaHotkey }
 
-function InitializeHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 begin
   Result := TCocoaHotkey.Create(AKey, AShift, AOnHotkey);
 end;
 
-constructor TCocoaHotkey.Create(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
+constructor TCocoaHotkey.Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
 begin
   inherited Create(AKey, AShift, AOnHotkey);
   // TODO: Initialize Cocoa-specific hotkey handler

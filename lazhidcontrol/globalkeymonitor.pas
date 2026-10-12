@@ -39,7 +39,7 @@ uses
   {$ENDIF}
   Classes, SysUtils, LCLType;
 
-// Re-export the base type and event for convenience
+  // Re-export the base type and event for convenience
 type
   TKeyEvent = GlobalKeyMonitorIntf.TKeyEvent;
   TGlobalKeyListener = GlobalKeyMonitorIntf.TGlobalKeyListener;
@@ -53,17 +53,17 @@ begin
   {$IFDEF WINDOWS}
   Result := InitializeGlobalKeyListener;
   {$ELSE}
-    {$IFDEF UNIX}
+  {$IFDEF UNIX}
       {$IFDEF LCLcarbon}
       Result := CocoaGlobalKeyMonitor.InitializeGlobalKeyListener;
       {$ELSE}
       // Note: X11 only - Wayland does not support global key monitoring
       Result := XGlobalKeyMonitor.InitializeGlobalKeyListener;
       {$ENDIF}
-    {$ELSE}
-    // Unsupported platform - return a stub that always fails
-    Result := TGlobalKeyListener.Create;
-    {$ENDIF}
+  {$ELSE}
+  // Unsupported platform - return a stub that always fails
+  Result := TGlobalKeyListener.Create;
+  {$ENDIF}
   {$ENDIF}
 end;
 

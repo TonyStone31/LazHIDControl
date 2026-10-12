@@ -60,12 +60,12 @@ uses
   {$ENDIF}
   Classes, SysUtils, LCLType;
 
-// Re-export the base type and event for convenience
+  // Re-export the base type and event for convenience
 type
   TKeyNotifyEvent = HotkeyInputIntf.TKeyNotifyEvent;
   THotkey = HotkeyInputIntf.THotkey;
 
-function CreateHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function CreateHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 
 implementation
 
@@ -76,12 +76,12 @@ begin
 end;
 {$ENDIF}
 
-function CreateHotkey(AKey: Word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
+function CreateHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 begin
   {$IFDEF WINDOWS}
   Result := InitializeHotkey(AKey, AShift, AOnHotkey);
   {$ELSE}
-    {$IFDEF UNIX}
+  {$IFDEF UNIX}
       {$IFDEF LCLcarbon}
       Result := CocoaHotkeyInput.InitializeHotkey(AKey, AShift, AOnHotkey);
       {$ELSE}
@@ -90,10 +90,10 @@ begin
       else
         Result := XHotkeyInput.InitializeHotkey(AKey, AShift, AOnHotkey);
       {$ENDIF}
-    {$ELSE}
-    // Unsupported platform - return a stub that always fails to register
-    Result := THotkey.Create(AKey, AShift, AOnHotkey);
-    {$ENDIF}
+  {$ELSE}
+  // Unsupported platform - return a stub that always fails to register
+  Result := THotkey.Create(AKey, AShift, AOnHotkey);
+  {$ENDIF}
   {$ENDIF}
 end;
 

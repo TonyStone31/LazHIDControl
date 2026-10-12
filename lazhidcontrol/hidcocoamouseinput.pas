@@ -32,7 +32,7 @@ type
   TCocoaMouseInput = class(TMouseInput)
   protected
     procedure DoDown(Button: TMouseButton); override;
-    procedure DoMove(ScreenX, ScreenY: Integer); override;
+    procedure DoMove(ScreenX, ScreenY: integer); override;
     procedure DoUp(Button: TMouseButton); override;
   end;
 
@@ -47,44 +47,43 @@ begin
 end;
 
 const
-  MouseButtonToCocoaButton: array [TMouseButton] of Integer =
-    (kCGMouseButtonLeft, kCGMouseButtonRight, kCGMouseButtonCenter,3,4);
+  MouseButtonToCocoaButton: array [TMouseButton] of integer =
+    (kCGMouseButtonLeft, kCGMouseButtonRight, kCGMouseButtonCenter, 3, 4);
 
 
-{ TCocoaMouseInput }
+  { TCocoaMouseInput }
 
 procedure TCocoaMouseInput.DoDown(Button: TMouseButton);
 var
-  MyMouseEvent : CGEventRef;
+  MyMouseEvent: CGEventRef;
 begin
-     if Button = mbLeft then
-        MyMouseEvent := CGEventCreateMouseEvent(nil, 1, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button])
-     else
-        MyMouseEvent := CGEventCreateMouseEvent(nil, 3, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button]);
-     CGEventPost(kCGHIDEventTap,MyMouseEvent);
-     CFRelease(MyMouseEvent);
+  if Button = mbLeft then
+    MyMouseEvent := CGEventCreateMouseEvent(nil, 1, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button])
+  else
+    MyMouseEvent := CGEventCreateMouseEvent(nil, 3, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button]);
+  CGEventPost(kCGHIDEventTap, MyMouseEvent);
+  CFRelease(MyMouseEvent);
 end;
 
-procedure TCocoaMouseInput.DoMove(ScreenX, ScreenY: Integer);
+procedure TCocoaMouseInput.DoMove(ScreenX, ScreenY: integer);
 var
-  MyMouseEvent : CGEventRef;
+  MyMouseEvent: CGEventRef;
 begin
-     MyMouseEvent := CGEventCreateMouseEvent(nil, 5, CGPointMake(ScreenX, ScreenY), MouseButtonToCocoaButton[mbLeft]);
-     CGEventPost(kCGHIDEventTap,MyMouseEvent);
-     CFRelease(MyMouseEvent);
+  MyMouseEvent := CGEventCreateMouseEvent(nil, 5, CGPointMake(ScreenX, ScreenY), MouseButtonToCocoaButton[mbLeft]);
+  CGEventPost(kCGHIDEventTap, MyMouseEvent);
+  CFRelease(MyMouseEvent);
 end;
 
 procedure TCocoaMouseInput.DoUp(Button: TMouseButton);
 var
-  MyMouseEvent : CGEventRef;
+  MyMouseEvent: CGEventRef;
 begin
-     if Button = mbLeft then
-        MyMouseEvent := CGEventCreateMouseEvent(nil, 2, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button])
-     else
-        MyMouseEvent := CGEventCreateMouseEvent(nil, 4, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button]);
-     CGEventPost(kCGHIDEventTap,MyMouseEvent);
-     CFRelease(MyMouseEvent);
+  if Button = mbLeft then
+    MyMouseEvent := CGEventCreateMouseEvent(nil, 2, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button])
+  else
+    MyMouseEvent := CGEventCreateMouseEvent(nil, 4, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button]);
+  CGEventPost(kCGHIDEventTap, MyMouseEvent);
+  CFRelease(MyMouseEvent);
 end;
 
 end.
-
