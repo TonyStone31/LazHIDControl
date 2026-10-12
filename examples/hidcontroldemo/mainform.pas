@@ -514,16 +514,32 @@ var
   Origin: TPoint;
   W, H: Integer;
 
-  { press, walk the pointer through the points, release - one drawn stroke }
+  { press, walk the pointer through the points, release - one drawn stroke.
+    The target is our own window, so the queue is drained after every step:
+    blocked, GTK would compress the backlog and the corners would go missing. }
   procedure Stroke(const Pts: array of TPoint);
   var
-    I: Integer;
+    I, Step, Steps: Integer;
+    A, B: TPoint;
   begin
     MouseInput.Move([], Origin.X + Pts[0].X, Origin.Y + Pts[0].Y, 200);
+    Application.ProcessMessages;
     MouseInput.Down(mbLeft, []);
     for I := 1 to High(Pts) do
-      MouseInput.Move([], Origin.X + Pts[I].X, Origin.Y + Pts[I].Y, 250);
+    begin
+      A := Pts[I - 1];
+      B := Pts[I];
+      Steps := Math.Max(Abs(B.X - A.X), Abs(B.Y - A.Y)) div 12 + 1;
+      for Step := 1 to Steps do
+      begin
+        MouseInput.Move([], Origin.X + A.X + (B.X - A.X) * Step div Steps,
+                            Origin.Y + A.Y + (B.Y - A.Y) * Step div Steps);
+        Sleep(10);
+        Application.ProcessMessages;
+      end;
+    end;
     MouseInput.Up(mbLeft, []);
+    Application.ProcessMessages;
   end;
 
 begin
