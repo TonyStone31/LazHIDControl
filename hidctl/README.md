@@ -3,11 +3,35 @@
 Everything the package can do to a mouse, a keyboard and a window, reachable
 from a shell script, a Makefile, a test runner, or any language that can
 write lines of text.  One binary, no dependency on `xdotool`, `wmctrl`,
-`xwininfo` or ImageMagick.
+`xwininfo` or ImageMagick - and the same binary builds for Windows.
 
     lazbuild hidctl/hidctl.lpi
+    hidctl --help                          # every command, on one screen
 
-## Using it
+## In place of xdotool
+
+Commands chain on one line, under xdotool's names:
+
+    hidctl search --name "Text Editor" windowactivate key ctrl+a type "Hello" key Return
+    hidctl getactivewindow getwindowgeometry
+    hidctl mousemove 400 300 click 1 sleep 0.5 type --delay 20 "typed slowly"
+
+These work as they do in xdotool: `search` (`--name`, `--class`, `--pid`),
+`getactivewindow`, `getwindowname`, `getwindowpid`, `getwindowgeometry`,
+`windowactivate`, `windowfocus`, `windowraise`, `windowmove`, `windowsize`,
+`windowminimize`, `windowclose`, `windowmap`, `windowunmap`, `mousemove`,
+`mousemove_relative`, `click`, `mousedown`, `mouseup`, `getmouselocation`,
+`getdisplaygeometry`, `key`, `keydown`, `keyup`, `type` (`--delay`), `sleep`,
+`get_num_desktops`, `get_desktop`, `set_desktop`.
+
+Where it differs: `search` matches plain text anywhere in the title, any case,
+not a regular expression; `--window`, `--clearmodifiers`, `--sync` and
+`--onlyvisible` are accepted and ignored; anything not in that list is not
+implemented.  Where it does better: `type` gets the text right on any
+keyboard layout, including with a second layout switched in, and it runs on
+Windows.
+
+## Scripts
 
     hidctl --window "Some App" script.txt
     hidctl --window "Some App" -           # reads standard input
@@ -48,9 +72,10 @@ Use it whenever something is watching:
   been still for a moment never sees a jump arrive;
 * **anything that tracks the pointer** as it moves rather than sampling it.
 
-## Commands
+## Script commands
 
-One per line.  Blank lines and `#` comments are ignored.
+One per line.  Blank lines and `#` comments are ignored.  The xdotool names
+above work in a script too.
 
 | | |
 | --- | --- |
@@ -68,7 +93,7 @@ One per line.  Blank lines and `#` comments are ignored.
 | `press` / `release [l\|r\|m]` | hold a button down, let it go |
 | `drag x1 y1 x2 y2 [l\|r\|m] [ms]` | press, move, release - over that many milliseconds if given |
 | `scroll up\|down [n]` | |
-| `key <name>` | `return` `escape` `tab` `space` `back` `delete` `up` `down` `left` `right` `pgup` `pgdn` `home` `end` `f1`..`f12`, or one character |
+| `key <name>` | `return` `escape` `tab` `space` `back` `delete` `up` `down` `left` `right` `pgup` `pgdn` `home` `end` `f1`..`f12`, one letter or digit, or a combination like `ctrl+shift+t`; `hidctl --help` has the whole list |
 | `hold <name>` / `let <name>` | `ctrl` `shift` `alt` |
 | `type <text>` | typed as if on the keyboard |
 | `wait <ms>` | |
