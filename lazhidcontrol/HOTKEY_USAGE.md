@@ -7,7 +7,7 @@ The LazHIDControl package includes cross-platform global hotkey registration sup
 - **Windows**: Implemented using RegisterHotKey
 - **X11 (Linux/Unix)**: Fully supported using XGrabKey
 - **Wayland**: Not currently implemented; the portal backend is a stub
-- **macOS**: Not currently implemented
+- **macOS**: Implemented using Carbon's RegisterEventHotKey (Ctrl, Alt/Option, Shift)
 
 ### Wayland status
 

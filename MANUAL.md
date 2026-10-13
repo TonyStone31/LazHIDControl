@@ -60,8 +60,9 @@ Settings are saved in the `.lfm`.
 The component owns its binding and releases it when destroyed. Constructors
 are passive and the designer never grabs keys. Published properties and events
 include source comments for the Object Inspector's hints and information box.
-Windows and GTK2/GTK3 Linux/X11 use the existing backends. Wayland and macOS hotkey
-support remain unfinished; unsupported registration reports failure.
+Windows, GTK2/GTK3 Linux/X11, and macOS register global shortcuts (macOS
+through Carbon's hotkey call, which needs no Accessibility permission). Wayland
+hotkeys remain unfinished; unsupported registration reports failure.
 
 The event runs on the GUI thread. Hotkey modifiers may still be held: if you
 replay typing, wait for their release first. The automation demo's hotkey
@@ -148,8 +149,12 @@ The components and their GUI methods are intended for the main GUI thread.
 Windows and Linux/X11 use the existing backends. Hotkeys use GTK2/GTK3 on X11.
 Linux/X11 is tested in a nested X server; Windows was tested on Windows 10 in
 a virtual machine, with hidctl and both demos.
-Wayland support is partial - see "Wayland, in detail" - and macOS is still
-unsupported. Components report unavailable operations rather than simulating success.
+Wayland support is partial - see "Wayland, in detail". macOS is partial too:
+hotkeys, clipboard monitoring, idle time, and power status work and were
+tested on macOS Sequoia 15 in a virtual machine (`sh tests/run_macos.sh`);
+window control and screenshots are not written, and sending input is
+untested. Components report unavailable operations rather than simulating
+success.
 
 Window management has explicit macOS and Wayland backend placeholders. They
 return no backend until implemented; Wayland sessions do not fall back to X11
@@ -203,8 +208,8 @@ and `LastError`. Re-enable to retry. Disabling the component does not fire event
 
 Windows uses the current session's `GetLastInputInfo`. Linux/X11 queries the
 screen-saver extension using `libXss.so.1` (an optional runtime dependency, loaded
-only when checking). macOS uses FPC's Core Graphics binding; this implementation
-needs testing on a Mac. Backend selection is automatic: X11 sessions use the
+only when checking). macOS uses FPC's Core Graphics binding; the idle query
+is tested there, the idle/active transitions are not. Backend selection is automatic: X11 sessions use the
 X11 query; Wayland sessions, and X11 sessions whose query fails, ask the GNOME
 Mutter IdleMonitor and then the freedesktop ScreenSaver service that KDE
 provides. Other Wayland sessions currently report unsupported until native
@@ -234,8 +239,9 @@ Linux uses logind sleep/wake signals and optional UPower status on the system
 D-Bus. With logind but no UPower, sleep events still work and status remains
 unknown. Both X11 and Wayland use these same Linux services. macOS listens for
 `NSWorkspace` sleep/wake notifications - which also cover waking from
-hibernation - and reads battery status from IOKit power sources; this backend
-still needs testing on a Mac.
+hibernation - and reads battery status from IOKit power sources. Power
+status is tested on a Mac; battery changes and sleep/wake need real hardware
+and are not.
 
 Events run when the application processes them. `OnSuspend` is informational:
 it does not delay sleep or guarantee your handler finishes before suspension.
@@ -259,7 +265,8 @@ initial event. **PollInterval** defaults to 250 milliseconds, and multiple
 changes between checks may produce one event. `Check` supports manual checking.
 
 Windows uses its clipboard sequence counter. GTK2 and GTK3 use the clipboard
-owner-change signal; macOS uses `NSPasteboard.changeCount` (untested).
+owner-change signal; macOS uses `NSPasteboard.changeCount`, tested with
+Unicode text.
 GTK3 on Wayland is subject to the clipboard visibility provided by GTK and the
 compositor; unrestricted background clipboard access is not promised. Other
 widgetsets currently report unsupported. This monitors the ordinary clipboard,
@@ -343,6 +350,6 @@ is why this package does not fall back to its X11 backends on Wayland.
 
 - Session lock/unlock notifications.
 - Native Wayland idle-notification support outside the GNOME and KDE services.
-- macOS platform testing.
+- macOS window control, screenshots, Unicode typing, and input testing.
 
 These are future options, not implemented features or release commitments.

@@ -22,18 +22,19 @@
 - Verified here: Linux x86-64, GTK2 and GTK3, Lazarus **4.99** (trunk), FPC **3.3.1**.
   Windows: win64 builds of hidctl and both demos were run on Windows 10 (22H2)
   in a virtual machine - typing, clicking, window control, capture, hotkey,
-  clipboard, idle and power status all passed. Qt builds compile but were not
-  run; release compiler/IDE versions were not verified here.
-  No minimum Lazarus/FPC version has been established.
+  clipboard, idle and power status all passed. macOS: built with the released
+  Lazarus **4.8** and FPC **3.2.4** on macOS Sequoia 15 (Intel) in a virtual
+  machine; hotkeys, clipboard, idle and power status passed. Qt builds compile
+  but were not run. No minimum Lazarus/FPC version has been established.
 
 ## Known limitations
 
 Wayland input (uinput) is written but untested, types as a US layout, and cannot
 type beyond ASCII. Wayland screenshots use the screenshot portal. Wayland hotkey
 registration is a stub: registration remains false. Global monitoring and window management use X11 and do not cover
-native Wayland windows. macOS is not a supported submission target: dispatch is
-incomplete, hotkey/key-monitor code is stubbed, and global mouse monitoring and
-window management return nil. Platform behavior was preserved, not repaired.
+native Wayland windows. macOS is not a supported submission target yet: hotkeys,
+clipboard, idle, and power work there, but input is untested and the key
+monitor, global mouse monitoring, and window management are not written.
 
 The units that share a name with Lazarus's bundled `mouseandkeyinput` package
 carry a `hid` prefix here, so nothing collides - installing both into the IDE is fine.
@@ -60,8 +61,8 @@ Package/project XML and file paths were checked. Package, main demo, small
 example and CLI builds passed from repository-file-only temporary copies with
 fresh Lazarus configuration on GTK3. Existing compiler warnings remain unchanged.
 Linux input automation ran in a nested X server, Windows in a virtual machine.
-macOS and Wayland runtime testing and the OPM archive-generation UI remain
-untested.
+macOS was tested in a virtual machine for the parts listed above. Wayland at
+run time and the OPM archive-generation UI remain untested.
 
 ## Maintenance and compatibility
 

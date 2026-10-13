@@ -110,13 +110,19 @@ other projects.
 | Linux / X11 (gtk2, gtk3) | **Tested.** | All eight components and hidctl are exercised in a nested X server on every change: typing with Unicode, clicking, capture, window control, clipboard, idle, power. Typing is checked on US, German, French, Spanish, and Russian keyboard layouts and with Caps Lock on. Qt builds compile; hotkeys and clipboard monitoring need GTK for now. |
 | Windows | **Tested on Windows 10 (22H2) in a virtual machine.** | hidctl and both demos pass there: typing the full Unicode sheet (also with Caps Lock and NumLock on), navigation keys, clicking, window find/move/size/minimize with Unicode titles, window and desktop capture, the global hotkey from another application, clipboard monitoring, idle, and power status. Not covered: suspend/resume events, more than one monitor, Windows 11. |
 | Linux / Wayland | **Partly there, untested on a real compositor.** | Screenshots go through the desktop's screenshot portal (tested against that portal on an X11 session; capturing one window by title is not possible). Idle (GNOME and KDE services), power (logind/UPower), and clipboard monitoring ride D-Bus and GTK, not X. Keyboard and mouse use the kernel's uinput: written, compiled, **never run** - it needs write access to `/dev/uinput`, types as a US layout, and cannot type beyond ASCII. Global hotkeys (GlobalShortcuts portal) are not written. Finding and moving other applications' windows is the one thing Wayland itself rules out. |
-| macOS | **Written, never run.** | Power monitoring (NSWorkspace sleep/wake, IOKit battery), clipboard (NSPasteboard), and idle (Core Graphics) are implemented and waiting for someone with a Mac. Input and window backends are stubs. |
+| macOS / Cocoa | **Partly there. Tested on macOS Sequoia 15 (Intel) in a virtual machine.** | Built with the released Lazarus 4.8 and FPC 3.2.4; both demos and hidctl run. Working and tested: global hotkeys (registered, then fired by a real Ctrl+Shift+F9), clipboard monitoring with Unicode text, idle time, power status, and hidctl's idle, power, display, and clipboard commands. Sending keys and mouse moves is written but has not been run against another application - it needs Accessibility permission. Not there yet: typing beyond the keys on the keyboard, the scroll wheel, window control, screenshots. Battery changes and sleep/wake cannot be tried in a virtual machine. `sh tests/run_macos.sh` runs the checks. |
 
 **Wayland and macOS developers: we want your feedback.** If you can run the
 automation demo on a real Wayland desktop or a Mac - or can tell us what the
 portal and Cocoa backends should look like - open an
 [issue](https://github.com/TonyStone31/LazHIDControl/issues). Those two
 columns improve only with reports from machines we do not have.
+
+The automation demo and the library demo on macOS:
+
+![The automation demo on macOS](images/macos/automation-demo.png)
+
+![The library demo on macOS, its hotkey registered](images/macos/hid-demo-keyboard.png)
 
 ## License and credits
 

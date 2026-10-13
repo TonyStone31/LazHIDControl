@@ -68,3 +68,5 @@ hidctl/*.lps
 
 # Demo executables
 /examples/automation/AutomationDemo
+/tests/macos_smoke
+/tests/results/

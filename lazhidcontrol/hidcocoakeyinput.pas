@@ -43,7 +43,11 @@ type
     procedure ToggleScrollLock; override;
   end;
 
+const
+  NoMacCode = High(word);  // what VKToMacCode answers for a key a Mac lacks; 0 is its A
+
 function InitializeKeyInput: TKeyInput;
+function VKToMacCode(AKey: word): word;
 
 
 implementation
@@ -191,7 +195,7 @@ begin
     VK_SCROLL: Result := kVK_F14;
     VK_F10: Result := kVK_F10;
 
-    VK_APPS: Result := kVK_SubMenu;
+    VK_APPS: Result := NoMacCode;  // no such key on a Mac
 
     VK_F12: Result := kVK_F12;
     VK_PAUSE: Result := kVK_F15;
@@ -210,43 +214,30 @@ begin
     VK_UP: Result := kVK_UpArrow;
 
     else
-      Result := VK_UNKNOWN;
+      Result := NoMacCode;
   end;
 end;
 
 procedure SendKeyInput(Key: word; Down: boolean);
 var
   EventSourceRef: CGEventSourceRef;
-  KeyDownRef, KeyUpRef: CGEventRef;
+  EventRef: CGEventRef;
+  MacCode: word;
 begin
-
+  MacCode := VKToMacCode(Key);
+  if MacCode = NoMacCode then
+    raise Exception.CreateFmt('Key %d is not supported by the Cocoa input backend.', [Key]);
+  EventRef := nil;
   EventSourceRef := CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
   if EventSourceRef = nil then RaiseLastOSError;
   try
-
-    if Down then
-    begin
-      KeyDownRef := CGEventCreateKeyboardEvent(EventSourceRef, VKToMacCode(Key), 1); //1 = key down
-      if KeyDownRef = nil then RaiseLastOSError;
-      CGEventSetFlags(KeyDownRef, CGEventGetFlags(KeyDownRef)); //combine flags
-      CGEventPost(kCGHIDEventTap, KeyDownRef);
-    end
-    else
-    begin
-      KeyUpRef := CGEventCreateKeyboardEvent(EventSourceRef, VKToMacCode(Key), 0);  //0 = key up
-      if KeyUpRef = nil then RaiseLastOSError;
-      CGEventSetFlags(KeyDownRef, CGEventGetFlags(KeyDownRef)); //combine flags
-      CGEventPost(kCGHIDEventTap, KeyUpRef);
-    end;
-
+    EventRef := CGEventCreateKeyboardEvent(EventSourceRef, MacCode, Ord(Down));
+    if EventRef = nil then RaiseLastOSError;
+    CGEventPost(kCGHIDEventTap, EventRef);
   finally
-    if Down then
-      if KeyDownRef <> nil then CFRelease(KeyDownRef)
-      else
-      if KeyUpRef <> nil then CFRelease(KeyUpRef);
+    if EventRef <> nil then CFRelease(EventRef);
     CFRelease(EventSourceRef);
   end;
-
 end;
 
 { TCocoaKeyInput }

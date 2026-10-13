@@ -1,6 +1,6 @@
 unit HIDHotkey;
 {$mode objfpc}{$H+}
-{$if defined(windows) or (defined(linux) and (defined(LCLgtk2) or defined(LCLgtk3)))}{$define HOTKEYBACKEND}{$endif}
+{$if defined(windows) or defined(darwin) or (defined(linux) and (defined(LCLgtk2) or defined(LCLgtk3)))}{$define HOTKEYBACKEND}{$endif}
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
 
