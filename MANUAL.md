@@ -328,10 +328,10 @@ Wayland program cannot learn where another program's window is.
 **Keyboard and mouse** go through the kernel's
 [`uinput`](https://docs.kernel.org/input/uinput.html), since there is no XTest
 to ask. `waylandmouseandkeyinput.pas` creates a virtual keyboard and a virtual
-absolute pointer that any compositor reads like hardware. This backend is
-written and compiles but has not been run on any machine yet - reports are
-welcome. It needs write access to `/dev/uinput`, which belongs to root by
-default. One udev rule gives it to whoever is logged in at the machine:
+absolute pointer that any compositor reads like hardware. Tested on KDE Plasma
+6: typing, keys with modifiers, moving, clicking and the scroll wheel. It
+needs write access to `/dev/uinput`, which belongs to root by default. One
+udev rule gives it to whoever is logged in at the machine:
 
 ```
 # /etc/udev/rules.d/60-uinput.rules
@@ -344,12 +344,18 @@ keyboard presses keys, not characters: text is typed as a US layout would
 type it, characters beyond ASCII are skipped, and the lock keys cannot be
 read.
 
+The pointer goes where it is told in screen coordinates. A `THIDMouse` with
+`RelativeTo` or `RelativeWindow` set raises an error on Wayland instead of
+guessing: a Wayland program is not told where its own windows are on the
+screen, so there is nothing to measure from.
+
 **Global hotkeys** want the `GlobalShortcuts` desktop portal (KDE Plasma,
 GNOME 48 and later, Hyprland); that unit is still a stub and registration
 fails with a message. **Window management** has no cross-compositor protocol
-to use, so `THIDWindow` reports that it is unavailable. Idle, power, and
-clipboard monitoring ride D-Bus and GTK and work as described in their
-sections.
+to use, so `THIDWindow` reports that it is unavailable. Power status and
+clipboard monitoring work as described in their sections. Idle time is asked
+of GNOME's and the freedesktop screen-saver services; KDE Plasma 6 answers
+that it has none to give, and `THIDSystemIdle` reports that.
 
 A GTK2 program on a Wayland desktop runs through XWayland, the X server
 Wayland sessions carry for older programs. X calls made there reach only
@@ -359,7 +365,8 @@ is why this package does not fall back to its X11 backends on Wayland.
 ## Possible future work
 
 - Session lock/unlock notifications.
-- Native Wayland idle-notification support outside the GNOME and KDE services.
+- Idle on Wayland through the `ext-idle-notify` protocol, which KDE needs.
+- Unicode typing and hotkeys on Wayland through the RemoteDesktop and GlobalShortcuts portals.
 - macOS on Apple Silicon, and its battery and sleep/wake events, on a real Mac.
 
 These are future options, not implemented features or release commitments.

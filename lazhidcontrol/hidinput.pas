@@ -54,6 +54,7 @@ type
     property Modifiers: TShiftState read MouseModifiers write MouseModifiers default [];
     // A control whose client area anchors MoveTo coordinates. Leave empty for
     // screen coordinates. Clicks and scrolls always act wherever the pointer is.
+    // Not on Wayland, which does not tell a program where its windows are.
     property RelativeTo: TControl read RelativeControl write SetRelativeControl;
     // A THIDWindow whose found window anchors MoveTo coordinates, measured from
     // its screen rectangle including native borders. Wins over RelativeTo;
@@ -132,6 +133,11 @@ end;
 procedure THIDMouse.MoveTo(X, Y: integer);
 begin
   CheckAvailable(Self, Modifiers);
+  {$ifdef linux}
+  // a Wayland program is never told where its own windows are on the screen
+  if (Assigned(RelativeTo) or Assigned(RelativeWindow)) and (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') then
+    raise EInvalidOperation.Create('On Wayland MoveTo takes screen coordinates only; RelativeTo and RelativeWindow cannot work there.');
+  {$endif}
   if Assigned(RelativeWindow) then MoveToWindow(RelativeWindow.Handle, X, Y)
   else if Assigned(RelativeTo) then MouseInput.Move(Modifiers, RelativeTo, X, Y, MovementDuration)
   else

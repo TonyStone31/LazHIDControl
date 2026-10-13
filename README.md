@@ -107,19 +107,19 @@ other projects.
 
 | | Linux / X11 | Windows | macOS | Linux / Wayland |
 |---|---|---|---|---|
-| Tested on | Mint, in a nested X server; GTK2 and GTK3 | Windows 10, in a virtual machine | macOS 15 on Intel, in a virtual machine; Lazarus 4.8, FPC 3.2.4 | no real compositor yet |
-| Typing, Unicode included | ✅ on US, German, French, Spanish and Russian layouts | ✅ | ✅ | written, never run; US layout and ASCII only |
-| Keys with Ctrl, Alt, Shift | ✅ | ✅ | ✅ | written, never run |
-| Mouse: move, click, scroll | ✅ | ✅ | ✅ | written, never run |
+| Tested on | Mint, in a nested X server; GTK2 and GTK3 | Windows 10, in a virtual machine | macOS 15 on Intel, in a virtual machine; Lazarus 4.8, FPC 3.2.4 | KDE Plasma 6 on Ubuntu 26.04, in a virtual machine; GTK3 |
+| Typing, Unicode included | ✅ on US, German, French, Spanish and Russian layouts | ✅ | ✅ | ASCII only, as a US keyboard types it |
+| Keys with Ctrl, Alt, Shift | ✅ | ✅ | ✅ | ✅ |
+| Mouse: move, click, scroll | ✅ | ✅ | ✅ | ✅ in screen coordinates |
 | Global hotkeys | ✅ | ✅ | ✅ | not written |
 | Windows: find, activate, move, size, minimize | ✅ | ✅ | ✅ | not possible on Wayland |
-| Screenshots | ✅ | ✅ | ✅ | ✅ through the desktop's portal |
-| Clipboard monitoring | ✅ | ✅ | ✅ | through GTK |
-| Idle time | ✅ | ✅ | ✅ | GNOME and KDE |
+| Screenshots | ✅ | ✅ | ✅ | ✅ through the desktop's portal; it asks the user once |
+| Clipboard monitoring | ✅ | ✅ | ✅ | ✅ |
+| Idle time | ✅ | ✅ | ✅ | not on KDE; GNOME untested |
 | Power status | ✅ | ✅ | ✅ | ✅ |
-| Sleep and wake events | ✅ | not tried | not tried | ✅ |
+| Sleep and wake events | ✅ | not tried | not tried | not tried |
 | Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | not possible on Wayland |
-| hidctl | ✅ | ✅ | ✅ | |
+| hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
 
 Qt builds compile; hotkeys and clipboard monitoring need GTK for now.
 
@@ -137,10 +137,14 @@ One Mac difference: a minimized window is not in the window list, so keep
 its handle if you mean to bring it back.
 
 **On Wayland** keyboard and mouse go through the kernel's uinput, which
-needs write access to `/dev/uinput` and has never been run; screenshots work
-through the screenshot portal; other programs' windows are out of reach by
-design. If you can run the demo on a real Wayland desktop,
-[tell us how it went](https://github.com/TonyStone31/LazHIDControl/issues).
+needs one udev rule to let the logged-in user write to `/dev/uinput`
+([the manual](MANUAL.md#wayland-in-detail) has it). A virtual keyboard
+presses keys, not characters, so text arrives as a US layout would type it
+and anything beyond ASCII is skipped. Wayland does not tell a program where
+windows are, its own included, so the mouse works in screen coordinates only
+and other programs' windows are out of reach. Screenshots come from the
+desktop's portal. GNOME and other desktops have not been tried;
+[tell us how it goes](https://github.com/TonyStone31/LazHIDControl/issues).
 
 **Still wanted from a real Mac:** Apple Silicon, battery changes, and
 sleep/wake events - a virtual machine has none of them. `sh tests/run_macos.sh`

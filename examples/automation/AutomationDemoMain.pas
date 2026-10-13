@@ -309,8 +309,12 @@ end;
 procedure TAutomationForm.MouseButtonClick(Sender: TObject);
 begin
   // Pointer.RelativeTo is the sample button, so this is the middle of it
-  Pointer.MoveTo(SampleButton.Width div 2, SampleButton.Height div 2);
-  Pointer.Click;
+  try
+    Pointer.MoveTo(SampleButton.Width div 2, SampleButton.Height div 2);
+    Pointer.Click;
+  except
+    on E: EInvalidOperation do Say(E.Message);
+  end;
 end;
 
 procedure TAutomationForm.SampleButtonClick(Sender: TObject);
@@ -321,8 +325,12 @@ end;
 
 procedure TAutomationForm.ScrollButtonClick(Sender: TObject);
 begin
-  ListPointer.MoveTo(ScrollList.Width div 2, ScrollList.Height div 2);
-  ListPointer.Scroll(-5);
+  try
+    ListPointer.MoveTo(ScrollList.Width div 2, ScrollList.Height div 2);
+    ListPointer.Scroll(-5);
+  except
+    on E: EInvalidOperation do Say(E.Message);
+  end;
 end;
 
 { ---- other programs' windows: WindowManager and THIDWindow ---- }
@@ -467,7 +475,7 @@ procedure TAutomationForm.IdleBoxChange(Sender: TObject);
 begin
   IdleStatus.Caption := 'Active; leave mouse and keyboard alone for 5 seconds.';
   SystemIdle.Enabled := IdleBox.Checked;
-  if not IdleBox.Checked then IdleStatus.Caption := 'Idle detection is off.';
+  if not IdleBox.Checked and (SystemIdle.LastError = '') then IdleStatus.Caption := 'Idle detection is off.';
 end;
 
 procedure TAutomationForm.BecameIdle(Sender: TObject);

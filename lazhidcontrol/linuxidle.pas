@@ -117,7 +117,7 @@ begin
     QueryBusIdle('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver', 'org.freedesktop.ScreenSaver', 'GetSessionIdleTime', Milliseconds);
   if Result then Message := ''
   else if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
-    Message := 'No supported Wayland idle service answered; GNOME and KDE are supported.';
+    Message := 'This Wayland desktop gives out no idle time. GNOME''s does; KDE Plasma 6 does not.';
 end;
 
 finalization

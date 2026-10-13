@@ -8,14 +8,14 @@
   by Sammarco Francesco, hotkey code adapted from Codebot. Source credits remain.
 - Homepage: https://github.com/TonyStone31/LazHIDControl
 - Description: Mouse/keyboard automation, global hotkeys, global input monitoring
-  and window management for Windows and X11, with partial, untested Wayland support.
+  and window management for Windows, X11 and macOS, with partial Wayland support.
 - License: **GPL-2.0-or-later** in package source notices; full GPL v2 text in
   `COPYING.GPL2`. Existing `LICENSE` contains GPL v3 (a permitted later version).
 - Lazarus dependencies: `LCL`, `FCL` with declared minimum **1.0.0.0** for FCL.
 - External dependencies on Linux: FPC X11/D-Bus units, linkable X11, Xtst and
   D-Bus libraries, `libXi` for global monitoring; usual LCL/widgetset libraries.
   The Wayland input backend uses uinput and needs write access to `/dev/uinput`;
-  it has not been run on a Wayland machine yet.
+  it was tested on KDE Plasma 6.
 - Examples: `examples/automation/AutomationDemo.lpi` and the `hidctl/hidctl.lpi`
   command-line tool; both require `LazHIDControl`.
 - Verified here: Linux x86-64, GTK2 and GTK3, Lazarus **4.99** (trunk), FPC **3.3.1**.
@@ -29,8 +29,8 @@
 
 ## Known limitations
 
-Wayland input (uinput) is written but untested, types as a US layout, and cannot
-type beyond ASCII. Wayland screenshots use the screenshot portal. Wayland hotkey
+Wayland input (uinput) types as a US layout and cannot type beyond ASCII; it was
+tested on KDE Plasma 6. Wayland screenshots use the screenshot portal. Wayland hotkey
 registration is a stub: registration remains false. Global monitoring and window management use X11 and do not cover
 native Wayland windows. On macOS everything needs the user's permission under
 Privacy & Security first (Accessibility, Screen Recording, Input Monitoring).
@@ -60,8 +60,8 @@ Package/project XML and file paths were checked. Package, main demo, small
 example and CLI builds passed from repository-file-only temporary copies with
 fresh Lazarus configuration on GTK3. Existing compiler warnings remain unchanged.
 Linux input automation ran in a nested X server, Windows in a virtual machine.
-macOS was tested in a virtual machine for the parts listed above. Wayland at
-run time and the OPM archive-generation UI remain untested.
+macOS and KDE Wayland were tested in virtual machines for the parts listed
+above. The OPM archive-generation UI remains untested.
 
 ## Maintenance and compatibility
 

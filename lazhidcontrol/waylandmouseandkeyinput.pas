@@ -92,6 +92,7 @@ var
   KeyboardFD: cint = -1;
   PointerFD: cint = -1;
   Tried: boolean = False;
+  ButtonWentDown: QWord = 0;
 
 procedure Emit(FD: cint; Kind, Code: word; Value: longint);
 var
@@ -236,10 +237,13 @@ end;
 procedure TWaylandMouseInput.DoDown(Button: TMouseButton);
 begin
   Send(PointerFD, EV_KEY, KernelButton(Button), 1);
+  ButtonWentDown := GetTickCount64;
 end;
 
 procedure TWaylandMouseInput.DoUp(Button: TMouseButton);
 begin
+  // a press and release in the same instant is not always taken for a click
+  while GetTickCount64 - ButtonWentDown < 40 do Sleep(5);
   Send(PointerFD, EV_KEY, KernelButton(Button), 0);
 end;
 
