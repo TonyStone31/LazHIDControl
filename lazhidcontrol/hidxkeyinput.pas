@@ -26,7 +26,7 @@ uses
   HIDKeyInputIntf, KeySym,
   SysUtils,
   X,
-  XLib;
+  XLib, xkb, xkblib;
 
 type
   { TXKeyInput }
@@ -34,19 +34,18 @@ type
   TXKeyInput = class(TKeyInput)
   private
     xDisplayConnection: PDisplay;
-    capsLockBeginState: boolean;
     ScratchKC: array[0..31] of integer;
     ScratchSym: array[0..31] of TKeySym;
     ScratchSaved: array[0..31] of array of TKeySym;
     ScratchPerKC: integer;
     ScratchReady: boolean;
+    CapsParked: boolean;
     function VirtualKeyToXKeySym(Key: word): TKeySym;
     procedure FindScratchKeycodes;
   protected
     procedure DoDown(Key: word); override;
     procedure DoUp(Key: word); override;
-    procedure capsLockGetSaveState; override;
-    procedure capsLockRestoreState; override;
+    procedure StringDone; override;
   public
     constructor Create;
     destructor Destroy; override;
@@ -71,37 +70,6 @@ uses
 function InitializeKeyInput: TKeyInput;
 begin
   Result := TXKeyInput.Create;
-end;
-
-procedure TXKeyInput.capsLockGetSaveState;
-var
-  keyboardState: TXKeyboardState;
-begin
-  XGetKeyboardControl(xDisplayConnection, @keyboardState);
-  capsLockBeginState := (keyboardState.led_mask and 1) <> 0;
-
-  if capsLockBeginState then
-  begin
-    Down(VK_CAPITAL);
-    Up(VK_CAPITAL);
-    Sleep(10);
-  end;
-end;
-
-procedure TXKeyInput.capsLockRestoreState;
-var
-  keyboardState: TXKeyboardState;
-begin
-  if capsLockBeginState then
-  begin
-    XGetKeyboardControl(xDisplayConnection, @keyboardState);
-    if (keyboardState.led_mask and 1) = 0 then
-    begin
-      Down(VK_CAPITAL);
-      Up(VK_CAPITAL);
-      Sleep(10);
-    end;
-  end;
 end;
 
 function TXKeyInput.VirtualKeyToXKeySym(Key: word): TKeySym;
@@ -293,42 +261,51 @@ begin
   Result := (keyboardState.led_mask and 1) <> 0;  // Bit 0 is CapsLock LED
 end;
 
+{ Where the active keyboard layout keeps the character - plain, shifted, or
+  not there at all, when it goes the way of any other symbol.  Asking the
+  layout instead of assuming a US one is what types "@" as "@" on a German
+  keyboard, and Latin text while a Russian layout is switched in. }
 procedure TXKeyInput.PressASCIIChar(ch: char);
 var
-  keySym: TKeySym;
-  keyCode: cardinal;
-  requiresShift: boolean;
-  upperCh: char;
-  vk: word;
+  Sym: TKeySym;
+  KC, ShiftKC: TKeyCode;
+  State: TXkbStateRec;
+  Shifted: boolean;
+
+  function SymAt(Level: integer): TKeySym;
+  begin
+    Result := XkbKeycodeToKeysym(xDisplayConnection, KC, State.group, Level);
+    // a key the layouts share, like Tab, has only the first group
+    if Result = NoSymbol then
+      Result := XkbKeycodeToKeysym(xDisplayConnection, KC, 0, Level);
+  end;
+
 begin
-  requiresShift := NeedsShiftWithCapsLock(ch);
-  upperCh := UpCase(ch);
-  vk := CharToKeySym(upperCh);
-  keySym := VirtualKeyToXKeySym(vk);
-
-  if keySym = XK_VoidSymbol then
+  if xDisplayConnection = nil then Exit;
+  if ch = #9 then Sym := XK_Tab
+  else if ch >= ' ' then Sym := Ord(ch)
+  else
+    Exit;
+  State := Default(TXkbStateRec);
+  XkbGetState(xDisplayConnection, XkbUseCoreKbd, @State);
+  KC := XKeysymToKeycode(xDisplayConnection, Sym);
+  if (KC <> 0) and (SymAt(0) = Sym) then Shifted := False
+  else if (KC <> 0) and (SymAt(1) = Sym) then Shifted := True
+  else
   begin
     PressUnicodeChar(Ord(ch));
     Exit;
   end;
+  if CapsLockStateAtStringStart and (ch in ['A'..'Z', 'a'..'z']) then
+    Shifted := not Shifted;
 
-  keyCode := XKeysymToKeycode(xDisplayConnection, keySym);
-
-  if keyCode = 0 then
-  begin
-    PressUnicodeChar(Ord(ch));
-    Exit;
-  end;
-
-  if requiresShift then
-    XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, XK_Shift_L), True, 0);
-
-  XTestFakeKeyEvent(xDisplayConnection, keyCode, True, 0);
-  XTestFakeKeyEvent(xDisplayConnection, keyCode, False, 0);
-
-  if requiresShift then
-    XTestFakeKeyEvent(xDisplayConnection, XKeysymToKeycode(xDisplayConnection, XK_Shift_L), False, 0);
-
+  ShiftKC := XKeysymToKeycode(xDisplayConnection, XK_Shift_L);
+  if Shifted then
+    XTestFakeKeyEvent(xDisplayConnection, ShiftKC, True, 0);
+  XTestFakeKeyEvent(xDisplayConnection, KC, True, 0);
+  XTestFakeKeyEvent(xDisplayConnection, KC, False, 0);
+  if Shifted then
+    XTestFakeKeyEvent(xDisplayConnection, ShiftKC, False, 0);
   XFlush(xDisplayConnection);
   Sleep(5);
 end;
@@ -401,7 +378,7 @@ end;
 { Any character into any application: borrow a spare keycode, give it the
   character's keysym, and press it - the way xdotool types.  Unlike the
   Ctrl+Shift+U hex entry this used to attempt, nothing depends on the
-  receiving application's input method, or on CapsLock or NumLock.
+  receiving application's input method or on NumLock.
 
   A receiving application translates a press against whatever the keyboard
   map says when it gets around to the event, which under load can be well
@@ -413,6 +390,7 @@ end;
 procedure TXKeyInput.PressUnicodeChar(unicode: cardinal);
 var
   Sym: TKeySym;
+  Pair: array[0..1] of TKeySym;
   I, Slot: integer;
 begin
   if xDisplayConnection = nil then Exit;
@@ -422,6 +400,14 @@ begin
     Sym := TKeySym($01000000) or TKeySym(unicode);
   if not ScratchReady then FindScratchKeycodes;
   if ScratchKC[0] = 0 then Exit;
+  // Caps Lock would capitalise a small letter on arrival; it sits out the
+  // rest of the string and StringDone switches it back on.
+  if CapsLockStateAtStringStart then
+  begin
+    ToggleCapsLock;
+    CapsLockStateAtStringStart := False;
+    CapsParked := True;
+  end;
   Slot := -1;
   for I := 0 to High(ScratchKC) do
     if (ScratchKC[I] <> 0) and (ScratchSym[I] = Sym) then Slot := I;
@@ -436,7 +422,11 @@ begin
       for I := 0 to High(ScratchKC) do ScratchSym[I] := NoSymbol;
       Slot := 0;
     end;
-    XChangeKeyboardMapping(xDisplayConnection, ScratchKC[Slot], 1, @Sym, 1);
+    // Both levels: a lone letter would be read as its lowercase/uppercase
+    // pair, and a capital would arrive small.
+    Pair[0] := Sym;
+    Pair[1] := Sym;
+    XChangeKeyboardMapping(xDisplayConnection, ScratchKC[Slot], 2, @Pair, 1);
     ScratchSym[Slot] := Sym;
     XSync(xDisplayConnection, False);
     { Every client reloads its keymap now - input-method daemons like IBus
@@ -448,6 +438,12 @@ begin
   XTestFakeKeyEvent(xDisplayConnection, ScratchKC[Slot], False, 0);
   XFlush(xDisplayConnection);
   Sleep(5);
+end;
+
+procedure TXKeyInput.StringDone;
+begin
+  if CapsParked then ToggleCapsLock;
+  CapsParked := False;
 end;
 
 function TXKeyInput.GetNumLockState: boolean;

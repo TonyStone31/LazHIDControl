@@ -31,13 +31,10 @@ type
 
   TWinKeyInput = class(TKeyInput)
   private
-    capsLockBeginState: boolean;
     function GetKeyStateVK(Key: byte): boolean;
   protected
     procedure DoDown(Key: word); override;
     procedure DoUp(Key: word); override;
-    procedure capsLockGetSaveState; override;
-    procedure capsLockRestoreState; override;
   public
     procedure PressUnicodeChar(unicode: cardinal); override;
     procedure PressASCIIChar(ch: char); override;
@@ -100,29 +97,9 @@ begin
   Sleep(1);
 end;
 
-procedure TWinKeyInput.capsLockGetSaveState;
-begin
-  capsLockBeginState := GetKeyStateVK(VK_CAPITAL);
-
-  if capsLockBeginState then
-  begin
-    DoDown(VK_CAPITAL);
-    DoUp(VK_CAPITAL);
-  end;
-end;
-
 function TWinKeyInput.GetKeyStateVK(Key: byte): boolean;
 begin
   Result := (GetKeyState(Key) and $01) <> 0;
-end;
-
-procedure TWinKeyInput.capsLockRestoreState;
-begin
-  if capsLockBeginState and not GetKeyStateVK(VK_CAPITAL) then
-  begin
-    DoDown(VK_CAPITAL);
-    DoUp(VK_CAPITAL);
-  end;
 end;
 
 procedure TWinKeyInput.PressUnicodeChar(unicode: cardinal);

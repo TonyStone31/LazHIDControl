@@ -51,31 +51,25 @@ procedure SendMouseInput(Flag: DWORD; MouseData: DWORD = 0);
 var
   Input: TInput;
 begin
-  {$IFDEF VER2_6}
-  FillChar(Input, SizeOf(Input), 0);
-  {$ELSE}
   Input := Default(TInput);
-  {$ENDIF}
-  Input.mi.mouseData := MouseData;
   Input.type_ := INPUT_MOUSE;
+  Input.mi.mouseData := MouseData;
   Input.mi.dwFlags := Flag;
-
   SendInput(1, @Input, SizeOf(Input));
 end;
 
+// Absolute coordinates run 0..65535 across the whole desktop, every monitor included.
 procedure SendMouseInput(Flag: DWORD; X, Y: integer);
+const
+  MOUSEEVENTF_VIRTUALDESK = $4000;
 var
   Input: TInput;
 begin
-  {$IFDEF VER2_6}
-  FillChar(Input, SizeOf(Input), 0);
-  {$ELSE}
   Input := Default(TInput);
-  {$ENDIF}
   Input.type_ := INPUT_MOUSE;
-  Input.mi.dx := MulDiv(X, 65535, Screen.Width - 1); // screen horizontal coordinates: 0 - 65535
-  Input.mi.dy := MulDiv(Y, 65535, Screen.Height - 1); // screen vertical coordinates: 0 - 65535
-  Input.mi.dwFlags := Flag or MOUSEEVENTF_ABSOLUTE;
+  Input.mi.dx := MulDiv(X - Screen.DesktopLeft, 65535, Screen.DesktopWidth - 1);
+  Input.mi.dy := MulDiv(Y - Screen.DesktopTop, 65535, Screen.DesktopHeight - 1);
+  Input.mi.dwFlags := Flag or MOUSEEVENTF_ABSOLUTE or MOUSEEVENTF_VIRTUALDESK;
   SendInput(1, @Input, SizeOf(Input));
 end;
 

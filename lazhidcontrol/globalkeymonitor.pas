@@ -31,7 +31,7 @@ uses
   WinGlobalKeyMonitor,
   {$ENDIF}
   {$IFDEF UNIX}
-    {$IFDEF LCLcarbon}
+    {$IFDEF DARWIN}
     CocoaGlobalKeyMonitor,
     {$ELSE}
     XGlobalKeyMonitor,
@@ -54,7 +54,7 @@ begin
   Result := InitializeGlobalKeyListener;
   {$ELSE}
   {$IFDEF UNIX}
-      {$IFDEF LCLcarbon}
+      {$IFDEF DARWIN}
       Result := CocoaGlobalKeyMonitor.InitializeGlobalKeyListener;
       {$ELSE}
       // Note: X11 only - Wayland does not support global key monitoring

@@ -62,14 +62,15 @@ type
 
 implementation
 
-uses HIDMouseAndKeyInput, WindowManager;
+uses HIDMouseAndKeyInput, WindowManager
+  {$ifdef linux}, WaylandMouseAndKeyInput{$endif};
 
 procedure THIDKeyboard.CheckAvailable;
 begin
   if csDesigning in ComponentState then raise EInvalidOperation.Create('Input is disabled in the designer.');
   {$ifdef linux}
-  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
-    raise EInvalidOperation.Create('Wayland input is not implemented.');
+  if (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') and not UInputReady then
+    raise EInvalidOperation.Create(UInputHelp);
   {$endif}
   if Modifiers - [ssCtrl, ssAlt, ssShift] <> [] then
     raise EInvalidOperation.Create('Supported modifiers are Ctrl, Alt, and Shift.');
@@ -109,8 +110,8 @@ procedure THIDMouse.CheckAvailable;
 begin
   if csDesigning in ComponentState then raise EInvalidOperation.Create('Input is disabled in the designer.');
   {$ifdef linux}
-  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
-    raise EInvalidOperation.Create('Wayland input is not implemented.');
+  if (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') and not UInputReady then
+    raise EInvalidOperation.Create(UInputHelp);
   {$endif}
   if Modifiers - [ssCtrl, ssAlt, ssShift] <> [] then
     raise EInvalidOperation.Create('Supported modifiers are Ctrl, Alt, and Shift.');

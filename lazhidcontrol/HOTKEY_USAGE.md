@@ -11,9 +11,9 @@ The LazHIDControl package includes cross-platform global hotkey registration sup
 
 ### Wayland status
 
-`TWaylandHotkey.DoRegister` currently leaves `Registered` false. The
-D-Bus event loop and GlobalShortcuts portal registration are TODOs;
-no compositor is supported by this backend yet.
+`TWaylandHotkey` registers nothing and leaves `Registered` false. The
+GlobalShortcuts portal it should talk to exists on KDE Plasma, GNOME 48 and
+later, and Hyprland; that work is not done.
 
 ## Basic Usage
 

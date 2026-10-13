@@ -31,13 +31,10 @@ type
 
   TCarbonKeyInput = class(TKeyInput)
   private
-    capsLockBeginState: boolean;
     function IsCapsLockOn: boolean;
   protected
     procedure DoDown(Key: word); override;
     procedure DoUp(Key: word); override;
-    procedure capsLockGetSaveState; override;
-    procedure capsLockRestoreState; override;
   public
     function GetCapsLockState: boolean; override;
     function GetNumLockState: boolean; override;
@@ -95,26 +92,6 @@ end;
 procedure TCarbonKeyInput.DoUp(Key: word);
 begin
   SendKeyInput(Key, False);
-end;
-
-procedure TCarbonKeyInput.capsLockGetSaveState;
-begin
-  capsLockBeginState := IsCapsLockOn;
-
-  if capsLockBeginState then
-  begin
-    SendKeyInput(VK_CAPITAL, True);
-    SendKeyInput(VK_CAPITAL, False);
-  end;
-end;
-
-procedure TCarbonKeyInput.capsLockRestoreState;
-begin
-  if capsLockBeginState and not IsCapsLockOn then
-  begin
-    SendKeyInput(VK_CAPITAL, True);
-    SendKeyInput(VK_CAPITAL, False);
-  end;
 end;
 
 function TCarbonKeyInput.GetCapsLockState: boolean;

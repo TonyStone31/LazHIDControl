@@ -51,7 +51,7 @@ uses
   WinHotkeyInput,
   {$ENDIF}
   {$IFDEF UNIX}
-    {$IFDEF LCLcarbon}
+    {$IFDEF DARWIN}
     CocoaHotkeyInput,
     {$ELSE}
     WaylandHotkeyInput,
@@ -82,7 +82,7 @@ begin
   Result := InitializeHotkey(AKey, AShift, AOnHotkey);
   {$ELSE}
   {$IFDEF UNIX}
-      {$IFDEF LCLcarbon}
+      {$IFDEF DARWIN}
       Result := CocoaHotkeyInput.InitializeHotkey(AKey, AShift, AOnHotkey);
       {$ELSE}
       if IsWayland then

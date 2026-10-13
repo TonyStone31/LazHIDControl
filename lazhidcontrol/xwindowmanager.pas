@@ -38,7 +38,6 @@ type
     // EWMH atoms
     AtomNetActiveWindow: TAtom;
     AtomNetClientList: TAtom;
-    AtomNetClientListStacking: TAtom;
     AtomNetCurrentDesktop: TAtom;
     AtomNetNumberOfDesktops: TAtom;
     AtomNetWMDesktop: TAtom;
@@ -51,14 +50,9 @@ type
     AtomNetCloseWindow: TAtom;
     AtomNetMoveResizeWindow: TAtom;
     AtomNetSupportingWMCheck: TAtom;
-    AtomNetWMWindowType: TAtom;
-    AtomNetWMWindowTypeNormal: TAtom;
 
     // ICCCM atoms
-    AtomWMClass: TAtom;
     AtomWMName: TAtom;
-    AtomWMState: TAtom;
-    AtomUTF8String: TAtom;
 
     procedure InitializeAtoms;
     function SendClientMessage(AWindow: TWindow; AAtom: TAtom; Data0: clong = 0; Data1: clong = 0; Data2: clong = 0; Data3: clong = 0; Data4: clong = 0): boolean;
@@ -67,59 +61,46 @@ type
     function GetWindowPropertyCardinal(AWindow: TWindow; AProperty: TAtom): longword;
     function GetProcessNameFromPID(APID: longword): string;
     function HasWMState(AWindow: TWindow; AState: TAtom): boolean;
-  protected
-    // Window query methods
-    function DoGetActiveWindow: TWindowHandle; override;
-    function DoGetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean; override;
-    function DoGetWindowTitle(AHandle: TWindowHandle): string; override;
-    function DoGetWindowPID(AHandle: TWindowHandle): longword; override;
-    function DoGetWindowRect(AHandle: TWindowHandle): TRect; override;
-    function DoGetWindowClass(AHandle: TWindowHandle): string;
-
-    // Window search methods
-    function DoFindWindow(const ATitle: string): TWindowHandle; override;
-    function DoFindWindowByClass(const AClassName: string): TWindowHandle; override;
-    function DoFindWindowByPID(APID: longword): TWindowHandle; override;
-    function DoEnumerateWindows: TList; override;
-    function DoGetWindowChildren(AHandle: TWindowHandle): TList; override;
-
-    // Window activation and focus
-    function DoActivateWindow(AHandle: TWindowHandle): boolean; override;
-    function DoFocusWindow(AHandle: TWindowHandle): boolean; override;
-    function DoRaiseWindow(AHandle: TWindowHandle): boolean; override;
-
-    // Window positioning and sizing
     function EwmhManaged: boolean;
-    function DoMoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean; override;
-    function DoResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean; override;
-    function DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean; override;
-
-    // Window state management
-    function DoMinimizeWindow(AHandle: TWindowHandle): boolean; override;
-    function DoMaximizeWindow(AHandle: TWindowHandle): boolean; override;
-    function DoRestoreWindow(AHandle: TWindowHandle): boolean; override;
-    function DoCloseWindow(AHandle: TWindowHandle): boolean; override;
-
-    // Window visibility
-    function DoShowWindow(AHandle: TWindowHandle): boolean; override;
-    function DoHideWindow(AHandle: TWindowHandle): boolean; override;
-    function DoIsWindowVisible(AHandle: TWindowHandle): boolean; override;
-
-    // Desktop and workspace management
-    function DoGetDesktopCount: integer; override;
-    function DoGetCurrentDesktop: integer; override;
-    function DoSetCurrentDesktop(ADesktop: integer): boolean; override;
-    function DoGetWindowDesktop(AHandle: TWindowHandle): integer; override;
-    function DoSetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean; override;
   public
     constructor Create;
     destructor Destroy; override;
 
-    // X11-specific methods
+    function GetActiveWindow: TWindowHandle; override;
+    function GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean; override;
+    function GetWindowTitle(AHandle: TWindowHandle): string; override;
+    function GetWindowClass(AHandle: TWindowHandle): string; override;
+    function GetWindowPID(AHandle: TWindowHandle): longword; override;
+    function GetWindowRect(AHandle: TWindowHandle): TRect; override;
+    function EnumerateWindows: TList; override;
+    function GetWindowChildren(AHandle: TWindowHandle): TList; override;
+
+    function ActivateWindow(AHandle: TWindowHandle): boolean; override;
+    function FocusWindow(AHandle: TWindowHandle): boolean; override;
+    function RaiseWindow(AHandle: TWindowHandle): boolean; override;
+
+    function MoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean; override;
+    function ResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean; override;
+    function MoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean; override;
+
+    function MinimizeWindow(AHandle: TWindowHandle): boolean; override;
+    function MaximizeWindow(AHandle: TWindowHandle): boolean; override;
+    function RestoreWindow(AHandle: TWindowHandle): boolean; override;
+    function CloseWindow(AHandle: TWindowHandle): boolean; override;
+
+    function ShowWindow(AHandle: TWindowHandle): boolean; override;
+    function HideWindow(AHandle: TWindowHandle): boolean; override;
+    function IsWindowVisible(AHandle: TWindowHandle): boolean; override;
+
+    function GetDesktopCount: integer; override;
+    function GetCurrentDesktop: integer; override;
+    function SetCurrentDesktop(ADesktop: integer): boolean; override;
+    function GetWindowDesktop(AHandle: TWindowHandle): integer; override;
+    function SetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean; override;
+
+    // X11 only
     function GetWindowAtPoint(X, Y: integer): TWindowHandle;
-    function GetWindowChildren(AHandle: TWindowHandle): TList;
     function GetWindowParent(AHandle: TWindowHandle): TWindowHandle;
-    function GetWindowClass(AHandle: TWindowHandle): string;
     function GetRootWindow: TWindowHandle;
 
     property Display: PDisplay read XDisplayHandle;
@@ -129,13 +110,9 @@ function InitializeWindowManager: TWindowManager;
 
 implementation
 
-uses
-  BaseUnix;
-
 const
   _NET_WM_STATE_REMOVE = 0;
   _NET_WM_STATE_ADD = 1;
-  _NET_WM_STATE_TOGGLE = 2;
 
 function InitializeWindowManager: TWindowManager;
 begin
@@ -180,7 +157,6 @@ begin
   AtomNetMoveResizeWindow := XInternAtom(XDisplayHandle, '_NET_MOVERESIZE_WINDOW', False);
   AtomNetSupportingWMCheck := XInternAtom(XDisplayHandle, '_NET_SUPPORTING_WM_CHECK', False);
   AtomNetClientList := XInternAtom(XDisplayHandle, '_NET_CLIENT_LIST', False);
-  AtomNetClientListStacking := XInternAtom(XDisplayHandle, '_NET_CLIENT_LIST_STACKING', False);
   AtomNetCurrentDesktop := XInternAtom(XDisplayHandle, '_NET_CURRENT_DESKTOP', False);
   AtomNetNumberOfDesktops := XInternAtom(XDisplayHandle, '_NET_NUMBER_OF_DESKTOPS', False);
   AtomNetWMDesktop := XInternAtom(XDisplayHandle, '_NET_WM_DESKTOP', False);
@@ -191,14 +167,9 @@ begin
   AtomNetWMStateMaximizedVert := XInternAtom(XDisplayHandle, '_NET_WM_STATE_MAXIMIZED_VERT', False);
   AtomNetWMStateMaximizedHorz := XInternAtom(XDisplayHandle, '_NET_WM_STATE_MAXIMIZED_HORZ', False);
   AtomNetCloseWindow := XInternAtom(XDisplayHandle, '_NET_CLOSE_WINDOW', False);
-  AtomNetWMWindowType := XInternAtom(XDisplayHandle, '_NET_WM_WINDOW_TYPE', False);
-  AtomNetWMWindowTypeNormal := XInternAtom(XDisplayHandle, '_NET_WM_WINDOW_TYPE_NORMAL', False);
 
   // ICCCM atoms
-  AtomWMClass := XInternAtom(XDisplayHandle, 'WM_CLASS', False);
   AtomWMName := XInternAtom(XDisplayHandle, 'WM_NAME', False);
-  AtomWMState := XInternAtom(XDisplayHandle, 'WM_STATE', False);
-  AtomUTF8String := XInternAtom(XDisplayHandle, 'UTF8_STRING', False);
 end;
 
 function TXWindowManager.SendClientMessage(AWindow: TWindow; AAtom: TAtom; Data0: clong; Data1: clong; Data2: clong; Data3: clong; Data4: clong): boolean;
@@ -306,7 +277,7 @@ end;
 
 // Window query methods
 
-function TXWindowManager.DoGetActiveWindow: TWindowHandle;
+function TXWindowManager.GetActiveWindow: TWindowHandle;
 var
   Data: PWindow;
   Count: culong;
@@ -320,7 +291,7 @@ begin
   end;
 end;
 
-function TXWindowManager.DoGetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean;
+function TXWindowManager.GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean;
 var
   Attrs: TXWindowAttributes;
 begin
@@ -330,17 +301,17 @@ begin
   Result := XGetWindowAttributes(XDisplayHandle, TWindow(AHandle), @Attrs) <> 0;
   if not Result then Exit;
 
-  AInfo.Title := DoGetWindowTitle(AHandle);
-  AInfo.ClassName := DoGetWindowClass(AHandle);
-  AInfo.ProcessID := DoGetWindowPID(AHandle);
+  AInfo.Title := GetWindowTitle(AHandle);
+  AInfo.ClassName := GetWindowClass(AHandle);
+  AInfo.ProcessID := GetWindowPID(AHandle);
   AInfo.ProcessName := GetProcessNameFromPID(AInfo.ProcessID);
-  AInfo.Rect := DoGetWindowRect(AHandle);
+  AInfo.Rect := GetWindowRect(AHandle);
   AInfo.IsVisible := (Attrs.map_state = IsViewable) and not HasWMState(TWindow(AHandle), AtomNetWMStateHidden);
   AInfo.IsMinimized := HasWMState(TWindow(AHandle), AtomNetWMStateHidden);
   AInfo.IsMaximized := HasWMState(TWindow(AHandle), AtomNetWMStateMaximizedVert) and HasWMState(TWindow(AHandle), AtomNetWMStateMaximizedHorz);
 end;
 
-function TXWindowManager.DoGetWindowTitle(AHandle: TWindowHandle): string;
+function TXWindowManager.GetWindowTitle(AHandle: TWindowHandle): string;
 begin
   // Try _NET_WM_NAME first (UTF-8)
   Result := GetWindowPropertyString(TWindow(AHandle), AtomNetWMName);
@@ -350,12 +321,12 @@ begin
     Result := GetWindowPropertyString(TWindow(AHandle), AtomWMName);
 end;
 
-function TXWindowManager.DoGetWindowPID(AHandle: TWindowHandle): longword;
+function TXWindowManager.GetWindowPID(AHandle: TWindowHandle): longword;
 begin
   Result := GetWindowPropertyCardinal(TWindow(AHandle), AtomNetWMPID);
 end;
 
-function TXWindowManager.DoGetWindowRect(AHandle: TWindowHandle): TRect;
+function TXWindowManager.GetWindowRect(AHandle: TWindowHandle): TRect;
 var
   Attrs: TXWindowAttributes;
   ChildReturn: TWindow;
@@ -376,7 +347,7 @@ begin
   Result.Bottom := RootY + Attrs.Height;
 end;
 
-function TXWindowManager.DoGetWindowClass(AHandle: TWindowHandle): string;
+function TXWindowManager.GetWindowClass(AHandle: TWindowHandle): string;
 var
   ClassHint: TXClassHint;
 begin
@@ -396,82 +367,7 @@ begin
   end;
 end;
 
-// Window search methods
-
-function TXWindowManager.DoFindWindow(const ATitle: string): TWindowHandle;
-var
-  WindowList: TList;
-  i: integer;
-  WinTitle: string;
-begin
-  Result := 0;
-  WindowList := DoEnumerateWindows;
-  if WindowList = nil then Exit;
-
-  try
-    for i := 0 to WindowList.Count - 1 do
-    begin
-      WinTitle := DoGetWindowTitle(TWindowHandle(WindowList[i]));
-      if Pos(ATitle, WinTitle) > 0 then
-      begin
-        Result := TWindowHandle(WindowList[i]);
-        Break;
-      end;
-    end;
-  finally
-    WindowList.Free;
-  end;
-end;
-
-function TXWindowManager.DoFindWindowByClass(const AClassName: string): TWindowHandle;
-var
-  WindowList: TList;
-  i: integer;
-  WinClass: string;
-begin
-  Result := 0;
-  WindowList := DoEnumerateWindows;
-  if WindowList = nil then Exit;
-
-  try
-    for i := 0 to WindowList.Count - 1 do
-    begin
-      WinClass := DoGetWindowClass(TWindowHandle(WindowList[i]));
-      if Pos(AClassName, WinClass) > 0 then
-      begin
-        Result := TWindowHandle(WindowList[i]);
-        Break;
-      end;
-    end;
-  finally
-    WindowList.Free;
-  end;
-end;
-
-function TXWindowManager.DoFindWindowByPID(APID: longword): TWindowHandle;
-var
-  WindowList: TList;
-  i: integer;
-begin
-  Result := 0;
-  WindowList := DoEnumerateWindows;
-  if WindowList = nil then Exit;
-
-  try
-    for i := 0 to WindowList.Count - 1 do
-    begin
-      if DoGetWindowPID(TWindowHandle(WindowList[i])) = APID then
-      begin
-        Result := TWindowHandle(WindowList[i]);
-        Break;
-      end;
-    end;
-  finally
-    WindowList.Free;
-  end;
-end;
-
-function TXWindowManager.DoEnumerateWindows: TList;
+function TXWindowManager.EnumerateWindows: TList;
 var
   Data: PWindow;
   Count, BytesAfter: culong;
@@ -496,27 +392,22 @@ begin
   if Data <> nil then XFree(Data);
 end;
 
-function TXWindowManager.DoGetWindowChildren(AHandle: TWindowHandle): TList;
-begin
-  Result := GetWindowChildren(AHandle);
-end;
-
 // Window activation and focus
 
-function TXWindowManager.DoActivateWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.ActivateWindow(AHandle: TWindowHandle): boolean;
 begin
   // Use _NET_ACTIVE_WINDOW message for proper EWMH activation
   Result := SendClientMessage(TWindow(AHandle), AtomNetActiveWindow, 2, CurrentTime, 0);
 end;
 
-function TXWindowManager.DoFocusWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.FocusWindow(AHandle: TWindowHandle): boolean;
 begin
   XSetInputFocus(XDisplayHandle, TWindow(AHandle), RevertToParent, CurrentTime);
   XFlush(XDisplayHandle);
   Result := True;
 end;
 
-function TXWindowManager.DoRaiseWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.RaiseWindow(AHandle: TWindowHandle): boolean;
 begin
   XRaiseWindow(XDisplayHandle, TWindow(AHandle));
   XFlush(XDisplayHandle);
@@ -543,7 +434,7 @@ begin
   end;
 end;
 
-function TXWindowManager.DoMoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean;
+function TXWindowManager.MoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean;
 begin
   if EwmhManaged then
     Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow, 10 or (1 shl 8) or (1 shl 9) or (1 shl 12), X, Y, 0, 0)
@@ -555,7 +446,7 @@ begin
   end;
 end;
 
-function TXWindowManager.DoResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean;
+function TXWindowManager.ResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean;
 begin
   if EwmhManaged then
     Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow, 10 or (1 shl 10) or (1 shl 11) or (1 shl 12), 0, 0, Width, Height)
@@ -567,7 +458,7 @@ begin
   end;
 end;
 
-function TXWindowManager.DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean;
+function TXWindowManager.MoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean;
 begin
   if EwmhManaged then
     Result := SendClientMessage(TWindow(AHandle), AtomNetMoveResizeWindow, 10 or (1 shl 8) or (1 shl 9) or (1 shl 10) or (1 shl 11) or (1 shl 12), X, Y, Width, Height)
@@ -581,7 +472,7 @@ end;
 
 // Window state management
 
-function TXWindowManager.DoMinimizeWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.MinimizeWindow(AHandle: TWindowHandle): boolean;
 begin
   // Use WM_CHANGE_STATE with IconicState
   Result := SendClientMessage(TWindow(AHandle), AtomNetWMState, _NET_WM_STATE_ADD, AtomNetWMStateHidden, 0, 1);
@@ -595,12 +486,12 @@ begin
   end;
 end;
 
-function TXWindowManager.DoMaximizeWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.MaximizeWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := SendClientMessage(TWindow(AHandle), AtomNetWMState, _NET_WM_STATE_ADD, AtomNetWMStateMaximizedVert, AtomNetWMStateMaximizedHorz, 1);
 end;
 
-function TXWindowManager.DoRestoreWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.RestoreWindow(AHandle: TWindowHandle): boolean;
 begin
   // First unmaximize
   SendClientMessage(TWindow(AHandle), AtomNetWMState, _NET_WM_STATE_REMOVE,
@@ -616,28 +507,28 @@ begin
   Result := True;
 end;
 
-function TXWindowManager.DoCloseWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.CloseWindow(AHandle: TWindowHandle): boolean;
 begin
   Result := SendClientMessage(TWindow(AHandle), AtomNetCloseWindow, CurrentTime, 1);
 end;
 
 // Window visibility
 
-function TXWindowManager.DoShowWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.ShowWindow(AHandle: TWindowHandle): boolean;
 begin
   XMapWindow(XDisplayHandle, TWindow(AHandle));
   XFlush(XDisplayHandle);
   Result := True;
 end;
 
-function TXWindowManager.DoHideWindow(AHandle: TWindowHandle): boolean;
+function TXWindowManager.HideWindow(AHandle: TWindowHandle): boolean;
 begin
   XUnmapWindow(XDisplayHandle, TWindow(AHandle));
   XFlush(XDisplayHandle);
   Result := True;
 end;
 
-function TXWindowManager.DoIsWindowVisible(AHandle: TWindowHandle): boolean;
+function TXWindowManager.IsWindowVisible(AHandle: TWindowHandle): boolean;
 var
   Attrs: TXWindowAttributes;
 begin
@@ -648,29 +539,29 @@ end;
 
 // Desktop and workspace management
 
-function TXWindowManager.DoGetDesktopCount: integer;
+function TXWindowManager.GetDesktopCount: integer;
 begin
   Result := GetWindowPropertyCardinal(RootWindowHandle, AtomNetNumberOfDesktops);
   if Result = 0 then
     Result := 1;  // At least one desktop
 end;
 
-function TXWindowManager.DoGetCurrentDesktop: integer;
+function TXWindowManager.GetCurrentDesktop: integer;
 begin
   Result := GetWindowPropertyCardinal(RootWindowHandle, AtomNetCurrentDesktop);
 end;
 
-function TXWindowManager.DoSetCurrentDesktop(ADesktop: integer): boolean;
+function TXWindowManager.SetCurrentDesktop(ADesktop: integer): boolean;
 begin
   Result := SendClientMessage(RootWindowHandle, AtomNetCurrentDesktop, ADesktop, CurrentTime);
 end;
 
-function TXWindowManager.DoGetWindowDesktop(AHandle: TWindowHandle): integer;
+function TXWindowManager.GetWindowDesktop(AHandle: TWindowHandle): integer;
 begin
   Result := GetWindowPropertyCardinal(TWindow(AHandle), AtomNetWMDesktop);
 end;
 
-function TXWindowManager.DoSetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean;
+function TXWindowManager.SetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean;
 begin
   Result := SendClientMessage(TWindow(AHandle), AtomNetWMDesktop, ADesktop, 1);
 end;
@@ -743,11 +634,6 @@ begin
     if Children <> nil then
       XFree(Children);
   end;
-end;
-
-function TXWindowManager.GetWindowClass(AHandle: TWindowHandle): string;
-begin
-  Result := DoGetWindowClass(AHandle);
 end;
 
 function TXWindowManager.GetRootWindow: TWindowHandle;

@@ -26,9 +26,12 @@ uses
   HIDWinKeyInput,
   {$ENDIF}
   {$IFDEF UNIX}
-    {$IFDEF LCLcarbon}
+    {$IF DEFINED(LCLcarbon)}
     HIDCarbonMouseInput,
     HIDCarbonKeyInput,
+    {$ELSEIF DEFINED(LCLcocoa)}
+    HIDCocoaMouseInput,
+    HIDCocoaKeyInput,
     {$ELSE}
     WaylandMouseAndKeyInput,
     HIDXMouseInput,
@@ -43,17 +46,10 @@ var
 
 implementation
 
-{$IFDEF UNIX}
-function IsWayland: Boolean;
-begin
-  Result := GetEnvironmentVariable('WAYLAND_DISPLAY') <> '';
-end;
-{$ENDIF}
-
 initialization
 
-  {$IFDEF UNIX}
-  if IsWayland then
+  {$IF DEFINED(UNIX) AND NOT DEFINED(DARWIN)}
+  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
   begin
     MouseInput := InitializeWaylandMouseInput;
     KeyInput := InitializeWaylandKeyInput;

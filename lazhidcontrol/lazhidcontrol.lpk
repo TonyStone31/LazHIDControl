@@ -212,6 +212,11 @@
         <UnitName Value="LinuxIdle"/>
       </Item>
       <Item>
+        <Filename Value="linuxscreenshot.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="LinuxScreenshot"/>
+      </Item>
+      <Item>
         <Filename Value="powerinput.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="PowerInput"/>

@@ -34,6 +34,8 @@ type
   published
     // What Capture photographs: every monitor together, one monitor, a window
     // found by title, the Region rectangle, or a rectangle the user drags out.
+    // On Wayland the desktop may ask the user's permission, and hcsWindow is
+    // unavailable.
     property Source: THIDCaptureSource read CaptureSource write CaptureSource default hcsDesktop;
     // Which monitor hcsMonitor captures: -1 is the primary monitor, otherwise
     // an index into Screen.Monitors.
@@ -60,7 +62,8 @@ type
 
 implementation
 
-uses Forms, Controls, LCLIntf, LCLType, GraphType, Math, WindowManager;
+uses Forms, Controls, LCLIntf, LCLType, GraphType, Math, WindowManager
+  {$ifdef linux}, LinuxScreenshot{$endif};
 
 type
   TRegionSelector = class(TForm)
@@ -181,10 +184,6 @@ function THIDScreenshot.Available: boolean;
 begin
   ErrorText := '';
   if csDesigning in ComponentState then Exit(Failed('Capture is disabled in the designer.'));
-  {$ifdef linux}
-  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
-    Exit(Failed('Wayland screenshot capture requires a portal backend, which is not implemented.'));
-  {$endif}
   {$if not defined(windows) and not defined(linux)}
   Exit(Failed('Screenshot capture is not implemented on this platform.'));
   {$endif}
@@ -196,18 +195,41 @@ var
   DC: HDC;
   Raw: TRawImage;
   Whole: TBitmap;
+  {$ifdef linux}
+  Part: TRect;
+  Message: string;
+  {$endif}
 begin
   Result := False;
-  DC := GetDC(0);
-  if DC = 0 then Exit;
-  // BitBlt from the screen DC reads back black on GTK; the raw image road works.
-  try
-    if not RawImage_FromDevice(Raw, DC, Area) then Exit;
-  finally
-    ReleaseDC(0, DC);
-  end;
   Whole := TBitmap.Create;
   try
+    {$ifdef linux}
+    // A Wayland session keeps the screen to itself; the desktop portal hands
+    // out the whole desktop, possibly at a different scale than the LCL sees.
+    if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
+    begin
+      if not PortalScreenshot(Whole, Message) then
+      begin
+        ErrorText := Message;
+        Exit;
+      end;
+      Part := Area;
+      Part.Offset(-Screen.DesktopLeft, -Screen.DesktopTop);
+      Part := Rect(MulDiv(Part.Left, Whole.Width, Screen.DesktopWidth), MulDiv(Part.Top, Whole.Height, Screen.DesktopHeight),
+        MulDiv(Part.Right, Whole.Width, Screen.DesktopWidth), MulDiv(Part.Bottom, Whole.Height, Screen.DesktopHeight));
+      Destination.SetSize(Area.Right - Area.Left, Area.Bottom - Area.Top);
+      Destination.Canvas.CopyRect(Rect(0, 0, Destination.Width, Destination.Height), Whole.Canvas, Part);
+      Exit(True);
+    end;
+    {$endif}
+    DC := GetDC(0);
+    if DC = 0 then Exit;
+    // BitBlt from the screen DC reads back black on GTK; the raw image road works.
+    try
+      if not RawImage_FromDevice(Raw, DC, Area) then Exit;
+    finally
+      ReleaseDC(0, DC);
+    end;
     Whole.LoadFromRawImage(Raw, True);
     // Some widgetsets hand back the whole screen whatever rectangle was asked.
     if (Whole.Width = Area.Right - Area.Left) and (Whole.Height = Area.Bottom - Area.Top) then
@@ -226,7 +248,12 @@ end;
 function THIDScreenshot.Complete(Value: boolean): boolean;
 begin
   Result := Value;
-  if not Value then Exit(Failed('The display could not be captured.'));
+  if not Value then
+  begin
+    // GrabArea may have left a better reason
+    if ErrorText = '' then ErrorText := 'The display could not be captured.';
+    Exit(Failed(ErrorText));
+  end;
   if Assigned(CapturedHandler) then CapturedHandler(Self);
 end;
 
@@ -285,7 +312,7 @@ begin
       Background := TBitmap.Create;
       try
         Area := Screen.DesktopRect;
-        if not GrabArea(Area, Background) then Exit(Failed('The display could not be captured.'));
+        if not GrabArea(Area, Background) then Exit(Complete(False));
         Selector := TRegionSelector.CreateSelector(Background, Area);
         try
           Result := Selector.ShowModal = mrOk;

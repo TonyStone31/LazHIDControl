@@ -7,11 +7,9 @@
   Wayland does not support traditional global hotkeys (XGrabKey) due to security restrictions.
   Instead, we use the org.freedesktop.portal.GlobalShortcuts portal API via D-Bus.
 
-  This implementation:
-  - Works on GNOME 45+ and KDE Plasma 5/6
-  - Does NOT work on Sway/wlroots or Hyprland (no portal support)
-  - Requires user permission dialogs
-  - Cannot override compositor hotkeys
+  Not written yet: registration always fails, and THIDHotkey reports that.
+  The portal is on KDE Plasma, GNOME 48+ and Hyprland; the user approves each
+  shortcut in a dialog, and compositor shortcuts cannot be overridden.
 
   See: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html
 
@@ -34,131 +32,30 @@ unit WaylandHotkeyInput;
 interface
 
 uses
-  Classes, SysUtils, LCLType, dbus, BaseUnix, HotkeyInputIntf;
+  Classes, SysUtils, LCLType, HotkeyInputIntf;
 
 type
-  TWaylandHotkeyData = record
-    Conn: PDBusConnection;
-    SessionHandle: utf8string;
-    ShortcutToken: utf8string;
-    Hotkey: THotkey;
-  end;
-  PWaylandHotkeyData = ^TWaylandHotkeyData;
-
-  { TWaylandHotkey }
   TWaylandHotkey = class(THotkey)
-  private
-    HotkeyData: PWaylandHotkeyData;
   protected
     procedure DoRegister; override;
     procedure DoUnregister; override;
-  public
-    constructor Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
   end;
 
 function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 
 implementation
 
-const
-  PORTAL = 'org.freedesktop.portal.Desktop';
-  PATH = '/org/freedesktop/portal/desktop';
-  IFACE = 'org.freedesktop.portal.GlobalShortcuts';
-
-var
-  GlobalHotkeys: TList = nil;
-  PortalConn: PDBusConnection = nil;
-  MonitorActive: boolean = False;
-
-function KeyToWaylandAccelerator(Key: word; Shift: TShiftState): utf8string;
-var
-  Modifiers: string;
-  KeyName: string;
-begin
-  Modifiers := '';
-  if ssCtrl in Shift then Modifiers := Modifiers + '<Ctrl>';
-  if ssShift in Shift then Modifiers := Modifiers + '<Shift>';
-  if ssAlt in Shift then Modifiers := Modifiers + '<Alt>';
-
-  case Key of
-    VK_F1..VK_F12: KeyName := 'F' + IntToStr(Key - VK_F1 + 1);
-    VK_A..VK_Z: KeyName := Chr(Key);
-    VK_0..VK_9: KeyName := Chr(Key);
-    VK_SPACE: KeyName := 'space';
-    VK_RETURN: KeyName := 'Return';
-    VK_ESCAPE: KeyName := 'Escape';
-    VK_TAB: KeyName := 'Tab';
-    else
-      KeyName := '';
-  end;
-
-  if KeyName = '' then
-    Result := ''
-  else
-    Result := Modifiers + KeyName;
-end;
-
-function PortalMessageLoop(parameter: Pointer): PtrInt;
-begin
-  // TODO: Implement D-Bus message loop for Wayland portal events
-  while MonitorActive do
-    Sleep(100);
-  Result := 0;
-end;
-
 function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 begin
   Result := TWaylandHotkey.Create(AKey, AShift, AOnHotkey);
 end;
 
-{ TWaylandHotkey }
-
-constructor TWaylandHotkey.Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
-begin
-  inherited Create(AKey, AShift, AOnHotkey);
-  HotkeyData := nil;
-
-  if GlobalHotkeys = nil then
-    GlobalHotkeys := TList.Create;
-
-  if PortalConn = nil then
-  begin
-    PortalConn := dbus_bus_get(DBUS_BUS_SESSION, nil);
-    if PortalConn <> nil then
-    begin
-      MonitorActive := True;
-      BeginThread(@PortalMessageLoop, nil);
-    end;
-  end;
-end;
-
 procedure TWaylandHotkey.DoRegister;
 begin
-  // TODO: Implement Wayland portal global shortcuts API
-  // The D-Bus bindings in FPC need updates for the newer portal API
-  // Reference: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html
-  Registered := False;
 end;
 
 procedure TWaylandHotkey.DoUnregister;
-var
-  I: integer;
-  Data: PWaylandHotkeyData;
 begin
-  if not Registered then Exit;
-
-  for I := 0 to GlobalHotkeys.Count - 1 do
-  begin
-    Data := PWaylandHotkeyData(GlobalHotkeys[I]);
-    if Data^.Hotkey = Self then
-    begin
-      GlobalHotkeys.Delete(I);
-      Dispose(Data);
-      Break;
-    end;
-  end;
-
-  Registered := False;
 end;
 
 end.

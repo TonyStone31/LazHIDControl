@@ -32,57 +32,42 @@ type
   TWinWindowManager = class(TWindowManager)
   private
     function GetProcessNameFromPID(APID: DWORD): string;
-  protected
-    // Window query methods
-    function DoGetActiveWindow: TWindowHandle; override;
-    function DoGetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean; override;
-    function DoGetWindowTitle(AHandle: TWindowHandle): string; override;
-    function DoGetWindowPID(AHandle: TWindowHandle): longword; override;
-    function DoGetWindowRect(AHandle: TWindowHandle): TRect; override;
-    function DoGetWindowClass(AHandle: TWindowHandle): string;
-
-    // Window search methods
-    function DoFindWindow(const ATitle: string): TWindowHandle; override;
-    function DoFindWindowByClass(const AClassName: string): TWindowHandle; override;
-    function DoFindWindowByPID(APID: longword): TWindowHandle; override;
-    function DoEnumerateWindows: TList; override;
-    function DoGetWindowChildren(AHandle: TWindowHandle): TList; override;
-
-    // Window activation and focus
-    function DoActivateWindow(AHandle: TWindowHandle): boolean; override;
-    function DoFocusWindow(AHandle: TWindowHandle): boolean; override;
-    function DoRaiseWindow(AHandle: TWindowHandle): boolean; override;
-
-    // Window positioning and sizing
-    function DoMoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean; override;
-    function DoResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean; override;
-    function DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean; override;
-
-    // Window state management
-    function DoMinimizeWindow(AHandle: TWindowHandle): boolean; override;
-    function DoMaximizeWindow(AHandle: TWindowHandle): boolean; override;
-    function DoRestoreWindow(AHandle: TWindowHandle): boolean; override;
-    function DoCloseWindow(AHandle: TWindowHandle): boolean; override;
-
-    // Window visibility
-    function DoShowWindow(AHandle: TWindowHandle): boolean; override;
-    function DoHideWindow(AHandle: TWindowHandle): boolean; override;
-    function DoIsWindowVisible(AHandle: TWindowHandle): boolean; override;
-
-    // Desktop and workspace management (limited on Windows)
-    function DoGetDesktopCount: integer; override;
-    function DoGetCurrentDesktop: integer; override;
-    function DoSetCurrentDesktop(ADesktop: integer): boolean; override;
-    function DoGetWindowDesktop(AHandle: TWindowHandle): integer; override;
-    function DoSetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean; override;
   public
-    constructor Create;
+    function GetActiveWindow: TWindowHandle; override;
+    function GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean; override;
+    function GetWindowTitle(AHandle: TWindowHandle): string; override;
+    function GetWindowClass(AHandle: TWindowHandle): string; override;
+    function GetWindowPID(AHandle: TWindowHandle): longword; override;
+    function GetWindowRect(AHandle: TWindowHandle): TRect; override;
+    function EnumerateWindows: TList; override;
+    function GetWindowChildren(AHandle: TWindowHandle): TList; override;
 
-    // Windows-specific methods
+    function ActivateWindow(AHandle: TWindowHandle): boolean; override;
+    function FocusWindow(AHandle: TWindowHandle): boolean; override;
+    function RaiseWindow(AHandle: TWindowHandle): boolean; override;
+
+    function MoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean; override;
+    function ResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean; override;
+    function MoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean; override;
+
+    function MinimizeWindow(AHandle: TWindowHandle): boolean; override;
+    function MaximizeWindow(AHandle: TWindowHandle): boolean; override;
+    function RestoreWindow(AHandle: TWindowHandle): boolean; override;
+    function CloseWindow(AHandle: TWindowHandle): boolean; override;
+
+    function ShowWindow(AHandle: TWindowHandle): boolean; override;
+    function HideWindow(AHandle: TWindowHandle): boolean; override;
+    function IsWindowVisible(AHandle: TWindowHandle): boolean; override;
+
+    function GetDesktopCount: integer; override;
+    function GetCurrentDesktop: integer; override;
+    function SetCurrentDesktop(ADesktop: integer): boolean; override;
+    function GetWindowDesktop(AHandle: TWindowHandle): integer; override;
+    function SetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean; override;
+
+    // Windows only
     function GetWindowAtPoint(X, Y: integer): TWindowHandle;
-    function GetWindowChildren(AHandle: TWindowHandle): TList;
     function GetWindowParent(AHandle: TWindowHandle): TWindowHandle;
-    function GetWindowClass(AHandle: TWindowHandle): string;
     function GetDesktopWindow: TWindowHandle;
   end;
 
@@ -90,348 +75,219 @@ function InitializeWindowManager: TWindowManager;
 
 implementation
 
-var
-  EnumWindowsList: TList;
-  EnumChildrenList: TList;
-  FindByPIDTarget: DWORD;
-  FindByPIDResult: HWND;
+function QueryFullProcessImageNameW(Process: THandle; Flags: DWORD; ExeName: pwidechar; var Size: DWORD): BOOL; stdcall;
+  external 'kernel32.dll' name 'QueryFullProcessImageNameW';
 
-function EnumWindowsCallback(hWnd: HWND; lParam: LPARAM): longbool; stdcall;
+function AddWindow(hWnd: HWND; lParam: LPARAM): longbool; stdcall;
 begin
-  // Only add visible top-level windows
-  if IsWindowVisible(hWnd) then
-    EnumWindowsList.Add(Pointer(hWnd));
-  Result := True;  // Continue enumeration
-end;
-
-function EnumChildCallback(hWnd: HWND; lParam: LPARAM): longbool; stdcall;
-begin
-  EnumChildrenList.Add(Pointer(hWnd));
+  TList(lParam).Add(Pointer(hWnd));
   Result := True;
 end;
 
-function FindByPIDCallback(hWnd: HWND; lParam: LPARAM): longbool; stdcall;
-var
-  ProcessID: DWORD;
+function AddVisibleWindow(hWnd: HWND; lParam: LPARAM): longbool; stdcall;
 begin
-  ProcessID := 0;
-  GetWindowThreadProcessId(hWnd, @ProcessID);
-  if ProcessID = FindByPIDTarget then
-  begin
-    FindByPIDResult := hWnd;
-    Result := False;  // Stop enumeration
-  end
-  else
-    Result := True;
+  if Windows.IsWindowVisible(hWnd) then
+    TList(lParam).Add(Pointer(hWnd));
+  Result := True;
 end;
 
 function InitializeWindowManager: TWindowManager;
 begin
-  try
-    Result := TWinWindowManager.Create;
-  except
-    Result := nil;
-  end;
+  Result := TWinWindowManager.Create;
 end;
 
 { TWinWindowManager }
-
-constructor TWinWindowManager.Create;
-begin
-  inherited Create;
-end;
 
 function TWinWindowManager.GetProcessNameFromPID(APID: DWORD): string;
 const
   PROCESS_QUERY_LIMITED_INFORMATION = $1000;
 var
-  hProcess: THandle;
-  ModuleName: array[0..MAX_PATH - 1] of widechar;
+  Process: THandle;
+  Name: array[0..MAX_PATH - 1] of widechar;
   Size: DWORD;
-  QueryFullProcessImageNameW: function(hProcess: THandle; dwFlags: DWORD; lpExeName: pwidechar; var lpdwSize: DWORD): BOOL; stdcall;
-  hKernel32: THandle;
 begin
   Result := '';
-  if APID = 0 then Exit;
-
-  // Try to get process name using QueryFullProcessImageNameW (Vista+)
-  hKernel32 := GetModuleHandle('kernel32.dll');
-  if hKernel32 <> 0 then
-  begin
-    Pointer(QueryFullProcessImageNameW) := GetProcAddress(hKernel32, 'QueryFullProcessImageNameW');
-    if Assigned(QueryFullProcessImageNameW) then
-    begin
-      hProcess := OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, APID);
-      if hProcess <> 0 then
-      begin
-        try
-          Size := MAX_PATH;
-          if QueryFullProcessImageNameW(hProcess, 0, ModuleName, Size) then
-            Result := ExtractFileName(UTF8Encode(WideString(ModuleName)));
-        finally
-          CloseHandle(hProcess);
-        end;
-      end;
-    end;
-  end;
+  Process := OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, APID);
+  if Process = 0 then Exit;
+  Size := MAX_PATH;
+  if QueryFullProcessImageNameW(Process, 0, Name, Size) then
+    Result := ExtractFileName(UTF8Encode(WideString(Name)));
+  CloseHandle(Process);
 end;
 
-// Window query methods
-
-function TWinWindowManager.DoGetActiveWindow: TWindowHandle;
+function TWinWindowManager.GetActiveWindow: TWindowHandle;
 begin
   Result := TWindowHandle(GetForegroundWindow);
 end;
 
-function TWinWindowManager.DoGetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean;
+function TWinWindowManager.GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean;
 var
-  WndRect: Windows.TRect;
   Placement: TWindowPlacement;
 begin
-  FillByte(AInfo, SizeOf(AInfo), 0);
+  AInfo := Default(TWindowInfo);
   AInfo.Handle := AHandle;
-
   Result := IsWindow(HWND(AHandle));
   if not Result then Exit;
 
-  AInfo.Title := DoGetWindowTitle(AHandle);
-  AInfo.ClassName := DoGetWindowClass(AHandle);
-  AInfo.ProcessID := DoGetWindowPID(AHandle);
+  AInfo.Title := GetWindowTitle(AHandle);
+  AInfo.ClassName := GetWindowClass(AHandle);
+  AInfo.ProcessID := GetWindowPID(AHandle);
   AInfo.ProcessName := GetProcessNameFromPID(AInfo.ProcessID);
+  AInfo.Rect := GetWindowRect(AHandle);
+  AInfo.IsVisible := IsWindowVisible(AHandle);
 
-  WndRect := Default(Windows.TRect);
-  if Windows.GetWindowRect(HWND(AHandle), WndRect) then
-  begin
-    AInfo.Rect.Left := WndRect.Left;
-    AInfo.Rect.Top := WndRect.Top;
-    AInfo.Rect.Right := WndRect.Right;
-    AInfo.Rect.Bottom := WndRect.Bottom;
-  end;
-
-  AInfo.IsVisible := Windows.IsWindowVisible(HWND(AHandle));
-
-  FillByte(Placement, SizeOf(Placement), 0);
-  Placement.length := SizeOf(TWindowPlacement);
-  if Windows.GetWindowPlacement(HWND(AHandle), Placement) then
+  Placement := Default(TWindowPlacement);
+  Placement.length := SizeOf(Placement);
+  if GetWindowPlacement(HWND(AHandle), Placement) then
   begin
     AInfo.IsMinimized := Placement.showCmd = SW_SHOWMINIMIZED;
     AInfo.IsMaximized := Placement.showCmd = SW_SHOWMAXIMIZED;
   end;
 end;
 
-function TWinWindowManager.DoGetWindowTitle(AHandle: TWindowHandle): string;
+function TWinWindowManager.GetWindowTitle(AHandle: TWindowHandle): string;
 var
-  Len: integer;
-  Buffer: array[0..1023] of char;
+  Buffer: array[0..1023] of widechar;
 begin
   Result := '';
-  Len := GetWindowText(HWND(AHandle), Buffer, SizeOf(Buffer));
-  if Len > 0 then
-    Result := StrPas(Buffer);
+  if GetWindowTextW(HWND(AHandle), Buffer, Length(Buffer)) > 0 then
+    Result := UTF8Encode(WideString(Buffer));
 end;
 
-function TWinWindowManager.DoGetWindowPID(AHandle: TWindowHandle): longword;
+function TWinWindowManager.GetWindowClass(AHandle: TWindowHandle): string;
 var
-  ProcessID: DWORD;
-begin
-  ProcessID := 0;
-  GetWindowThreadProcessId(HWND(AHandle), @ProcessID);
-  Result := ProcessID;
-end;
-
-function TWinWindowManager.DoGetWindowRect(AHandle: TWindowHandle): TRect;
-var
-  R: Windows.TRect;
-begin
-  R := Default(Windows.TRect);
-  Windows.GetWindowRect(HWND(AHandle), R);
-  Result.Left := R.Left;
-  Result.Top := R.Top;
-  Result.Right := R.Right;
-  Result.Bottom := R.Bottom;
-end;
-
-function TWinWindowManager.DoGetWindowClass(AHandle: TWindowHandle): string;
-var
-  Buffer: array[0..255] of char;
+  Buffer: array[0..255] of widechar;
 begin
   Result := '';
-  if GetClassName(HWND(AHandle), Buffer, SizeOf(Buffer)) > 0 then
-    Result := StrPas(Buffer);
+  if GetClassNameW(HWND(AHandle), Buffer, Length(Buffer)) > 0 then
+    Result := UTF8Encode(WideString(Buffer));
 end;
 
-// Window search methods
-
-function TWinWindowManager.DoFindWindow(const ATitle: string): TWindowHandle;
-begin
-  Result := TWindowHandle(Windows.FindWindow(nil, PChar(ATitle)));
-end;
-
-function TWinWindowManager.DoFindWindowByClass(const AClassName: string): TWindowHandle;
-begin
-  Result := TWindowHandle(Windows.FindWindow(PChar(AClassName), nil));
-end;
-
-function TWinWindowManager.DoFindWindowByPID(APID: longword): TWindowHandle;
-begin
-  FindByPIDTarget := APID;
-  FindByPIDResult := 0;
-  EnumWindows(@FindByPIDCallback, 0);
-  Result := TWindowHandle(FindByPIDResult);
-end;
-
-function TWinWindowManager.DoEnumerateWindows: TList;
-begin
-  EnumWindowsList := TList.Create;
-  EnumWindows(@EnumWindowsCallback, 0);
-  Result := EnumWindowsList;
-end;
-
-function TWinWindowManager.DoGetWindowChildren(AHandle: TWindowHandle): TList;
-begin
-  Result := GetWindowChildren(AHandle);
-end;
-
-// Window activation and focus
-
-function TWinWindowManager.DoActivateWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := SetForegroundWindow(HWND(AHandle));
-end;
-
-function TWinWindowManager.DoFocusWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := SetFocus(HWND(AHandle)) <> 0;
-end;
-
-function TWinWindowManager.DoRaiseWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := BringWindowToTop(HWND(AHandle));
-end;
-
-// Window positioning and sizing
-
-function TWinWindowManager.DoMoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean;
-var
-  R: Windows.TRect;
-begin
-  R := Default(Windows.TRect);
-  if Windows.GetWindowRect(HWND(AHandle), R) then
-    Result := Windows.MoveWindow(HWND(AHandle), X, Y, R.Right - R.Left, R.Bottom - R.Top, True)
-  else
-    Result := False;
-end;
-
-function TWinWindowManager.DoResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean;
-var
-  R: Windows.TRect;
-begin
-  R := Default(Windows.TRect);
-  if Windows.GetWindowRect(HWND(AHandle), R) then
-    Result := Windows.MoveWindow(HWND(AHandle), R.Left, R.Top, Width, Height, True)
-  else
-    Result := False;
-end;
-
-function TWinWindowManager.DoMoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean;
-begin
-  Result := Windows.MoveWindow(HWND(AHandle), X, Y, Width, Height, True);
-end;
-
-// Window state management
-
-function TWinWindowManager.DoMinimizeWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := Windows.ShowWindow(HWND(AHandle), SW_MINIMIZE);
-end;
-
-function TWinWindowManager.DoMaximizeWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := Windows.ShowWindow(HWND(AHandle), SW_MAXIMIZE);
-end;
-
-function TWinWindowManager.DoRestoreWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := Windows.ShowWindow(HWND(AHandle), SW_RESTORE);
-end;
-
-function TWinWindowManager.DoCloseWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := PostMessage(HWND(AHandle), WM_CLOSE, 0, 0);
-end;
-
-// Window visibility
-
-function TWinWindowManager.DoShowWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := Windows.ShowWindow(HWND(AHandle), SW_SHOW);
-end;
-
-function TWinWindowManager.DoHideWindow(AHandle: TWindowHandle): boolean;
-begin
-  Result := Windows.ShowWindow(HWND(AHandle), SW_HIDE);
-end;
-
-function TWinWindowManager.DoIsWindowVisible(AHandle: TWindowHandle): boolean;
-begin
-  Result := IsWindowVisible(HWND(AHandle));
-end;
-
-// Desktop and workspace management (limited on Windows - virtual desktops API is complex)
-
-function TWinWindowManager.DoGetDesktopCount: integer;
-begin
-  // Windows 10+ has virtual desktops but the API is complex (COM-based)
-  // For now, return 1
-  Result := 1;
-end;
-
-function TWinWindowManager.DoGetCurrentDesktop: integer;
+function TWinWindowManager.GetWindowPID(AHandle: TWindowHandle): longword;
 begin
   Result := 0;
+  GetWindowThreadProcessId(HWND(AHandle), @Result);
 end;
 
-function TWinWindowManager.DoSetCurrentDesktop(ADesktop: integer): boolean;
+function TWinWindowManager.GetWindowRect(AHandle: TWindowHandle): TRect;
 begin
-  Result := False;  // Not implemented for basic Windows API
+  Result := Default(TRect);
+  Windows.GetWindowRect(HWND(AHandle), Result);
 end;
 
-function TWinWindowManager.DoGetWindowDesktop(AHandle: TWindowHandle): integer;
+// Visible top-level windows only.
+function TWinWindowManager.EnumerateWindows: TList;
 begin
-  Result := 0;
-end;
-
-function TWinWindowManager.DoSetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean;
-begin
-  Result := False;
-end;
-
-// Windows-specific methods
-
-function TWinWindowManager.GetWindowAtPoint(X, Y: integer): TWindowHandle;
-var
-  Pt: TPoint;
-begin
-  Pt.X := X;
-  Pt.Y := Y;
-  Result := TWindowHandle(WindowFromPoint(Pt));
+  Result := TList.Create;
+  EnumWindows(@AddVisibleWindow, LPARAM(Result));
 end;
 
 function TWinWindowManager.GetWindowChildren(AHandle: TWindowHandle): TList;
 begin
-  EnumChildrenList := TList.Create;
-  EnumChildWindows(HWND(AHandle), @EnumChildCallback, 0);
-  Result := EnumChildrenList;
+  Result := TList.Create;
+  EnumChildWindows(HWND(AHandle), @AddWindow, LPARAM(Result));
+end;
+
+function TWinWindowManager.ActivateWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := SetForegroundWindow(HWND(AHandle));
+end;
+
+function TWinWindowManager.FocusWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := SetFocus(HWND(AHandle)) <> 0;
+end;
+
+function TWinWindowManager.RaiseWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := BringWindowToTop(HWND(AHandle));
+end;
+
+function TWinWindowManager.MoveWindow(AHandle: TWindowHandle; X, Y: integer): boolean;
+begin
+  Result := SetWindowPos(HWND(AHandle), 0, X, Y, 0, 0, SWP_NOSIZE or SWP_NOZORDER or SWP_NOACTIVATE);
+end;
+
+function TWinWindowManager.ResizeWindow(AHandle: TWindowHandle; Width, Height: integer): boolean;
+begin
+  Result := SetWindowPos(HWND(AHandle), 0, 0, 0, Width, Height, SWP_NOMOVE or SWP_NOZORDER or SWP_NOACTIVATE);
+end;
+
+function TWinWindowManager.MoveResizeWindow(AHandle: TWindowHandle; X, Y, Width, Height: integer): boolean;
+begin
+  Result := Windows.MoveWindow(HWND(AHandle), X, Y, Width, Height, True);
+end;
+
+function TWinWindowManager.MinimizeWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := Windows.ShowWindow(HWND(AHandle), SW_MINIMIZE);
+end;
+
+function TWinWindowManager.MaximizeWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := Windows.ShowWindow(HWND(AHandle), SW_MAXIMIZE);
+end;
+
+function TWinWindowManager.RestoreWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := Windows.ShowWindow(HWND(AHandle), SW_RESTORE);
+end;
+
+function TWinWindowManager.CloseWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := PostMessage(HWND(AHandle), WM_CLOSE, 0, 0);
+end;
+
+function TWinWindowManager.ShowWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := Windows.ShowWindow(HWND(AHandle), SW_SHOW);
+end;
+
+function TWinWindowManager.HideWindow(AHandle: TWindowHandle): boolean;
+begin
+  Result := Windows.ShowWindow(HWND(AHandle), SW_HIDE);
+end;
+
+function TWinWindowManager.IsWindowVisible(AHandle: TWindowHandle): boolean;
+begin
+  Result := Windows.IsWindowVisible(HWND(AHandle));
+end;
+
+// Windows virtual desktops sit behind an undocumented COM interface; one desktop is reported.
+
+function TWinWindowManager.GetDesktopCount: integer;
+begin
+  Result := 1;
+end;
+
+function TWinWindowManager.GetCurrentDesktop: integer;
+begin
+  Result := 0;
+end;
+
+function TWinWindowManager.SetCurrentDesktop(ADesktop: integer): boolean;
+begin
+  Result := False;
+end;
+
+function TWinWindowManager.GetWindowDesktop(AHandle: TWindowHandle): integer;
+begin
+  Result := 0;
+end;
+
+function TWinWindowManager.SetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean;
+begin
+  Result := False;
+end;
+
+function TWinWindowManager.GetWindowAtPoint(X, Y: integer): TWindowHandle;
+begin
+  Result := TWindowHandle(WindowFromPoint(Types.Point(X, Y)));
 end;
 
 function TWinWindowManager.GetWindowParent(AHandle: TWindowHandle): TWindowHandle;
 begin
   Result := TWindowHandle(Windows.GetParent(HWND(AHandle)));
-end;
-
-function TWinWindowManager.GetWindowClass(AHandle: TWindowHandle): string;
-begin
-  Result := DoGetWindowClass(AHandle);
 end;
 
 function TWinWindowManager.GetDesktopWindow: TWindowHandle;

@@ -37,8 +37,7 @@ type
     CapsLockStateAtStringStart: boolean;
     procedure DoDown(Key: word); dynamic; abstract;
     procedure DoUp(Key: word); dynamic; abstract;
-    procedure capsLockGetSaveState; dynamic; abstract;
-    procedure capsLockRestoreState; dynamic; abstract;
+    procedure StringDone; virtual;
     function CharToKeySym(ch: char): word;
     function NeedsShift(ch: char): boolean;
     function NeedsShiftWithCapsLock(ch: char): boolean;
@@ -88,25 +87,11 @@ begin
 end;
 
 function TKeyInput.NeedsShiftWithCapsLock(ch: char): boolean;
-var
-  isUpperCase: boolean;
-  normallyNeedsShift: boolean;
 begin
-  isUpperCase := ch in ['A'..'Z'];
-
-  if isUpperCase or (ch in ['a'..'z']) then
-  begin
-    // For letters: CapsLock inverts the shift requirement
-    if CapsLockStateAtStringStart then
-      Result := not isUpperCase  // Shift needed for lowercase when CapsLock ON
-    else
-      Result := isUpperCase;     // Shift needed for uppercase when CapsLock OFF
-  end
-  else
-  begin
-    normallyNeedsShift := ch in ['~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '{', '}', '|', ':', '"', '<', '>', '?'];
-    Result := normallyNeedsShift;
-  end;
+  // CapsLock turns the shift requirement around, for letters only
+  Result := NeedsShift(ch);
+  if CapsLockStateAtStringStart and (ch in ['A'..'Z', 'a'..'z']) then
+    Result := not Result;
 end;
 
 function TKeyInput.CharToKeySym(ch: char): word;
@@ -144,15 +129,9 @@ begin
   end;
 end;
 
+// Nothing here: a backend that can type beyond ASCII overrides this.
 procedure TKeyInput.PressUnicodeChar(unicode: cardinal);
 begin
-  // Base class fallback implementation
-  // Platform-specific implementations should override this method:
-  //   - TXKeyInput (Linux): Uses Ctrl+Shift+U + hex digits
-  //   - TWinKeyInput (Windows): Uses KEYEVENTF_UNICODE with SendInput
-  //   - TCarbonKeyInput (macOS): Uses Option key combinations
-
-  // This fallback does nothing - Unicode input requires platform-specific handling
 end;
 
 procedure TKeyInput.PressString(StringValue: string; Interval: cardinal);
@@ -161,62 +140,52 @@ var
   unicode: cardinal;
   CPLen: integer;
 begin
-  try
-    CapsLockStateAtStringStart := GetCapsLockState;
-  except
-    CapsLockStateAtStringStart := False;
-  end;
-
+  CapsLockStateAtStringStart := GetCapsLockState;
   UnapplyAllKeys;
 
   p := PChar(StringValue);
   while p^ <> #0 do
   begin
     unicode := UTF8CodepointToUnicode(p, CPLen);
-
-    // Normalize line endings: CR, LF, or CRLF all become single RETURN
-    if (unicode = 13) then
-    begin
-      Inc(p, CPLen);
-      if (p^ = #10) then
-        Inc(p, 1);
-      PressASCIIChar(#10);
-      Sleep(5);
-      if (Interval > 0) and (p^ <> #0) then Sleep(Interval);
-      Continue;
-    end;
-
-    if (CPLen = 1) and (unicode < 128) then
+    Inc(p, CPLen);
+    // CR, LF and CRLF are each one press of Enter
+    if (unicode = 13) and (p^ = #10) then
+      Inc(p);
+    if (unicode = 13) or (unicode = 10) then
+      Press(VK_RETURN)
+    else if unicode >= 128 then
+      PressUnicodeChar(unicode)
+    else if unicode > 0 then
     begin
       PressASCIIChar(char(unicode));
       Sleep(5);
-    end
-    else if unicode > 0 then
-    begin
-      PressUnicodeChar(unicode);
     end;
-
-    Inc(p, CPLen);
-    if (Interval > 0) and (p^ <> #0) then Sleep(Interval);
+    if (Interval > 0) and (p^ <> #0) then
+      Sleep(Interval);
   end;
+  StringDone;
 end;
 
+// After PressString's last key, for a backend that has something to put back.
+procedure TKeyInput.StringDone;
+begin
+end;
+
+// Typing often starts from a hotkey whose keys are still physically down.
 procedure TKeyInput.UnapplyAllKeys;
 var
-  keyCode: word;
+  Key: word;
 begin
-  Up(VK_SHIFT);
-  Up(VK_CONTROL);
-  Up(VK_MENU);
-
-  for keyCode := VK_0 to VK_9 do
-    Up(keyCode);
-
-  for keyCode := VK_A to VK_Z do
-    Up(keyCode);
-
-  for keyCode := VK_F1 to VK_F12 do
-    Up(keyCode);
+  DoUp(VK_SHIFT);
+  DoUp(VK_CONTROL);
+  DoUp(VK_MENU);
+  for Key := VK_0 to VK_9 do
+    DoUp(Key);
+  for Key := VK_A to VK_Z do
+    DoUp(Key);
+  for Key := VK_F1 to VK_F12 do
+    DoUp(Key);
+  Application.ProcessMessages;
 end;
 
 procedure TKeyInput.Apply(Shift: TShiftState);

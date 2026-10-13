@@ -34,8 +34,6 @@ type
   protected
     procedure DoDown(Key: word); override;
     procedure DoUp(Key: word); override;
-    procedure capsLockGetSaveState; override;
-    procedure capsLockRestoreState; override;
   public
     function GetCapsLockState: boolean; override;
     function GetNumLockState: boolean; override;
@@ -260,16 +258,6 @@ end;
 procedure TCocoaKeyInput.DoUp(Key: word);
 begin
   SendKeyInput(Key, False);
-end;
-
-procedure TCocoaKeyInput.capsLockGetSaveState;
-begin
-  // Cocoa implementation - not yet fully implemented
-end;
-
-procedure TCocoaKeyInput.capsLockRestoreState;
-begin
-  // Cocoa implementation - not yet fully implemented
 end;
 
 function TCocoaKeyInput.GetCapsLockState: boolean;
