@@ -3,7 +3,8 @@
 Everything the package can do to a mouse, a keyboard and a window, reachable
 from a shell script, a Makefile, a test runner, or any language that can
 write lines of text.  One binary, no dependency on `xdotool`, `wmctrl`,
-`xwininfo` or ImageMagick - and the same binary builds for Windows.
+`xwininfo` or ImageMagick - and the same source builds for Windows, where it
+was tested on Windows 10 in a virtual machine.
 
     lazbuild hidctl/hidctl.lpi
     hidctl --help                          # every command, on one screen

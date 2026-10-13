@@ -19,9 +19,11 @@
 - Examples: `examples/automation/AutomationDemo.lpi`,
   `examples/hidcontroldemo/HIDControlDemo.lpi`, and the `hidctl/hidctl.lpi`
   command-line tool; all require `LazHIDControl`.
-- Verified here: Linux x86-64, GTK3, Lazarus **4.99** (trunk), FPC **3.3.1**.
-  Windows support is reported in the README but was not tested in this review.
-  GTK2/Qt and release compiler/IDE versions were not verified here.
+- Verified here: Linux x86-64, GTK2 and GTK3, Lazarus **4.99** (trunk), FPC **3.3.1**.
+  Windows: win64 builds of hidctl and both demos were run on Windows 10 (22H2)
+  in a virtual machine - typing, clicking, window control, capture, hotkey,
+  clipboard, idle and power status all passed. Qt builds compile but were not
+  run; release compiler/IDE versions were not verified here.
   No minimum Lazarus/FPC version has been established.
 
 ## Known limitations
@@ -57,8 +59,9 @@ repository files merely to reduce the release archive.
 Package/project XML and file paths were checked. Package, main demo, small
 example and CLI builds passed from repository-file-only temporary copies with
 fresh Lazarus configuration on GTK3. Existing compiler warnings remain unchanged.
-No input automation was run against the user's desktop. Windows/macOS/Wayland
-runtime testing and the OPM archive-generation UI remain untested.
+Linux input automation ran in a nested X server, Windows in a virtual machine.
+macOS and Wayland runtime testing and the OPM archive-generation UI remain
+untested.
 
 ## Maintenance and compatibility
 

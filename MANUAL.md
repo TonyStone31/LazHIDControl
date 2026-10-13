@@ -146,6 +146,8 @@ The demos share Ctrl+Shift+F9; run one at a time or change its `ShortCut`.
 Published properties and events have source comments for Object Inspector help.
 The components and their GUI methods are intended for the main GUI thread.
 Windows and Linux/X11 use the existing backends. Hotkeys use GTK2/GTK3 on X11.
+Linux/X11 is tested in a nested X server; Windows was tested on Windows 10 in
+a virtual machine, with hidctl and both demos.
 Wayland support is partial - see "Wayland, in detail" - and macOS is still
 unsupported. Components report unavailable operations rather than simulating success.
 
