@@ -36,6 +36,7 @@ type
   private
     Display: PDisplay;
     RootWindow: Pointer;
+    procedure GrabBoth(Grab: boolean);
   protected
     procedure DoRegister; override;
     procedure DoUnregister; override;
@@ -200,117 +201,77 @@ begin
     GlobalHotkeys := TList.Create;
 end;
 
+{ X grabs a key for one exact set of modifiers, and Caps Lock and Num Lock
+  count as modifiers, so a hotkey is grabbed once for each combination of them. }
+procedure GrabKey(Display: PDisplay; KeyCode, Modifier: longword; Window: TWindow; Grab: boolean);
+const
+  Locks: array[0..3] of longword = (0, CapLock, NumLock, CapLock or NumLock);
+var
+  I: integer;
+begin
+  for I := Low(Locks) to High(Locks) do
+    if Grab then XGrabKey(Display, KeyCode, (Modifier and NotLock) or Locks[I], Window, 1, GrabModeAsync, GrabModeAsync)
+    else
+      XUngrabKey(Display, KeyCode, (Modifier and NotLock) or Locks[I], Window);
+end;
+
+{ Grabs or releases the key, and the key its shifted symbol sits on when
+  that is a different one. }
+procedure TXHotkey.GrabBoth(Grab: boolean);
+var
+  KeySym, ShiftedSym: TKeySym;
+  Code: longword;
+begin
+  KeySym := KeyToSym(Key);
+  Code := XKeysymToKeycode(Display, KeySym);
+  GrabKey(Display, Code, ShiftToMod(Shift), RootXid(RootWindow), Grab);
+  ShiftedSym := XKeycodeToKeysym(Display, Code, 1);
+  if ShiftedSym <> KeySym then
+    GrabKey(Display, XKeysymToKeycode(Display, ShiftedSym), ShiftToMod(Shift), RootXid(RootWindow), Grab);
+end;
+
 procedure TXHotkey.DoRegister;
 var
-  Modifier: longword;
-  KeySym, ShiftedSym: TKeySym;
-  XKeyCode: longword;
-  Window: TWindow;
   I: integer;
   PreviousHandler: TXErrorHandler;
-
-  procedure CaptureKey(Disp: PDisplay; KC: longword; Modif: longword; Win: TWindow);
-  begin
-    { Capture keys without cap or num lock }
-    XGrabKey(Disp, KC, Modif and NotLock, Win, 1, GrabModeAsync, GrabModeAsync);
-    { Capture keys with cap lock }
-    XGrabKey(Disp, KC, Modif or CapLock, Win, 1, GrabModeAsync, GrabModeAsync);
-    { Capture keys with num lock }
-    XGrabKey(Disp, KC, Modif or NumLock, Win, 1, GrabModeAsync, GrabModeAsync);
-    { Capture keys with cap or num lock }
-    XGrabKey(Disp, KC, Modif or CapLock or NumLock, Win, 1, GrabModeAsync, GrabModeAsync);
-  end;
-
 begin
   for I := 0 to GlobalHotkeys.Count - 1 do
     if (TXHotkey(GlobalHotkeys[I]).Key = Key) and (TXHotkey(GlobalHotkeys[I]).Shift = Shift) then Exit;
   if not Assigned(Display) or not Assigned(RootWindow) then Exit;
-  Modifier := ShiftToMod(Shift);
-  KeySym := KeyToSym(Key);
-  if KeySym = 0 then Exit;
+  if (KeyToSym(Key) = 0) or (XKeysymToKeycode(Display, KeyToSym(Key)) = 0) then Exit;
 
-  XKeyCode := XKeysymToKeycode(Display, KeySym);
-  Window := RootXid(RootWindow);
-  if XKeyCode = 0 then Exit;
+  // a grab somebody else already holds comes back as an X error, not a result
   XSync(Display, False);
   GrabFailed := False;
   PreviousHandler := XSetErrorHandler(@GrabError);
-  CaptureKey(Display, XKeyCode, Modifier, Window);
-
-  { Also capture the shifted variant if it's different (e.g., lowercase vs uppercase) }
-  ShiftedSym := XKeycodeToKeysym(Display, XKeyCode, 1);
-  if KeySym <> ShiftedSym then
-  begin
-    XKeyCode := XKeysymToKeycode(Display, ShiftedSym);
-    CaptureKey(Display, XKeyCode, Modifier, Window);
-  end;
-
+  GrabBoth(True);
   XSync(Display, False);
   XSetErrorHandler(PreviousHandler);
   if GrabFailed then
   begin
-    // Release any variants that succeeded before the conflicting grab.
-    Registered := True;
-    DoUnregister;
+    GrabBoth(False);
     Exit;
   end;
-  GlobalHotkeys.Add(Self);
 
+  GlobalHotkeys.Add(Self);
   if not FilterInstalled then
   begin
     gdk_window_add_filter(RootWindow, @FilterKeys, nil);
     FilterInstalled := True;
   end;
-
   Registered := True;
 end;
 
 procedure TXHotkey.DoUnregister;
-var
-  Modifier: longword;
-  KeySym, ShiftedSym: TKeySym;
-  XKeyCode: longword;
-  Window: TWindow;
-
-  procedure ReleaseKey(Disp: PDisplay; KC: longword; Modif: longword; Win: TWindow);
-  begin
-    { Release keys without cap or num lock }
-    XUngrabKey(Disp, KC, Modif and NotLock, Win);
-    { Release keys with cap lock }
-    XUngrabKey(Disp, KC, Modif or CapLock, Win);
-    { Release keys with num lock }
-    XUngrabKey(Disp, KC, Modif or NumLock, Win);
-    { Release keys with cap or num lock }
-    XUngrabKey(Disp, KC, Modif or CapLock or NumLock, Win);
-  end;
-
 begin
   if not Registered then Exit;
-
   GlobalHotkeys.Remove(Self);
-
-  Modifier := ShiftToMod(Shift);
-  KeySym := KeyToSym(Key);
-  if KeySym = 0 then Exit;
-
-  XKeyCode := XKeysymToKeycode(Display, KeySym);
-  Window := RootXid(RootWindow);
-  ReleaseKey(Display, XKeyCode, Modifier, Window);
-
-  { Also release the shifted variant if it's different (e.g., lowercase vs uppercase) }
-  ShiftedSym := XKeycodeToKeysym(Display, XKeyCode, 1);
-  if KeySym <> ShiftedSym then
-  begin
-    XKeyCode := XKeysymToKeycode(Display, ShiftedSym);
-    ReleaseKey(Display, XKeyCode, Modifier, Window);
-  end;
-
+  GrabBoth(False);
   if (GlobalHotkeys.Count = 0) and FilterInstalled then
   begin
     gdk_window_remove_filter(RootWindow, @FilterKeys, nil);
     FilterInstalled := False;
   end;
-
   Registered := False;
 end;
 

@@ -17,7 +17,10 @@ uses
   HIDWindow,
   HIDHotkey,
   HIDScreenshot,
-  HIDMouseAndKeyInput;
+  HIDMouseAndKeyInput,
+  WindowManagerIntf,
+  GlobalKeyMonitor,
+  GlobalMouseMonitor;
 
 var
   Checks, Failures, Skipped: integer;
@@ -128,58 +131,70 @@ type
     end;
   end;
 
-  procedure UnsupportedChecks;
+  { Windows, pictures, hotkeys and the monitors.  What macOS only does for a
+    program the user has allowed is reported, not counted as a failure. }
+  procedure DesktopChecks;
   var
     Window: THIDWindow;
     Hotkey: THIDHotkey;
     Shot: THIDScreenshot;
+    Info: TWindowInfo;
+    Keys: TGlobalKeyListener;
+    Clicks: TGlobalMouseListener;
     Rejected: boolean;
   begin
     Window := THIDWindow.Create(nil);
     Hotkey := THIDHotkey.Create(nil);
     Shot := THIDScreenshot.Create(nil);
+    Keys := CreateGlobalKeyListener;
+    Clicks := CreateGlobalMouseListener;
     try
-      if Window.Find then Check(Window.Handle <> 0, 'window lookup returns a handle')
-      else
+      if Window.Find and Window.GetInfo(Info) then
       begin
-        Check(Window.LastError <> '', 'unavailable window lookup reports an error');
-        Skip('window lookup/control: ' + Window.LastError);
-      end;
-      Hotkey.ShortCut := ShortCut(VK_F9, [ssCtrl, ssShift]);
-      if Hotkey.RegisterHotkey then
-      begin
-        Check(Hotkey.Registered, 'global hotkey registers');
-        Hotkey.UnregisterHotkey;
-        Check(not Hotkey.Registered, 'global hotkey unregisters');
+        Check(Info.Rect.Width > 0, 'the front window has a size');
+        Check(Info.ProcessID <> 0, 'the front window has a process');
+        WriteLn('Front window: "', Info.Title, '" of ', Info.ClassName, ' at ', Info.Rect.Left, ',', Info.Rect.Top, ' ',
+          Info.Rect.Width, 'x', Info.Rect.Height);
+        if Window.MoveTo(Info.Rect.Left + 20, Info.Rect.Top + 20) then
+        begin
+          Check(Window.GetInfo(Info), 'the moved window is still found');
+          Check(Window.MoveTo(Info.Rect.Left - 20, Info.Rect.Top - 20), 'the window moves back');
+        end
+        else
+          Skip('moving a window needs Accessibility permission: ' + Window.LastError);
       end
       else
-      begin
-        Check(Hotkey.LastError <> '', 'unavailable hotkey reports an error');
-        Skip('global hotkey: ' + Hotkey.LastError);
-      end;
-      if Shot.Capture then Check((Shot.Bitmap.Width > 0) and (Shot.Bitmap.Height > 0), 'desktop capture has pixels')
+        Skip('no window on the screen to look at: ' + Window.LastError);
+
+      Hotkey.ShortCut := ShortCut(VK_F9, [ssCtrl, ssShift]);
+      Check(Hotkey.RegisterHotkey and Hotkey.Registered, 'global hotkey registers');
+      Hotkey.UnregisterHotkey;
+      Check(not Hotkey.Registered, 'global hotkey unregisters');
+
+      Check(Shot.Capture and (Shot.Bitmap.Width > 0) and (Shot.Bitmap.Height > 0), 'desktop capture has pixels');
+      WriteLn('Desktop capture: ', Shot.Bitmap.Width, 'x', Shot.Bitmap.Height);
+
+      Clicks.StartMonitoring;
+      Check(Clicks.Active, 'the mouse monitor starts');
+      Clicks.StopMonitoring;
+      Keys.StartMonitoring;
+      if Keys.Active then Check(True, 'the key monitor starts')
       else
-      begin
-        Check(Shot.LastError <> '', 'unavailable desktop capture reports an error');
-        Skip('desktop capture: ' + Shot.LastError);
-      end;
+        Skip('the key monitor needs Input Monitoring permission');
+      Keys.StopMonitoring;
+
       Rejected := False;
       try
         KeyInput.Down(VK_APPS);
       except
-        on E: Exception do Rejected := Pos('not supported', E.Message) > 0;
+        on E: Exception do Rejected := True;
       end;
-      Check(Rejected, 'unsupported application-menu key is rejected before posting');
-      Rejected := False;
-      try
-        KeyInput.Up(High(word));
-      except
-        on E: Exception do Rejected := Pos('not supported', E.Message) > 0;
-      end;
-      Check(Rejected, 'unsupported key-up is rejected before posting');
-      Skip('keyboard/mouse delivery requires Accessibility permission and an unlocked, dedicated target');
-      Skip('Unicode typing, scrolling and global input monitoring remain incomplete Cocoa backends');
+      Check(Rejected, 'a key a Mac does not have is refused');
+      WriteLn('Caps Lock is ', BoolToStr(KeyInput.GetCapsLockState, 'on', 'off'));
+      Skip('battery changes, sleep/wake and typing into another program are for the demo, by hand');
     finally
+      Clicks.Free;
+      Keys.Free;
       Shot.Free;
       Hotkey.Free;
       Window.Free;
@@ -218,7 +233,7 @@ begin
     ClipboardChecks;
     PowerChecks;
     IdleChecks;
-    UnsupportedChecks;
+    DesktopChecks;
   except
     on E: Exception do
     begin

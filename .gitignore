@@ -51,8 +51,6 @@ desktop.ini
 *.link.res
 *.lrt
 packagefiles.xml
-examples/hidcontroldemo/HIDControlDemo
-examples/hidcontroldemo/HIDControlDemo.exe
 
 # Build scripts (user-specific paths)
 build-and-run.sh

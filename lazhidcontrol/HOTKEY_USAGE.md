@@ -141,6 +141,6 @@ The hotkey implementation is adapted from the [Codebot Pascal Library](http://cr
 
 ## See Also
 
-- Demo application in `../HIDControlDemo.lpi` for complete working example
+- The demo in `../examples/automation/AutomationDemo.lpi`, which registers two hotkeys
 - `HIDMouseAndKeyInput` unit for keyboard and mouse simulation
 - `HIDKeyInputIntf` and `HIDMouseInputIntf` for low-level interfaces

@@ -24,16 +24,6 @@
     <Version Major="1" Minor="0"/>
     <Files>
       <Item>
-        <Filename Value="hidcarbonkeyinput.pas"/>
-        <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="HIDCarbonKeyInput"/>
-      </Item>
-      <Item>
-        <Filename Value="hidcarbonmouseinput.pas"/>
-        <AddToUsesPkgSection Value="False"/>
-        <UnitName Value="HIDCarbonMouseInput"/>
-      </Item>
-      <Item>
         <Filename Value="hidcocoakeyinput.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="HIDCocoaKeyInput"/>
@@ -130,6 +120,21 @@
         <Filename Value="cocoaglobalkeymonitor.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="CocoaGlobalKeyMonitor"/>
+      </Item>
+      <Item>
+        <Filename Value="cocoaglobalmousemonitor.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CocoaGlobalMouseMonitor"/>
+      </Item>
+      <Item>
+        <Filename Value="cocoaeventtap.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CocoaEventTap"/>
+      </Item>
+      <Item>
+        <Filename Value="cocoacapture.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="CocoaCapture"/>
       </Item>
       <Item>
         <Filename Value="globalkeymonitor.pas"/>

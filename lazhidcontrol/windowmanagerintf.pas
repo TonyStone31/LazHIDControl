@@ -58,6 +58,8 @@ type
   TWindowManager = class
   public
     function GetActiveWindow: TWindowHandle; virtual; abstract;
+    // The topmost window at a point on the screen, 0 if there is none.
+    function GetWindowAtPoint(X, Y: integer): TWindowHandle; virtual; abstract;
     function GetWindowInfo(AHandle: TWindowHandle; out AInfo: TWindowInfo): boolean; virtual; abstract;
     function GetWindowTitle(AHandle: TWindowHandle): string; virtual; abstract;
     function GetWindowClass(AHandle: TWindowHandle): string; virtual; abstract;

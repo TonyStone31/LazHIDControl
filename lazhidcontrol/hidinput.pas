@@ -10,7 +10,6 @@ type
   private
     Delay: cardinal;
     KeyModifiers: TShiftState;
-    procedure CheckAvailable;
   public
     procedure TypeText(const Text: string);
     procedure PressKey(Key: word);
@@ -19,6 +18,8 @@ type
   published
     // Extra milliseconds to rest between typed characters. Zero types at the
     // backend's own pace. TypeText sends to whatever application has the focus.
+    // On macOS nothing arrives until the user allows your program under
+    // Privacy & Security > Accessibility.
     property TypingInterval: cardinal read Delay write Delay default 0;
     // Ctrl, Alt, and Shift held around PressKey calls. TypeText ignores this
     // and types its text literally.
@@ -33,7 +34,6 @@ type
     TargetWindow: THIDWindow;
     procedure SetRelativeWindow(Value: THIDWindow);
     procedure SetRelativeControl(Value: TControl);
-    procedure CheckAvailable;
   protected
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
   public
@@ -47,7 +47,8 @@ type
     procedure Scroll(Steps: integer);
   published
     // Milliseconds MoveTo spends walking the pointer to its target in small
-    // steps. Zero jumps straight there.
+    // steps. Zero jumps straight there. On macOS the pointer and clicks need
+    // the user to allow your program under Privacy & Security > Accessibility.
     property MovementDuration: cardinal read Duration write Duration default 0;
     // Ctrl, Alt, and Shift held during clicks, moves, and scrolls.
     property Modifiers: TShiftState read MouseModifiers write MouseModifiers default [];
@@ -65,27 +66,26 @@ implementation
 uses HIDMouseAndKeyInput, WindowManager
   {$ifdef linux}, WaylandMouseAndKeyInput{$endif};
 
-procedure THIDKeyboard.CheckAvailable;
+{ Raises when input cannot be sent from here, saying why. }
+procedure CheckAvailable(Component: TComponent; Modifiers: TShiftState);
 begin
-  if csDesigning in ComponentState then raise EInvalidOperation.Create('Input is disabled in the designer.');
+  if csDesigning in Component.ComponentState then raise EInvalidOperation.Create('Input is disabled in the designer.');
   {$ifdef linux}
-  if (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') and not UInputReady then
-    raise EInvalidOperation.Create(UInputHelp);
+  if (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') and not UInputReady then raise EInvalidOperation.Create(UInputHelp);
   {$endif}
-  if Modifiers - [ssCtrl, ssAlt, ssShift] <> [] then
-    raise EInvalidOperation.Create('Supported modifiers are Ctrl, Alt, and Shift.');
-  if not Assigned(KeyInput) then raise EInvalidOperation.Create('Keyboard input is unavailable.');
+  if Modifiers - [ssCtrl, ssAlt, ssShift] <> [] then raise EInvalidOperation.Create('Supported modifiers are Ctrl, Alt, and Shift.');
+  if not Assigned(KeyInput) or not Assigned(MouseInput) then raise EInvalidOperation.Create('Input is not available on this platform.');
 end;
 
 procedure THIDKeyboard.TypeText(const Text: string);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   KeyInput.PressString(Text, TypingInterval);
 end;
 
 procedure THIDKeyboard.PressKey(Key: word);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   KeyInput.Apply(Modifiers);
   try
     KeyInput.Press(Key);
@@ -96,26 +96,14 @@ end;
 
 procedure THIDKeyboard.KeyDown(Key: word);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   KeyInput.Down(Key);
 end;
 
 procedure THIDKeyboard.KeyUp(Key: word);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   KeyInput.Up(Key);
-end;
-
-procedure THIDMouse.CheckAvailable;
-begin
-  if csDesigning in ComponentState then raise EInvalidOperation.Create('Input is disabled in the designer.');
-  {$ifdef linux}
-  if (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') and not UInputReady then
-    raise EInvalidOperation.Create(UInputHelp);
-  {$endif}
-  if Modifiers - [ssCtrl, ssAlt, ssShift] <> [] then
-    raise EInvalidOperation.Create('Supported modifiers are Ctrl, Alt, and Shift.');
-  if not Assigned(MouseInput) then raise EInvalidOperation.Create('Mouse input is unavailable.');
 end;
 
 procedure THIDMouse.SetRelativeControl(Value: TControl);
@@ -143,7 +131,7 @@ end;
 
 procedure THIDMouse.MoveTo(X, Y: integer);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   if Assigned(RelativeWindow) then MoveToWindow(RelativeWindow.Handle, X, Y)
   else if Assigned(RelativeTo) then MouseInput.Move(Modifiers, RelativeTo, X, Y, MovementDuration)
   else
@@ -154,7 +142,7 @@ procedure THIDMouse.MoveToWindow(Window: TWindowHandle; X, Y: integer);
 var
   Info: TWindowInfo;
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   EnsureWindowManager;
   if (WindowMgr = nil) or (Window = 0) then raise EInvalidOperation.Create('Window control is unavailable.');
   if not WindowMgr.GetWindowInfo(Window, Info) or not Info.IsVisible then
@@ -164,31 +152,31 @@ end;
 
 procedure THIDMouse.Click(Button: TMouseButton);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   MouseInput.Click(Button, Modifiers);
 end;
 
 procedure THIDMouse.DoubleClick(Button: TMouseButton);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   MouseInput.DblClick(Button, Modifiers);
 end;
 
 procedure THIDMouse.ButtonDown(Button: TMouseButton);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   MouseInput.Down(Button, Modifiers);
 end;
 
 procedure THIDMouse.ButtonUp(Button: TMouseButton);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   MouseInput.Up(Button, Modifiers);
 end;
 
 procedure THIDMouse.Scroll(Steps: integer);
 begin
-  CheckAvailable;
+  CheckAvailable(Self, Modifiers);
   while Steps > 0 do
   begin
     MouseInput.ScrollUp(Modifiers);

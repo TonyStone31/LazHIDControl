@@ -25,18 +25,14 @@ uses
   HIDWinMouseInput,
   HIDWinKeyInput,
   {$ENDIF}
-  {$IFDEF UNIX}
-    {$IF DEFINED(LCLcarbon)}
-    HIDCarbonMouseInput,
-    HIDCarbonKeyInput,
-    {$ELSEIF DEFINED(LCLcocoa)}
-    HIDCocoaMouseInput,
-    HIDCocoaKeyInput,
-    {$ELSE}
-    WaylandMouseAndKeyInput,
-    HIDXMouseInput,
-    HIDXKeyInput,
-    {$ENDIF}
+  {$IFDEF DARWIN}
+  HIDCocoaMouseInput,
+  HIDCocoaKeyInput,
+  {$ENDIF}
+  {$IF DEFINED(UNIX) AND NOT DEFINED(DARWIN)}
+  WaylandMouseAndKeyInput,
+  HIDXMouseInput,
+  HIDXKeyInput,
   {$ENDIF}
   Classes, SysUtils;
 

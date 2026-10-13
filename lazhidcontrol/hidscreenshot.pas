@@ -35,7 +35,8 @@ type
     // What Capture photographs: every monitor together, one monitor, a window
     // found by title, the Region rectangle, or a rectangle the user drags out.
     // On Wayland the desktop may ask the user's permission, and hcsWindow is
-    // unavailable.
+    // unavailable. On macOS other programs' windows are in the picture only
+    // once the user allows yours under Privacy & Security > Screen Recording.
     property Source: THIDCaptureSource read CaptureSource write CaptureSource default hcsDesktop;
     // Which monitor hcsMonitor captures: -1 is the primary monitor, otherwise
     // an index into Screen.Monitors.
@@ -63,7 +64,8 @@ type
 implementation
 
 uses Forms, Controls, LCLIntf, LCLType, GraphType, Math, WindowManager
-  {$ifdef linux}, LinuxScreenshot{$endif};
+  {$ifdef linux}, LinuxScreenshot{$endif}
+  {$ifdef darwin}, CocoaCapture{$endif};
 
 type
   TRegionSelector = class(TForm)
@@ -184,7 +186,7 @@ function THIDScreenshot.Available: boolean;
 begin
   ErrorText := '';
   if csDesigning in ComponentState then Exit(Failed('Capture is disabled in the designer.'));
-  {$if not defined(windows) and not defined(linux)}
+  {$if not defined(windows) and not defined(linux) and not defined(darwin)}
   Exit(Failed('Screenshot capture is not implemented on this platform.'));
   {$endif}
   Result := True;
@@ -200,6 +202,10 @@ var
   Message: string;
   {$endif}
 begin
+  {$ifdef darwin}
+  // shows other programs' windows only once the user allows Screen Recording
+  Exit(CaptureScreenArea(Area, Destination));
+  {$endif}
   Result := False;
   Whole := TBitmap.Create;
   try

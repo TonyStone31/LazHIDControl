@@ -148,17 +148,19 @@ Published properties and events have source comments for Object Inspector help.
 The components and their GUI methods are intended for the main GUI thread.
 Windows and Linux/X11 use the existing backends. Hotkeys use GTK2/GTK3 on X11.
 Linux/X11 is tested in a nested X server; Windows was tested on Windows 10 in
-a virtual machine, with hidctl and both demos.
-Wayland support is partial - see "Wayland, in detail". macOS is partial too:
-hotkeys, clipboard monitoring, idle time, and power status work and were
-tested on macOS Sequoia 15 in a virtual machine (`sh tests/run_macos.sh`);
-window control and screenshots are not written, and sending input is
-untested. Components report unavailable operations rather than simulating
+a virtual machine, with hidctl and the demo.
+macOS was tested on macOS Sequoia 15 in a virtual machine: typing, the mouse,
+window control, screenshots, hotkeys, and the monitors all work there, once
+the user has allowed the program under Privacy & Security - Accessibility for
+input and windows, Screen Recording for screenshots of other programs, Input
+Monitoring for watching keys. Wayland support is partial - see "Wayland, in
+detail". Components report unavailable operations rather than simulating
 success.
 
-Window management has explicit macOS and Wayland backend placeholders. They
-return no backend until implemented; Wayland sessions do not fall back to X11
-window control. Windows and X11 keep their existing implementations.
+A Wayland session has no window backend and does not fall back to X11 window
+control. On macOS a window's handle is its Core Graphics window number, its
+"class" is the application's name, and a minimized window is not listed -
+keep its handle to restore it.
 
 ## THIDWindow
 
@@ -187,7 +189,8 @@ any borders reported by the backend; it ignores the mouse's `RelativeTo` control
 
 The automation demo's **Find and activate window** button uses the title box.
 X11 uses the window manager's client list, falling back to direct root children
-on bare X servers. macOS and native Wayland window backends remain placeholders.
+on bare X servers. macOS uses the Core Graphics window list and the
+Accessibility API; native Wayland has no window backend.
 
 ## THIDSystemIdle
 
@@ -290,18 +293,24 @@ its **Move pointer to window offset X, Y** button moves without clicking.
 
 ## The demos
 
-Two programs cover the lot.
+One program covers the lot:
+**[examples/automation/AutomationDemo.lpi](examples/automation/AutomationDemo.lpi)**.
+Every component sits on its form in the designer, a tab for each job:
 
-- **[examples/automation/AutomationDemo.lpi](examples/automation/AutomationDemo.lpi)** -
-  the component workout: typing with Unicode, a countdown that types into
-  whatever then has the focus, mouse clicking, every capture mode with
-  preview and save, a global hotkey wired in the Object Inspector
-  (Ctrl+Shift+F9 captures), window find/wait/activate, and live idle, power,
-  and clipboard monitoring. Every component sits on the form in the designer.
-- **[examples/hidcontroldemo/HIDControlDemo.lpi](examples/hidcontroldemo/HIDControlDemo.lpi)** -
-  the original library demo, for what the components do not show: global key
-  and mouse *monitoring*, Window Spy, and keyboard replay of a Unicode test
-  sheet into another application. Give the replay a disposable editor window.
+- **Typing** - a sheet of Unicode text typed into the box beside it and
+  compared, a countdown that types it into whatever then has the focus, and
+  Ctrl+Shift+F9 to type it into another program from anywhere. Handy for the
+  places that will not take a paste.
+- **Mouse** - move and click relative to a control, and the scroll wheel.
+- **Windows** - list other programs' windows; activate, minimize, restore,
+  close; see what is under the pointer; aim the pointer inside one.
+- **Screenshot** - every capture mode, with preview, save and copy;
+  Ctrl+Shift+F10 captures from anywhere.
+- **Idle, power, clipboard** - the three monitors, live.
+
+The status bar shows the pointer, the last click and the last key anywhere on
+the system. That part uses the `GlobalKeyMonitor` and `GlobalMouseMonitor`
+units directly; they are not palette components.
 
 Try the input demos in a nested X server (`Xephyr :9 & DISPLAY=:9 ...`) so a
 misaimed script cannot click on your real desktop. That is also how we drive
@@ -350,6 +359,6 @@ is why this package does not fall back to its X11 backends on Wayland.
 
 - Session lock/unlock notifications.
 - Native Wayland idle-notification support outside the GNOME and KDE services.
-- macOS window control, screenshots, Unicode typing, and input testing.
+- macOS on Apple Silicon, and its battery and sleep/wake events, on a real Mac.
 
 These are future options, not implemented features or release commitments.

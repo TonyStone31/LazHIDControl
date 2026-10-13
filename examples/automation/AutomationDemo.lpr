@@ -3,6 +3,8 @@ program AutomationDemo;
 {$ifdef windows}{$apptype gui}{$endif}
 
 uses
+  // the key and mouse monitors listen on a thread
+  {$ifdef unix}cthreads,{$endif}
   Interfaces,
   Forms,
   AutomationDemoMain;

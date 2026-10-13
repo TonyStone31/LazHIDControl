@@ -21,8 +21,7 @@ unit HIDCocoaMouseInput;
 interface
 
 uses
-  Classes, SysUtils, Controls, Forms,
-  CocoaUtils, CocoaAll, CGGeometry, CGEvent, CGEventTypes, CFBase,
+  Classes, SysUtils, Controls, Forms, MacOSAll, CocoaEventTap,
   HIDMouseInputIntf;
 
 type
@@ -34,6 +33,8 @@ type
     procedure DoDown(Button: TMouseButton); override;
     procedure DoMove(ScreenX, ScreenY: integer); override;
     procedure DoUp(Button: TMouseButton); override;
+    procedure DoScrollUp; override;
+    procedure DoScrollDown; override;
   end;
 
 function InitializeMouseInput: TMouseInput;
@@ -47,43 +48,58 @@ begin
 end;
 
 const
-  MouseButtonToCocoaButton: array [TMouseButton] of integer =
-    (kCGMouseButtonLeft, kCGMouseButtonRight, kCGMouseButtonCenter, 3, 4);
+  ButtonNumber: array [TMouseButton] of integer = (kCGMouseButtonLeft, kCGMouseButtonRight, kCGMouseButtonCenter, 3, 4);
+  // left and right have event kinds of their own; every other button shares one
+  DownKind: array [TMouseButton] of CGEventType = (kCGEventLeftMouseDown, kCGEventRightMouseDown, kCGEventOtherMouseDown,
+    kCGEventOtherMouseDown, kCGEventOtherMouseDown);
+  UpKind: array [TMouseButton] of CGEventType = (kCGEventLeftMouseUp, kCGEventRightMouseUp, kCGEventOtherMouseUp,
+    kCGEventOtherMouseUp, kCGEventOtherMouseUp);
 
+procedure Post(Kind: CGEventType; X, Y: integer; Button: TMouseButton);
+var
+  Event: CGEventRef;
+begin
+  Event := CGEventCreateMouseEvent(nil, Kind, CGPointMake(X, Y), ButtonNumber[Button]);
+  if Event = nil then Exit;
+  CGEventPost(kCGHIDEventTap, Event);
+  CFRelease(Event);
+end;
 
-  { TCocoaMouseInput }
+procedure Wheel(Lines: integer);
+var
+  Event: CGEventRef;
+begin
+  Event := CGEventCreateScrollWheelEvent(nil, kCGScrollEventUnitLine, 1, Lines);
+  if Event = nil then Exit;
+  CGEventPost(kCGHIDEventTap, Event);
+  CFRelease(Event);
+end;
+
+{ TCocoaMouseInput }
 
 procedure TCocoaMouseInput.DoDown(Button: TMouseButton);
-var
-  MyMouseEvent: CGEventRef;
 begin
-  if Button = mbLeft then
-    MyMouseEvent := CGEventCreateMouseEvent(nil, 1, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button])
-  else
-    MyMouseEvent := CGEventCreateMouseEvent(nil, 3, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button]);
-  CGEventPost(kCGHIDEventTap, MyMouseEvent);
-  CFRelease(MyMouseEvent);
+  Post(DownKind[Button], Mouse.CursorPos.X, Mouse.CursorPos.Y, Button);
 end;
 
 procedure TCocoaMouseInput.DoMove(ScreenX, ScreenY: integer);
-var
-  MyMouseEvent: CGEventRef;
 begin
-  MyMouseEvent := CGEventCreateMouseEvent(nil, 5, CGPointMake(ScreenX, ScreenY), MouseButtonToCocoaButton[mbLeft]);
-  CGEventPost(kCGHIDEventTap, MyMouseEvent);
-  CFRelease(MyMouseEvent);
+  Post(kCGEventMouseMoved, ScreenX, ScreenY, mbLeft);
 end;
 
 procedure TCocoaMouseInput.DoUp(Button: TMouseButton);
-var
-  MyMouseEvent: CGEventRef;
 begin
-  if Button = mbLeft then
-    MyMouseEvent := CGEventCreateMouseEvent(nil, 2, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button])
-  else
-    MyMouseEvent := CGEventCreateMouseEvent(nil, 4, CGPointMake(Mouse.CursorPos.x, Mouse.CursorPos.y), MouseButtonToCocoaButton[Button]);
-  CGEventPost(kCGHIDEventTap, MyMouseEvent);
-  CFRelease(MyMouseEvent);
+  Post(UpKind[Button], Mouse.CursorPos.X, Mouse.CursorPos.Y, Button);
+end;
+
+procedure TCocoaMouseInput.DoScrollUp;
+begin
+  Wheel(1);
+end;
+
+procedure TCocoaMouseInput.DoScrollDown;
+begin
+  Wheel(-1);
 end;
 
 end.

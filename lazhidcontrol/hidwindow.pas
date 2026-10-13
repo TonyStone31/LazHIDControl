@@ -44,9 +44,12 @@ type
     property LastError: string read ErrorText;
   published
     // Title to look for; blank accepts any title. The filters that are set
-    // must all match the same window.
+    // must all match the same window. On macOS titles are readable, and
+    // windows movable, once the user allows your program under Privacy &
+    // Security > Accessibility; a minimized window is not found by title there.
     property WindowTitle: string read TitleFilter write TitleFilter;
-    // Native window class to look for; blank accepts any class.
+    // Native window class to look for; blank accepts any class. macOS has no
+    // window classes, so there this is the application's name.
     property WindowClass: string read ClassFilter write ClassFilter;
     // Only accept windows belonging to this process. Zero accepts any process.
     property ProcessID: longword read PIDFilter write PIDFilter default 0;

@@ -1,454 +1,632 @@
 object AutomationForm: TAutomationForm
   Left = 10
-  Height = 800
+  Height = 720
   Top = 10
-  Width = 900
-  Caption = 'LazHIDControl Automation Demo'
-  ClientHeight = 800
-  ClientWidth = 900
+  Width = 960
+  Caption = 'LazHIDControl Demo'
+  ClientHeight = 720
+  ClientWidth = 960
   DefaultMonitor = dmPrimary
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
   LCLVersion = '5.99.0.0'
-  object KeyboardGroup: TGroupBox
-    Left = 8
-    Height = 126
-    Top = 8
-    Width = 884
-    Align = alTop
-    BorderSpacing.Left = 8
-    BorderSpacing.Top = 8
-    BorderSpacing.Right = 8
-    Caption = 'THIDKeyboard  -  TypeText types into whatever has the focus'
-    TabOrder = 0
-    object TextLabel: TLabel
-      Left = 12
-      Height = 17
-      Top = 12
-      Width = 80
-      Caption = 'Text to type:'
-    end
-    object TextInput: TEdit
-      Left = 110
-      Height = 30
-      Top = 6
-      Width = 420
-      TabOrder = 0
-      Text = 'Hello from THIDKeyboard! € ½ × → 😀'
-    end
-    object TypeButton: TButton
-      Left = 542
-      Height = 32
-      Top = 5
-      Width = 326
-      Caption = 'Type it into the box below'
-      TabOrder = 1
-      OnClick = TypeButtonClick
-    end
-    object OutputLabel: TLabel
-      Left = 12
-      Height = 17
-      Top = 50
-      Width = 80
-      Caption = 'Typed result:'
-    end
-    object Output: TEdit
-      Left = 110
-      Height = 30
-      Top = 44
-      Width = 420
-      TabOrder = 2
-    end
-    object DelayInput: TSpinEdit
-      Left = 542
-      Height = 30
-      Top = 44
-      Width = 60
-      MaxValue = 60
-      MinValue = 1
-      TabOrder = 3
-      Value = 3
-    end
-    object TypeLaterButton: TButton
-      Left = 610
-      Height = 32
-      Top = 43
-      Width = 258
-      Caption = 'seconds, then type at the focus'
-      TabOrder = 4
-      OnClick = TypeLaterButtonClick
-    end
-    object KeyboardHint: TLabel
-      Left = 12
-      Height = 17
-      Top = 82
-      Width = 80
-      Caption = 'The timed button leaves you time to click into another application first - handy where pasting is blocked.'
-    end
-  end
-  object MouseGroup: TGroupBox
-    Left = 8
-    Height = 68
-    Top = 142
-    Width = 884
-    Align = alTop
-    BorderSpacing.Left = 8
-    BorderSpacing.Top = 8
-    BorderSpacing.Right = 8
-    Caption = 'THIDMouse  -  MoveTo and Click; its RelativeTo property aims at a control'
-    TabOrder = 1
-    object MouseButton: TButton
-      Left = 12
-      Height = 32
-      Top = 6
-      Width = 320
-      Caption = 'Move the pointer to the sample and click'
-      TabOrder = 0
-      OnClick = MouseButtonClick
-    end
-    object SampleButton: TButton
-      Left = 344
-      Height = 32
-      Top = 6
-      Width = 286
-      Caption = 'Sample click target'
-      TabOrder = 1
-      OnClick = SampleButtonClick
-    end
-  end
-  object WindowGroup: TGroupBox
-    Left = 8
-    Height = 106
-    Top = 218
-    Width = 884
-    Align = alTop
-    BorderSpacing.Left = 8
-    BorderSpacing.Top = 8
-    BorderSpacing.Right = 8
-    Caption = 'THIDWindow  -  find another application''s window, then aim a THIDMouse inside it'
-    TabOrder = 2
-    object WindowLabel: TLabel
-      Left = 12
-      Height = 17
-      Top = 12
-      Width = 80
-      Caption = 'Window title:'
-    end
-    object WindowInput: TComboBox
-      Left = 110
-      Height = 30
-      Top = 6
-      Width = 520
-      ItemHeight = 0
-      TabOrder = 0
-      Text = 'LazHIDControl Automation Demo'
-      OnDropDown = WindowInputDropDown
-    end
-    object FindButton: TButton
-      Left = 642
-      Height = 32
-      Top = 5
-      Width = 226
-      Caption = 'Find and activate'
-      TabOrder = 1
-      OnClick = FindButtonClick
-    end
-    object WindowXLabel: TLabel
-      Left = 12
-      Height = 17
-      Top = 50
-      Width = 80
-      Caption = 'Offset X:'
-    end
-    object WindowX: TSpinEdit
-      Left = 110
-      Height = 30
-      Top = 44
-      Width = 80
-      MaxValue = 32767
-      MinValue = -32768
-      TabOrder = 2
-      Value = 40
-    end
-    object WindowYLabel: TLabel
-      Left = 206
-      Height = 17
-      Top = 50
-      Width = 80
-      Caption = 'Y:'
-    end
-    object WindowY: TSpinEdit
-      Left = 228
-      Height = 30
-      Top = 44
-      Width = 80
-      MaxValue = 32767
-      MinValue = -32768
-      TabOrder = 3
-      Value = 80
-    end
-    object MoveWindowButton: TButton
-      Left = 324
-      Height = 32
-      Top = 43
-      Width = 306
-      Caption = 'Move the pointer there (no click)'
-      TabOrder = 4
-      OnClick = MoveWindowButtonClick
-    end
-  end
-  object CaptureGroup: TGroupBox
-    Left = 8
-    Height = 106
-    Top = 332
-    Width = 884
-    Align = alTop
-    BorderSpacing.Left = 8
-    BorderSpacing.Top = 8
-    BorderSpacing.Right = 8
-    Caption = 'THIDScreenshot and THIDHotkey  -  the button, or Ctrl+Shift+F9 from any application'
-    TabOrder = 3
-    object SourceLabel: TLabel
-      Left = 12
-      Height = 17
-      Top = 12
-      Width = 80
-      Caption = 'Capture:'
-    end
-    object SourceBox: TComboBox
-      Left = 110
-      Height = 30
-      Top = 6
-      Width = 310
-      ItemHeight = 0
-      ItemIndex = 0
-      Items.Strings = (
-        'Entire desktop'
-        'One monitor'
-        'The window titled above'
-        'The Region rectangle (Object Inspector)'
-        'A rectangle you drag out'
-      )
-      Style = csDropDownList
-      TabOrder = 0
-      Text = 'Entire desktop'
-    end
-    object MonitorLabel: TLabel
-      Left = 438
-      Height = 17
-      Top = 12
-      Width = 80
-      Caption = 'Monitor (-1 = primary):'
-    end
-    object MonitorInput: TSpinEdit
-      Left = 606
-      Height = 30
-      Top = 6
-      Width = 70
-      MaxValue = 32
-      MinValue = -1
-      TabOrder = 1
-      Value = -1
-    end
-    object CaptureButton: TButton
-      Left = 12
-      Height = 32
-      Top = 43
-      Width = 220
-      Caption = 'Capture (Ctrl+Shift+F9)'
-      TabOrder = 2
-      OnClick = CaptureButtonClick
-    end
-    object SaveButton: TButton
-      Left = 244
-      Height = 32
-      Top = 43
-      Width = 150
-      Caption = 'Save PNG...'
-      TabOrder = 3
-      OnClick = SaveButtonClick
-      Enabled = False
-    end
-    object CopyImageButton: TButton
-      Left = 406
-      Height = 32
-      Top = 43
-      Width = 224
-      Caption = 'Copy image to clipboard'
-      TabOrder = 4
-      OnClick = CopyImageButtonClick
-      Enabled = False
-    end
-  end
-  object MonitorsPanel: TPanel
+  object StatusBar: TStatusBar
     Left = 0
-    Height = 152
-    Top = 446
-    Width = 900
-    Align = alTop
-    BevelOuter = bvNone
-    TabOrder = 4
-    object IdleGroup: TGroupBox
-      Left = 8
-      Height = 140
-      Top = 8
-      Width = 290
-      Caption = 'THIDSystemIdle'
-      TabOrder = 0
-      object IdleBox: TCheckBox
-        Left = 10
-        Height = 22
-        Top = 6
-        Width = 200
-        Caption = 'Watch for 5 idle seconds'
-        TabOrder = 0
-        OnChange = IdleBoxChange
-      end
-      object IdleStatus: TLabel
-        Left = 10
-        Height = 70
-        Top = 36
-        Width = 266
-        AutoSize = False
-        Caption = 'Idle detection is off.'
-        WordWrap = True
-      end
-    end
-    object PowerGroup: TGroupBox
-      Left = 305
-      Height = 140
-      Top = 8
-      Width = 290
-      Caption = 'THIDPowerMonitor'
-      TabOrder = 1
-      object PowerBox: TCheckBox
-        Left = 10
-        Height = 22
-        Top = 6
-        Width = 170
-        Caption = 'Watch power and sleep'
-        TabOrder = 0
-        OnChange = PowerBoxChange
-      end
-      object RefreshPowerButton: TButton
-        Left = 196
-        Height = 32
-        Top = 1
-        Width = 82
-        Caption = 'Refresh'
-        TabOrder = 1
-        OnClick = RefreshPowerButtonClick
-      end
-      object PowerStatus: TLabel
-        Left = 10
-        Height = 17
-        Top = 36
-        Width = 266
-        AutoSize = False
-        Caption = 'Power monitoring is off.'
-        WordWrap = True
-      end
-      object PowerLog: TMemo
-        Left = 10
-        Height = 54
-        Top = 58
-        Width = 268
-        Lines.Strings = (
-          'Sleep and wake are logged here.'
-        )
-        ReadOnly = True
-        ScrollBars = ssAutoVertical
-        TabOrder = 2
-      end
-    end
-    object ClipboardGroup: TGroupBox
-      Left = 602
-      Height = 140
-      Top = 8
-      Width = 290
-      Caption = 'THIDClipboardMonitor'
-      TabOrder = 2
-      object ClipboardBox: TCheckBox
-        Left = 10
-        Height = 22
-        Top = 6
+    Height = 23
+    Top = 697
+    Width = 960
+    Panels = <    
+      item
+        Text = 'Pointer:'
         Width = 150
-        Caption = 'Watch the clipboard'
+      end    
+      item
+        Text = 'Last click:'
+        Width = 220
+      end    
+      item
+        Text = 'Last key:'
+        Width = 220
+      end    
+      item
+        Width = 400
+      end>
+    SimplePanel = False
+  end
+  object WatchPanel: TPanel
+    Left = 0
+    Height = 32
+    Top = 665
+    Width = 960
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 32
+    ClientWidth = 960
+    TabOrder = 1
+    object WatchBox: TCheckBox
+      Left = 10
+      Height = 22
+      Top = 5
+      Width = 700
+      Caption = 'Show every key press and mouse click on the system in the status bar'
+      Checked = True
+      State = cbChecked
+      TabOrder = 0
+      OnChange = WatchBoxChange
+    end
+  end
+  object Pages: TPageControl
+    Left = 0
+    Height = 665
+    Top = 0
+    Width = 960
+    ActivePage = TypingTab
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 0
+    object TypingTab: TTabSheet
+      Caption = 'Typing'
+      ClientHeight = 632
+      ClientWidth = 952
+      object TypingTop: TPanel
+        Left = 0
+        Height = 104
+        Top = 0
+        Width = 952
+        Align = alTop
+        BevelOuter = bvNone
+        ClientHeight = 104
+        ClientWidth = 952
         TabOrder = 0
-        OnChange = ClipboardBoxChange
+        object TypeButton: TButton
+          Left = 8
+          Height = 32
+          Top = 8
+          Width = 300
+          Caption = 'Type the left text into the right box'
+          TabOrder = 0
+          OnClick = TypeButtonClick
+        end
+        object DelayInput: TSpinEdit
+          Left = 324
+          Height = 30
+          Top = 9
+          Width = 64
+          MaxValue = 30
+          MinValue = 1
+          TabOrder = 1
+          Value = 3
+        end
+        object TypeLaterButton: TButton
+          Left = 396
+          Height = 32
+          Top = 8
+          Width = 360
+          Caption = 'seconds, then type it wherever the focus is'
+          TabOrder = 2
+          OnClick = TypeLaterButtonClick
+        end
+        object HotkeyLabel: TLabel
+          Left = 8
+          Height = 17
+          Top = 50
+          Width = 930
+          AutoSize = False
+          Caption = 'Ctrl+Shift+F9 types the left text into whatever program has the focus - for the places that will not take a paste.'
+        end
+        object MatchLabel: TLabel
+          Left = 8
+          Height = 17
+          Top = 76
+          Width = 930
+          AutoSize = False
+          Caption = 'Nothing typed yet.'
+          Font.Style = [fsBold]
+          ParentFont = False
+        end
       end
-      object CopyButton: TButton
-        Left = 164
-        Height = 32
-        Top = 1
-        Width = 114
-        Caption = 'Copy demo text'
+      object SourceMemo: TMemo
+        Left = 0
+        Height = 528
+        Top = 104
+        Width = 470
+        Align = alLeft
+        Lines.Strings = (
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZ     abcdefghijklmnopqrstuvwxyz'
+          '1234567890 !@#$%^&*()~_+`-={}|[]\:";''<>?,./'
+          '€ £ ¥ ¢ $ ₹ ₽'
+          '½ ¼ ¾ ⅓ ⅔'
+          '± × ÷ ≠ ≤ ≥ ∞ √ ∑'
+          '← ↑ → ↓ ↔'
+          'é ñ ü ß Ω я 漢字'
+          '😀 😁 😂 🤔 🙃 😉 🌟'
+        )
+        ScrollBars = ssAutoBoth
         TabOrder = 1
-        OnClick = CopyButtonClick
+        WordWrap = False
       end
-      object ClipboardStatus: TLabel
-        Left = 10
-        Height = 36
-        Top = 36
-        Width = 266
+      object TypingSplitter: TSplitter
+        Left = 470
+        Height = 528
+        Top = 104
+        Width = 6
+      end
+      object TargetMemo: TMemo
+        Left = 476
+        Height = 528
+        Top = 104
+        Width = 476
+        Align = alClient
+        ScrollBars = ssAutoBoth
+        TabOrder = 2
+        WordWrap = False
+        OnChange = TargetMemoChange
+      end
+    end
+    object MouseTab: TTabSheet
+      Caption = 'Mouse'
+      ClientHeight = 632
+      ClientWidth = 952
+      object MouseButton: TButton
+        Left = 12
+        Height = 32
+        Top = 14
+        Width = 360
+        Caption = 'Move the pointer to the sample and click it'
+        TabOrder = 0
+        OnClick = MouseButtonClick
+      end
+      object SampleButton: TButton
+        Left = 388
+        Height = 32
+        Top = 14
+        Width = 280
+        Caption = 'Sample click target'
+        TabOrder = 1
+        OnClick = SampleButtonClick
+      end
+      object ScrollButton: TButton
+        Left = 12
+        Height = 32
+        Top = 60
+        Width = 360
+        Caption = 'Put the pointer on the list and scroll it down'
+        TabOrder = 2
+        OnClick = ScrollButtonClick
+      end
+      object ScrollList: TListBox
+        Left = 388
+        Height = 260
+        Top = 60
+        Width = 280
+        ItemHeight = 0
+        TabOrder = 3
+      end
+      object MouseHint: TLabel
+        Left = 12
+        Height = 60
+        Top = 336
+        Width = 900
         AutoSize = False
-        Caption = 'Clipboard monitoring is off.'
+        Caption = 'THIDMouse moves, clicks and scrolls. Its RelativeTo property is set to the sample button here, so MoveTo counts from that control''s corner; RelativeWindow does the same for another program''s window (see the Windows tab).'
         WordWrap = True
       end
-      object ClipboardText: TEdit
-        Left = 10
-        Height = 30
-        Top = 80
-        Width = 268
+    end
+    object WindowsTab: TTabSheet
+      Caption = 'Windows'
+      ClientHeight = 632
+      ClientWidth = 952
+      object WindowsTop: TPanel
+        Left = 0
+        Height = 48
+        Top = 0
+        Width = 952
+        Align = alTop
+        BevelOuter = bvNone
+        ClientHeight = 48
+        ClientWidth = 952
+        TabOrder = 0
+        object RefreshButton: TButton
+          Left = 8
+          Height = 32
+          Top = 8
+          Width = 180
+          Caption = 'List the windows'
+          TabOrder = 0
+          OnClick = RefreshButtonClick
+        end
+        object FollowBox: TCheckBox
+          Left = 204
+          Height = 22
+          Top = 13
+          Width = 400
+          Caption = 'Show the window under the pointer'
+          TabOrder = 1
+        end
+      end
+      object WindowList: TListView
+        Left = 0
+        Height = 500
+        Top = 48
+        Width = 952
+        Align = alClient
+        Columns = <        
+          item
+            Caption = 'Title'
+            Width = 380
+          end        
+          item
+            Caption = 'Program or class'
+            Width = 200
+          end        
+          item
+            Caption = 'Process'
+            Width = 90
+          end        
+          item
+            Caption = 'Position'
+            Width = 120
+          end        
+          item
+            Caption = 'Size'
+            Width = 120
+          end>
         ReadOnly = True
+        RowSelect = True
+        TabOrder = 1
+        ViewStyle = vsReport
+      end
+      object WindowsBottom: TPanel
+        Left = 0
+        Height = 84
+        Top = 548
+        Width = 952
+        Align = alBottom
+        BevelOuter = bvNone
+        ClientHeight = 84
+        ClientWidth = 952
         TabOrder = 2
+        object ActivateButton: TButton
+          Left = 8
+          Height = 32
+          Top = 8
+          Width = 120
+          Caption = 'Activate'
+          TabOrder = 0
+          OnClick = ActivateButtonClick
+        end
+        object MinimizeButton: TButton
+          Left = 136
+          Height = 32
+          Top = 8
+          Width = 120
+          Caption = 'Minimize'
+          TabOrder = 1
+          OnClick = MinimizeButtonClick
+        end
+        object RestoreButton: TButton
+          Left = 264
+          Height = 32
+          Top = 8
+          Width = 120
+          Caption = 'Restore'
+          TabOrder = 2
+          OnClick = RestoreButtonClick
+        end
+        object CloseButton: TButton
+          Left = 392
+          Height = 32
+          Top = 8
+          Width = 120
+          Caption = 'Close'
+          TabOrder = 3
+          OnClick = CloseButtonClick
+        end
+        object PointerIntoButton: TButton
+          Left = 528
+          Height = 32
+          Top = 8
+          Width = 260
+          Caption = 'Move the pointer into it'
+          TabOrder = 4
+          OnClick = PointerIntoButtonClick
+        end
+        object UnderLabel: TLabel
+          Left = 8
+          Height = 17
+          Top = 54
+          Width = 930
+          AutoSize = False
+          Caption = 'Under the pointer:'
+        end
+      end
+    end
+    object CaptureTab: TTabSheet
+      Caption = 'Screenshot'
+      ClientHeight = 632
+      ClientWidth = 952
+      object CaptureTop: TPanel
+        Left = 0
+        Height = 92
+        Top = 0
+        Width = 952
+        Align = alTop
+        BevelOuter = bvNone
+        ClientHeight = 92
+        ClientWidth = 952
+        TabOrder = 0
+        object SourceLabel: TLabel
+          Left = 8
+          Height = 17
+          Top = 14
+          Width = 70
+          Caption = 'Capture:'
+        end
+        object SourceBox: TComboBox
+          Left = 84
+          Height = 30
+          Top = 8
+          Width = 300
+          ItemHeight = 0
+          ItemIndex = 0
+          Items.Strings = (
+            'Entire desktop'
+            'One monitor'
+            'The window titled at the right'
+            'The Region rectangle (Object Inspector)'
+            'A rectangle you drag out'
+          )
+          Style = csDropDownList
+          TabOrder = 0
+          Text = 'Entire desktop'
+        end
+        object TitleLabel: TLabel
+          Left = 400
+          Height = 17
+          Top = 14
+          Width = 90
+          Caption = 'Window title:'
+        end
+        object CaptureTitle: TEdit
+          Left = 496
+          Height = 30
+          Top = 8
+          Width = 220
+          TabOrder = 1
+          Text = 'LazHIDControl Demo'
+        end
+        object MonitorLabel: TLabel
+          Left = 732
+          Height = 17
+          Top = 14
+          Width = 130
+          Caption = 'Monitor (-1 = primary):'
+        end
+        object MonitorInput: TSpinEdit
+          Left = 880
+          Height = 30
+          Top = 8
+          Width = 60
+          MaxValue = 32
+          MinValue = -1
+          TabOrder = 2
+          Value = -1
+        end
+        object CaptureButton: TButton
+          Left = 8
+          Height = 32
+          Top = 50
+          Width = 240
+          Caption = 'Capture (Ctrl+Shift+F10)'
+          TabOrder = 3
+          OnClick = CaptureButtonClick
+        end
+        object SaveButton: TButton
+          Left = 260
+          Height = 32
+          Top = 50
+          Width = 150
+          Caption = 'Save PNG...'
+          Enabled = False
+          TabOrder = 4
+          OnClick = SaveButtonClick
+        end
+        object CopyImageButton: TButton
+          Left = 422
+          Height = 32
+          Top = 50
+          Width = 230
+          Caption = 'Copy image to clipboard'
+          Enabled = False
+          TabOrder = 5
+          OnClick = CopyImageButtonClick
+        end
+      end
+      object Preview: TImage
+        Left = 8
+        Height = 524
+        Top = 100
+        Width = 936
+        Align = alClient
+        BorderSpacing.Around = 8
+        Center = True
+        Proportional = True
+        Stretch = True
+      end
+    end
+    object MonitorsTab: TTabSheet
+      Caption = 'Idle, power, clipboard'
+      ClientHeight = 632
+      ClientWidth = 952
+      object IdleGroup: TGroupBox
+        Left = 8
+        Height = 150
+        Top = 8
+        Width = 300
+        Caption = 'THIDSystemIdle'
+        ClientHeight = 130
+        ClientWidth = 296
+        TabOrder = 0
+        object IdleBox: TCheckBox
+          Left = 10
+          Height = 22
+          Top = 6
+          Width = 220
+          Caption = 'Watch for 5 idle seconds'
+          TabOrder = 0
+          OnChange = IdleBoxChange
+        end
+        object IdleStatus: TLabel
+          Left = 10
+          Height = 70
+          Top = 38
+          Width = 276
+          AutoSize = False
+          Caption = 'Idle detection is off.'
+          WordWrap = True
+        end
+      end
+      object PowerGroup: TGroupBox
+        Left = 318
+        Height = 150
+        Top = 8
+        Width = 300
+        Caption = 'THIDPowerMonitor'
+        ClientHeight = 130
+        ClientWidth = 296
+        TabOrder = 1
+        object PowerBox: TCheckBox
+          Left = 10
+          Height = 22
+          Top = 6
+          Width = 180
+          Caption = 'Watch power and sleep'
+          TabOrder = 0
+          OnChange = PowerBoxChange
+        end
+        object RefreshPowerButton: TButton
+          Left = 200
+          Height = 32
+          Top = 1
+          Width = 86
+          Caption = 'Refresh'
+          TabOrder = 1
+          OnClick = RefreshPowerButtonClick
+        end
+        object PowerStatus: TLabel
+          Left = 10
+          Height = 17
+          Top = 38
+          Width = 276
+          AutoSize = False
+          Caption = 'Power monitoring is off.'
+        end
+        object PowerLog: TMemo
+          Left = 10
+          Height = 60
+          Top = 62
+          Width = 276
+          Lines.Strings = (
+            'Sleep and wake are logged here.'
+          )
+          ReadOnly = True
+          ScrollBars = ssAutoVertical
+          TabOrder = 2
+        end
+      end
+      object ClipboardGroup: TGroupBox
+        Left = 628
+        Height = 150
+        Top = 8
+        Width = 314
+        Caption = 'THIDClipboardMonitor'
+        ClientHeight = 130
+        ClientWidth = 310
+        TabOrder = 2
+        object ClipboardBox: TCheckBox
+          Left = 10
+          Height = 22
+          Top = 6
+          Width = 160
+          Caption = 'Watch the clipboard'
+          TabOrder = 0
+          OnChange = ClipboardBoxChange
+        end
+        object CopyButton: TButton
+          Left = 176
+          Height = 32
+          Top = 1
+          Width = 124
+          Caption = 'Copy sample text'
+          TabOrder = 1
+          OnClick = CopyButtonClick
+        end
+        object ClipboardStatus: TLabel
+          Left = 10
+          Height = 36
+          Top = 38
+          Width = 290
+          AutoSize = False
+          Caption = 'Clipboard monitoring is off.'
+          WordWrap = True
+        end
+        object ClipboardText: TEdit
+          Left = 10
+          Height = 30
+          Top = 84
+          Width = 290
+          ReadOnly = True
+          TabOrder = 2
+        end
       end
     end
   end
-  object Status: TLabel
-    Left = 12
-    Height = 17
-    Top = 775
-    Width = 876
-    Align = alBottom
-    BorderSpacing.Left = 12
-    BorderSpacing.Right = 12
-    BorderSpacing.Bottom = 8
-    Caption = 'Ctrl+Shift+F9 captures from anywhere, even while another application has the focus.'
+  object PointerTimer: TTimer
+    Interval = 100
+    OnTimer = PointerTimerTick
+    Left = 24
+    Top = 560
   end
-  object Preview: TImage
-    Left = 12
-    Height = 153
-    Top = 610
-    Width = 876
-    Align = alClient
-    BorderSpacing.Around = 12
-    Center = True
-    Proportional = True
-    Stretch = True
+  object Countdown: TTimer
+    Enabled = False
+    OnTimer = CountdownTick
+    Left = 72
+    Top = 560
   end
   object Keyboard: THIDKeyboard
-    TypingInterval = 5
-    Left = 24
-    Top = 640
+    Left = 120
+    Top = 560
+  end
+  object TypeHotkey: THIDHotkey
+    ShortCut = 24696
+    Enabled = True
+    OnHotkey = TypeHotkeyPressed
+    OnError = Error
+    Left = 168
+    Top = 560
   end
   object Pointer: THIDMouse
     MovementDuration = 150
     RelativeTo = SampleButton
-    Left = 72
-    Top = 640
+    Left = 216
+    Top = 560
+  end
+  object ListPointer: THIDMouse
+    MovementDuration = 150
+    RelativeTo = ScrollList
+    Left = 264
+    Top = 560
+  end
+  object Window: THIDWindow
+    OnError = Error
+    Left = 312
+    Top = 560
   end
   object WindowPointer: THIDMouse
     MovementDuration = 150
     RelativeWindow = Window
-    Left = 120
-    Top = 640
-  end
-  object Window: THIDWindow
-    WindowTitle = 'LazHIDControl Automation Demo'
-    OnFound = WindowFound
-    OnTimeout = WindowTimeout
-    OnError = Error
-    Left = 168
-    Top = 640
+    Left = 360
+    Top = 560
   end
   object Screenshot: THIDScreenshot
     RegionLeft = 24
@@ -457,50 +635,44 @@ object AutomationForm: TAutomationForm
     RegionHeight = 240
     OnCaptured = Captured
     OnError = CaptureError
-    Left = 216
-    Top = 640
+    Left = 408
+    Top = 560
   end
-  object Hotkey: THIDHotkey
-    ShortCut = 24696
+  object CaptureHotkey: THIDHotkey
+    ShortCut = 24697
     Enabled = True
     OnHotkey = CaptureButtonClick
     OnError = Error
-    Left = 264
-    Top = 640
+    Left = 456
+    Top = 560
+  end
+  object SaveDialog: TSaveDialog
+    DefaultExt = '.png'
+    Filter = 'PNG image|*.png'
+    Options = [ofOverwritePrompt, ofPathMustExist]
+    Left = 504
+    Top = 560
   end
   object SystemIdle: THIDSystemIdle
     IdleThreshold = 5000
     OnIdle = BecameIdle
     OnActive = BecameActive
     OnError = IdleError
-    Left = 312
-    Top = 640
+    Left = 552
+    Top = 560
   end
   object Power: THIDPowerMonitor
     OnSuspend = PowerSuspend
     OnResume = PowerResume
     OnPowerChanged = PowerChanged
     OnError = PowerError
-    Left = 360
-    Top = 640
+    Left = 600
+    Top = 560
   end
   object ClipboardMonitor: THIDClipboardMonitor
     OnChanged = ClipboardChanged
     OnError = ClipboardError
-    Left = 408
-    Top = 640
-  end
-  object SaveDialog: TSaveDialog
-    DefaultExt = '.png'
-    Filter = 'PNG image|*.png'
-    Options = [ofOverwritePrompt, ofPathMustExist]
-    Left = 456
-    Top = 640
-  end
-  object Countdown: TTimer
-    Enabled = False
-    OnTimer = CountdownTick
-    Left = 504
-    Top = 640
+    Left = 648
+    Top = 560
   end
 end

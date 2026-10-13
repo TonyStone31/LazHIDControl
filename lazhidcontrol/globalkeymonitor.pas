@@ -50,21 +50,8 @@ implementation
 
 function CreateGlobalKeyListener: TGlobalKeyListener;
 begin
-  {$IFDEF WINDOWS}
+  // on Linux this is X11 only: a Wayland session shows a program no keys but its own
   Result := InitializeGlobalKeyListener;
-  {$ELSE}
-  {$IFDEF UNIX}
-      {$IFDEF DARWIN}
-      Result := CocoaGlobalKeyMonitor.InitializeGlobalKeyListener;
-      {$ELSE}
-      // Note: X11 only - Wayland does not support global key monitoring
-      Result := XGlobalKeyMonitor.InitializeGlobalKeyListener;
-      {$ENDIF}
-  {$ELSE}
-  // Unsupported platform - return a stub that always fails
-  Result := TGlobalKeyListener.Create;
-  {$ENDIF}
-  {$ENDIF}
 end;
 
 end.

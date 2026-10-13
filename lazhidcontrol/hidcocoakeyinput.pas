@@ -35,6 +35,8 @@ type
     procedure DoDown(Key: word); override;
     procedure DoUp(Key: word); override;
   public
+    procedure PressUnicodeChar(unicode: cardinal); override;
+    procedure PressASCIIChar(ch: char); override;
     function GetCapsLockState: boolean; override;
     function GetNumLockState: boolean; override;
     function GetScrollLockState: boolean; override;
@@ -53,7 +55,7 @@ function VKToMacCode(AKey: word): word;
 implementation
 
 uses
-  LCLType;
+  LCLType, CocoaEventTap;
 
 function InitializeKeyInput: TKeyInput;
 begin
@@ -251,22 +253,57 @@ begin
   SendKeyInput(Key, False);
 end;
 
+{ A typed character goes out as text riding on a key event, so it arrives
+  as itself whatever the keyboard layout and whatever Caps Lock is doing. }
+procedure TCocoaKeyInput.PressUnicodeChar(unicode: cardinal);
+var
+  Text: array[0..1] of widechar;
+  Count, Step: integer;
+  Event: CGEventRef;
+begin
+  // past the 16-bit range a character is a pair of them
+  if unicode > $FFFF then
+  begin
+    Text[0] := widechar(word($D800 + ((unicode - $10000) shr 10)));
+    Text[1] := widechar(word($DC00 + ((unicode - $10000) and $3FF)));
+    Count := 2;
+  end
+  else
+  begin
+    Text[0] := widechar(word(unicode));
+    Count := 1;
+  end;
+  for Step := 1 downto 0 do
+  begin
+    Event := CGEventCreateKeyboardEvent(nil, 0, Step);
+    if Event = nil then Exit;
+    CGEventKeyboardSetUnicodeString(Event, Count, @Text[0]);
+    CGEventPost(kCGHIDEventTap, Event);
+    CFRelease(Event);
+  end;
+end;
+
+procedure TCocoaKeyInput.PressASCIIChar(ch: char);
+begin
+  if ch = #9 then Press(VK_TAB)
+  else
+    PressUnicodeChar(Ord(ch));
+end;
+
 function TCocoaKeyInput.GetCapsLockState: boolean;
 begin
-  // Cocoa implementation - not yet fully implemented
-  // Would use CGEventSourceFlagsState or NSEvent modifierFlags
-  Result := False;
+  Result := CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState) and kCGEventFlagMaskAlphaShift <> 0;
 end;
+
+// a Mac keyboard has no Num Lock or Scroll Lock
 
 function TCocoaKeyInput.GetNumLockState: boolean;
 begin
-  // macOS keyboards typically don't have NumLock
   Result := False;
 end;
 
 function TCocoaKeyInput.GetScrollLockState: boolean;
 begin
-  // macOS keyboards typically don't have ScrollLock
   Result := False;
 end;
 
@@ -278,14 +315,10 @@ end;
 
 procedure TCocoaKeyInput.ToggleNumLock;
 begin
-  // macOS keyboards typically don't have NumLock
-  // This is a no-op
 end;
 
 procedure TCocoaKeyInput.ToggleScrollLock;
 begin
-  // macOS keyboards typically don't have ScrollLock
-  // This is a no-op
 end;
 
 end.

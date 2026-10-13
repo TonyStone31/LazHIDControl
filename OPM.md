@@ -16,15 +16,15 @@
   D-Bus libraries, `libXi` for global monitoring; usual LCL/widgetset libraries.
   The Wayland input backend uses uinput and needs write access to `/dev/uinput`;
   it has not been run on a Wayland machine yet.
-- Examples: `examples/automation/AutomationDemo.lpi`,
-  `examples/hidcontroldemo/HIDControlDemo.lpi`, and the `hidctl/hidctl.lpi`
-  command-line tool; all require `LazHIDControl`.
+- Examples: `examples/automation/AutomationDemo.lpi` and the `hidctl/hidctl.lpi`
+  command-line tool; both require `LazHIDControl`.
 - Verified here: Linux x86-64, GTK2 and GTK3, Lazarus **4.99** (trunk), FPC **3.3.1**.
-  Windows: win64 builds of hidctl and both demos were run on Windows 10 (22H2)
+  Windows: win64 builds of hidctl and the demo were run on Windows 10 (22H2)
   in a virtual machine - typing, clicking, window control, capture, hotkey,
   clipboard, idle and power status all passed. macOS: built with the released
   Lazarus **4.8** and FPC **3.2.4** on macOS Sequoia 15 (Intel) in a virtual
-  machine; hotkeys, clipboard, idle and power status passed. Qt builds compile
+  machine; typing, mouse, window control, screenshots, hotkeys, clipboard,
+  idle and power status passed. Qt builds compile
   but were not run. No minimum Lazarus/FPC version has been established.
 
 ## Known limitations
@@ -32,9 +32,8 @@
 Wayland input (uinput) is written but untested, types as a US layout, and cannot
 type beyond ASCII. Wayland screenshots use the screenshot portal. Wayland hotkey
 registration is a stub: registration remains false. Global monitoring and window management use X11 and do not cover
-native Wayland windows. macOS is not a supported submission target yet: hotkeys,
-clipboard, idle, and power work there, but input is untested and the key
-monitor, global mouse monitoring, and window management are not written.
+native Wayland windows. On macOS everything needs the user's permission under
+Privacy & Security first (Accessibility, Screen Recording, Input Monitoring).
 
 The units that share a name with Lazarus's bundled `mouseandkeyinput` package
 carry a `hid` prefix here, so nothing collides - installing both into the IDE is fine.

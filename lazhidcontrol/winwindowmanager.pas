@@ -66,7 +66,7 @@ type
     function SetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean; override;
 
     // Windows only
-    function GetWindowAtPoint(X, Y: integer): TWindowHandle;
+    function GetWindowAtPoint(X, Y: integer): TWindowHandle; override;
     function GetWindowParent(AHandle: TWindowHandle): TWindowHandle;
     function GetDesktopWindow: TWindowHandle;
   end;

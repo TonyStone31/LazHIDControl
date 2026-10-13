@@ -26,31 +26,18 @@ function CreateGlobalMouseListener: TGlobalMouseListener;
 
 implementation
 
-{$IFDEF UNIX}
-  {$IFDEF DARWIN}
-    // macOS - not yet implemented, return nil
+uses
+  {$IF DEFINED(WINDOWS)}
+  WinGlobalMouseMonitor
+  {$ELSEIF DEFINED(DARWIN)}
+  CocoaGlobalMouseMonitor
   {$ELSE}
-    uses XGlobalMouseMonitor;
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF WINDOWS}
-  uses WinGlobalMouseMonitor;
-{$ENDIF}
+  XGlobalMouseMonitor
+  {$ENDIF};
 
 function CreateGlobalMouseListener: TGlobalMouseListener;
 begin
-  {$IFDEF UNIX}
-    {$IFDEF DARWIN}
-      Result := nil;  // macOS not yet implemented
-    {$ELSE}
-      Result := InitializeGlobalMouseListener;  // X11
-    {$ENDIF}
-  {$ENDIF}
-
-  {$IFDEF WINDOWS}
-    Result := InitializeGlobalMouseListener;  // Windows
-  {$ENDIF}
+  Result := InitializeGlobalMouseListener;
 end;
 
 end.

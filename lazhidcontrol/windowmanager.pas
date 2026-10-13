@@ -97,19 +97,10 @@ end;
 
 function GetWindowAtPoint(X, Y: integer): TWindowHandle;
 begin
-  Result := 0;
   EnsureWindowManager;
-  if WindowMgr = nil then Exit;
-
-  {$IFDEF WINDOWS}
-  Result := TWinWindowManager(WindowMgr).GetWindowAtPoint(X, Y);
-  {$ELSE}
-  {$IFDEF UNIX}
-      {$IFNDEF DARWIN}
-      Result := TXWindowManager(WindowMgr).GetWindowAtPoint(X, Y);
-      {$ENDIF}
-  {$ENDIF}
-  {$ENDIF}
+  if WindowMgr = nil then Result := 0
+  else
+    Result := WindowMgr.GetWindowAtPoint(X, Y);
 end;
 
 function GetWindowInfoAtPoint(X, Y: integer; out AInfo: TWindowInfo): boolean;

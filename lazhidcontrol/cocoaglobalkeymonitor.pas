@@ -2,7 +2,7 @@
 
   Copyright (C) 2025 LazHIDControl Contributors
 
-  macOS/Cocoa implementation of global key monitoring (stub).
+  macOS/Cocoa implementation of global key monitoring .
 
   This source is free software; you can redistribute it and/or modify it under the terms of the
   GNU General Public License as published by the Free Software Foundation; either version 2 of the
@@ -23,49 +23,70 @@ unit CocoaGlobalKeyMonitor;
 interface
 
 uses
-  Classes, SysUtils, LCLType, GlobalKeyMonitorIntf;
+  Classes, SysUtils, LCLType, MacOSAll, GlobalKeyMonitorIntf;
 
 type
-  { TCocoaGlobalKeyListener }
+  { Every key press on the system, through a Core Graphics event tap.  macOS
+    hands key presses only to a program the user has allowed under Privacy &
+    Security > Input Monitoring; until then Active stays False. }
   TCocoaGlobalKeyListener = class(TGlobalKeyListener)
+  private
+    Tap: CFMachPortRef;
+    Source: CFRunLoopSourceRef;
   protected
     procedure DoStartMonitoring; override;
     procedure DoStopMonitoring; override;
-  public
-    constructor Create; override;
   end;
 
 function InitializeGlobalKeyListener: TGlobalKeyListener;
 
 implementation
 
+uses
+  CocoaEventTap, HIDCocoaKeyInput;
+
 function InitializeGlobalKeyListener: TGlobalKeyListener;
 begin
   Result := TCocoaGlobalKeyListener.Create;
 end;
 
-{ TCocoaGlobalKeyListener }
-
-constructor TCocoaGlobalKeyListener.Create;
+function MacCodeToVK(Code: word): word;
+var
+  Key: word;
 begin
-  inherited Create;
-  // TODO: Initialize Cocoa-specific event monitor
+  for Key := 1 to 255 do
+    if VKToMacCode(Key) = Code then Exit(Key);
+  Result := 0;
+end;
+
+function KeyPressed(Proxy: CGEventTapProxy; Kind: CGEventType; Event: CGEventRef; Info: UnivPtr): CGEventRef; mwpascal;
+var
+  Listener: TCocoaGlobalKeyListener;
+  Flags: CGEventFlags;
+  Shift: TShiftState;
+begin
+  Result := Event;
+  Listener := TCocoaGlobalKeyListener(Info);
+  // macOS switches off a tap that was slow to answer; switch it back on
+  if Kind = kCGEventTapDisabledByTimeout then CGEventTapEnable(Listener.Tap, 1);
+  if (Kind <> kCGEventKeyDown) or not Assigned(Listener.OnKeyPressEvent) then Exit;
+  Flags := CGEventGetFlags(Event);
+  Shift := [];
+  if Flags and kCGEventFlagMaskShift <> 0 then Include(Shift, ssShift);
+  if Flags and kCGEventFlagMaskControl <> 0 then Include(Shift, ssCtrl);
+  if Flags and kCGEventFlagMaskAlternate <> 0 then Include(Shift, ssAlt);
+  if Flags and kCGEventFlagMaskCommand <> 0 then Include(Shift, ssMeta);
+  Listener.OnKeyPressEvent(MacCodeToVK(CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode)), Shift);
 end;
 
 procedure TCocoaGlobalKeyListener.DoStartMonitoring;
 begin
-  // TODO: Implement macOS global key monitoring using NSEvent
-  // Reference: NSEvent.addGlobalMonitorForEventsMatchingMask
-  Active := False;
+  Active := StartEventTap(CGEventMask(1) shl kCGEventKeyDown, @KeyPressed, Self, Tap, Source);
 end;
 
 procedure TCocoaGlobalKeyListener.DoStopMonitoring;
 begin
-  if not Active then Exit;
-
-  // TODO: Implement macOS key monitoring stop
-  // Reference: NSEvent.removeMonitor
-
+  StopEventTap(Tap, Source);
   Active := False;
 end;
 

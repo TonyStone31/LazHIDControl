@@ -99,7 +99,7 @@ type
     function SetWindowDesktop(AHandle: TWindowHandle; ADesktop: integer): boolean; override;
 
     // X11 only
-    function GetWindowAtPoint(X, Y: integer): TWindowHandle;
+    function GetWindowAtPoint(X, Y: integer): TWindowHandle; override;
     function GetWindowParent(AHandle: TWindowHandle): TWindowHandle;
     function GetRootWindow: TWindowHandle;
 

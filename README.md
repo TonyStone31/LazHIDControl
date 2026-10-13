@@ -12,7 +12,7 @@ Three pieces, three directories:
 |---|---|
 | [`hidctl/`](hidctl/) | The command-line automation tool. Does the work people reach for xdotool to do, in one binary, on an API you can also call from Pascal. |
 | [`lazhidcontrol/`](lazhidcontrol/) | The package: components, input backends, window management. |
-| [`examples/`](examples/) | Two demos: the component workout, and the original library demo. |
+| [`examples/`](examples/) | The demo: every component at work, a tab for each job. |
 
 ## The components
 
@@ -74,7 +74,7 @@ MouseInput.Click(mbLeft, []);
 
 ## hidctl
 
-Everything above, from a shell - on Windows as well as Linux. It answers to
+Everything above, from a shell - on Linux, Windows and macOS. It answers to
 xdotool's command names, chained on one line the way xdotool takes them:
 
 ```sh
@@ -105,31 +105,48 @@ other projects.
 
 ## What is tested, what is not
 
-| Platform | Status | Notes |
-|---|---|---|
-| Linux / X11 (gtk2, gtk3) | **Tested.** | All eight components and hidctl are exercised in a nested X server on every change: typing with Unicode, clicking, capture, window control, clipboard, idle, power. Typing is checked on US, German, French, Spanish, and Russian keyboard layouts and with Caps Lock on. Qt builds compile; hotkeys and clipboard monitoring need GTK for now. |
-| Windows | **Tested on Windows 10 (22H2) in a virtual machine.** | hidctl and both demos pass there: typing the full Unicode sheet (also with Caps Lock and NumLock on), navigation keys, clicking, window find/move/size/minimize with Unicode titles, window and desktop capture, the global hotkey from another application, clipboard monitoring, idle, and power status. Not covered: suspend/resume events, more than one monitor, Windows 11. |
-| Linux / Wayland | **Partly there, untested on a real compositor.** | Screenshots go through the desktop's screenshot portal (tested against that portal on an X11 session; capturing one window by title is not possible). Idle (GNOME and KDE services), power (logind/UPower), and clipboard monitoring ride D-Bus and GTK, not X. Keyboard and mouse use the kernel's uinput: written, compiled, **never run** - it needs write access to `/dev/uinput`, types as a US layout, and cannot type beyond ASCII. Global hotkeys (GlobalShortcuts portal) are not written. Finding and moving other applications' windows is the one thing Wayland itself rules out. |
-| macOS / Cocoa | **Partly there. Tested on macOS Sequoia 15 (Intel) in a virtual machine.** | Built with the released Lazarus 4.8 and FPC 3.2.4; both demos and hidctl run. Working and tested: global hotkeys (registered, then fired by a real Ctrl+Shift+F9), clipboard monitoring with Unicode text, idle time, power status, and hidctl's idle, power, display, and clipboard commands. Sending keys and mouse moves is written but has not been run against another application - it needs Accessibility permission. Not there yet: typing beyond the keys on the keyboard, the scroll wheel, window control, screenshots. Battery changes and sleep/wake cannot be tried in a virtual machine. `sh tests/run_macos.sh` runs the checks. |
+| | Linux / X11 | Windows | macOS | Linux / Wayland |
+|---|---|---|---|---|
+| Tested on | Mint, in a nested X server; GTK2 and GTK3 | Windows 10, in a virtual machine | macOS 15 on Intel, in a virtual machine; Lazarus 4.8, FPC 3.2.4 | no real compositor yet |
+| Typing, Unicode included | ✅ on US, German, French, Spanish and Russian layouts | ✅ | ✅ | written, never run; US layout and ASCII only |
+| Keys with Ctrl, Alt, Shift | ✅ | ✅ | ✅ | written, never run |
+| Mouse: move, click, scroll | ✅ | ✅ | ✅ | written, never run |
+| Global hotkeys | ✅ | ✅ | ✅ | not written |
+| Windows: find, activate, move, size, minimize | ✅ | ✅ | ✅ | not possible on Wayland |
+| Screenshots | ✅ | ✅ | ✅ | ✅ through the desktop's portal |
+| Clipboard monitoring | ✅ | ✅ | ✅ | through GTK |
+| Idle time | ✅ | ✅ | ✅ | GNOME and KDE |
+| Power status | ✅ | ✅ | ✅ | ✅ |
+| Sleep and wake events | ✅ | not tried | not tried | ✅ |
+| Watching keys and clicks system-wide | ✅ | ✅ | ✅ | not possible on Wayland |
+| hidctl | ✅ | ✅ | ✅ | |
 
-**Wayland developers: we want your feedback.** If you can run the automation
-demo on a real Wayland desktop - or can tell us what the portal backends
-should look like - open an
-[issue](https://github.com/TonyStone31/LazHIDControl/issues). That column
-improves only with reports from machines we do not have.
+Qt builds compile; hotkeys and clipboard monitoring need GTK for now.
 
-**Mac developers:** the package now builds and is tested on macOS, in a
-virtual machine. What a virtual machine cannot tell us is how it does on
-Apple Silicon, whether battery and sleep/wake events arrive, and whether
-keys and clicks reach other applications once Accessibility permission is
-granted. If you have a real Mac, run `sh tests/run_macos.sh` and the
-automation demo and tell us, the same way.
+**On a Mac the user has to allow it.** macOS asks before a program may do
+any of this to other programs, under System Settings > Privacy & Security:
+*Accessibility* for typing, the mouse and moving windows, *Input Monitoring*
+for watching keys, *Screen Recording* for screenshots that show other
+programs' windows. Hotkeys, the clipboard, idle time and power need nothing.
+Without a permission the call fails or comes back empty; nothing crashes.
+One Mac difference: a minimized window is not in the window list, so keep
+its handle if you mean to bring it back.
 
-The automation demo and the library demo on macOS:
+**On Wayland** keyboard and mouse go through the kernel's uinput, which
+needs write access to `/dev/uinput` and has never been run; screenshots work
+through the screenshot portal; other programs' windows are out of reach by
+design. If you can run the demo on a real Wayland desktop,
+[tell us how it went](https://github.com/TonyStone31/LazHIDControl/issues).
 
-![The automation demo on macOS](images/macos/automation-demo.png)
+**Still wanted from a real Mac:** Apple Silicon, battery changes, and
+sleep/wake events - a virtual machine has none of them. `sh tests/run_macos.sh`
+runs the checks.
 
-![The library demo on macOS, its hotkey registered](images/macos/hid-demo-keyboard.png)
+The demo on macOS, listing the Mac's windows and showing its typing test sheet:
+
+![The demo's Windows tab on macOS](images/macos/demo-windows.png)
+
+![The demo's Typing tab on macOS](images/macos/demo-typing.png)
 
 ## License and credits
 
