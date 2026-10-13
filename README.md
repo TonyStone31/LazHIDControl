@@ -111,7 +111,7 @@ other projects.
 | Typing, Unicode included | ✅ on US, German, French, Spanish and Russian layouts | ✅ | ✅ | ASCII only, as a US keyboard types it |
 | Keys with Ctrl, Alt, Shift | ✅ | ✅ | ✅ | ✅ |
 | Mouse: move, click, scroll | ✅ | ✅ | ✅ | ✅ in screen coordinates |
-| Global hotkeys | ✅ | ✅ | ✅ | not written |
+| Global hotkeys | ✅ | ✅ | ✅ | not written; the portal serves only installed applications |
 | Windows: find, activate, move, size, minimize | ✅ | ✅ | ✅ | not possible on Wayland |
 | Screenshots | ✅ | ✅ | ✅ | ✅ through the desktop's portal; it asks the user once |
 | Clipboard monitoring | ✅ | ✅ | ✅ | ✅ |

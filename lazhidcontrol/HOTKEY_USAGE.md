@@ -6,7 +6,7 @@ The LazHIDControl package includes cross-platform global hotkey registration sup
 
 - **Windows**: Implemented using RegisterHotKey
 - **X11 (Linux/Unix)**: Fully supported using XGrabKey
-- **Wayland**: Not currently implemented; the portal backend is a stub
+- **Wayland**: Not implemented. The GlobalShortcuts portal refuses a program that has no installed desktop entry ("an app id is required")
 - **macOS**: Implemented using Carbon's RegisterEventHotKey (Ctrl, Alt/Option, Shift)
 
 ### Wayland status

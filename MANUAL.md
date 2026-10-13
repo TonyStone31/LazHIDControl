@@ -351,7 +351,10 @@ screen, so there is nothing to measure from.
 
 **Global hotkeys** want the `GlobalShortcuts` desktop portal (KDE Plasma,
 GNOME 48 and later, Hyprland); that unit is still a stub and registration
-fails with a message. **Window management** has no cross-compositor protocol
+fails with a message. It will take more than code in a unit: asked by an
+ordinary program, KDE's portal answers "an app id is required" - it serves
+only programs installed with a desktop entry and started as that
+application. **Window management** has no cross-compositor protocol
 to use, so `THIDWindow` reports that it is unavailable. Power status and
 clipboard monitoring work as described in their sections. Idle time is asked
 of GNOME's and the freedesktop screen-saver services; KDE Plasma 6 answers
