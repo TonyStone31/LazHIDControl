@@ -23,6 +23,7 @@ uses
   LCLType,
   Graphics,
   Clipbrd,
+  LazUTF8,
   HIDMouseAndKeyInput,
   WindowManager,
   WindowManagerIntf,
@@ -280,9 +281,9 @@ var
         if WindowMgr.GetWindowInfo(TWindowHandle(Item), Info) then
         begin
           if Kind = 'pid' then Hit := Info.ProcessID = StrToDWord(Text)
-          else if Kind = 'class' then Hit := Pos(LowerCase(Text), LowerCase(Info.ClassName)) > 0
+          else if Kind = 'class' then Hit := Pos(UTF8LowerCase(Text), UTF8LowerCase(Info.ClassName)) > 0
           else
-            Hit := Pos(LowerCase(Text), LowerCase(Info.Title)) > 0;
+            Hit := Pos(UTF8LowerCase(Text), UTF8LowerCase(Info.Title)) > 0;
           if not Hit then Continue;
           WriteLn(Info.Handle);
           if Win = 0 then Win := Info.Handle;

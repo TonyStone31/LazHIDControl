@@ -190,6 +190,9 @@ end;
 
 function TWinWindowManager.ActivateWindow(AHandle: TWindowHandle): boolean;
 begin
+  // a minimized window comes back up, as it does on X11
+  if IsIconic(HWND(AHandle)) then
+    Windows.ShowWindow(HWND(AHandle), SW_RESTORE);
   Result := SetForegroundWindow(HWND(AHandle));
 end;
 

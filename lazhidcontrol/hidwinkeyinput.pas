@@ -55,31 +55,38 @@ begin
   Result := TWinKeyInput.Create;
 end;
 
-function MakeScanCodeInput(Scan: word; KeyUp: boolean): TInput;
+{ Keys that share a scan code with the number pad, or with a twin on the
+  left.  Without the extended flag an arrow is a digit while NumLock is on. }
+function IsExtendedKey(Key: word): boolean;
 begin
-  FillChar(Result, SizeOf(Result), 0);
+  case Key of
+    VK_PRIOR, VK_NEXT, VK_END, VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_INSERT, VK_DELETE,
+    VK_DIVIDE, VK_NUMLOCK, VK_RCONTROL, VK_RMENU, VK_LWIN, VK_RWIN, VK_APPS: Result := True;
+    else
+      Result := False;
+  end;
+end;
+
+// Scan codes rather than virtual keys: applications get proper WM_CHAR from them.
+function MakeScanCodeInput(Scan: word; KeyUp: boolean; extended: boolean = False): TInput;
+begin
+  Result := Default(TInput);
   Result.type_ := INPUT_KEYBOARD;
-  Result.ki.wVk := 0;  // Using scan code only for better WM_CHAR generation
   Result.ki.wScan := Scan;
   Result.ki.dwFlags := KEYEVENTF_SCANCODE;
-
-  if (Scan and $E000) <> 0 then
+  if extended then
     Result.ki.dwFlags := Result.ki.dwFlags or KEYEVENTF_EXTENDEDKEY;
-
   if KeyUp then
     Result.ki.dwFlags := Result.ki.dwFlags or KEYEVENTF_KEYUP;
 end;
-
 
 { TWinKeyInput }
 
 procedure TWinKeyInput.DoDown(Key: word);
 var
-  Sc: word;
   Inp: TInput;
 begin
-  Sc := MapVirtualKey(Key, 0);
-  Inp := MakeScanCodeInput(Sc, False);
+  Inp := MakeScanCodeInput(MapVirtualKey(Key, 0), False, IsExtendedKey(Key));
   SendInput(1, @Inp, SizeOf(Inp));
   Application.ProcessMessages;
   Sleep(1);
@@ -87,11 +94,9 @@ end;
 
 procedure TWinKeyInput.DoUp(Key: word);
 var
-  Sc: word;
   Inp: TInput;
 begin
-  Sc := MapVirtualKey(Key, 0);
-  Inp := MakeScanCodeInput(Sc, True);
+  Inp := MakeScanCodeInput(MapVirtualKey(Key, 0), True, IsExtendedKey(Key));
   SendInput(1, @Inp, SizeOf(Inp));
   Application.ProcessMessages;
   Sleep(1);
