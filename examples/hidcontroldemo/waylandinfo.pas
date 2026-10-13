@@ -54,20 +54,19 @@ begin
   memoInfo.Lines.Add('Current display environment: ' + displayServer);
   memoInfo.Lines.Add('Wayland support in LazHIDControl');
   memoInfo.Lines.Add('');
-  memoInfo.Lines.Add('The intended backend emulates a keyboard and mouse through Linux uinput.');
-  memoInfo.Lines.Add('This checkout does not open /dev/uinput or create the virtual devices.');
-  memoInfo.Lines.Add('Event layout, key translation and mouse coordinates also need work.');
-  memoInfo.Lines.Add('Changing permissions alone will not make this backend functional.');
-  memoInfo.Lines.Add('');
-  memoInfo.Lines.Add('The input factory selects it when WAYLAND_DISPLAY is set,');
-  memoInfo.Lines.Add('including when this application runs under Xwayland.');
-  memoInfo.Lines.Add('Hotkey portal support is a stub. Window management remains X11 only.');
-  memoInfo.Lines.Add('');
-  memoInfo.Lines.Add('For a completed backend, device access should be restricted to /dev/uinput.');
-  memoInfo.Lines.Add('The general input group may also allow reading physical input events.');
+  memoInfo.Lines.Add('Keyboard and mouse: a virtual keyboard and pointer made through Linux uinput.');
+  memoInfo.Lines.Add('It needs write access to /dev/uinput - MANUAL.md has the udev rule - and has');
+  memoInfo.Lines.Add('not been run on a real Wayland desktop yet. Text is typed as a US layout');
+  memoInfo.Lines.Add('would type it, and characters beyond ASCII are skipped.');
   memoInfo.Lines.Add('Do not run the demo as root as a workaround.');
   memoInfo.Lines.Add('');
-  memoInfo.Lines.Add('See README.md for the current implementation limits.');
+  memoInfo.Lines.Add('Screenshots: through the desktop''s screenshot portal.');
+  memoInfo.Lines.Add('Idle, power and clipboard monitoring: through D-Bus and GTK.');
+  memoInfo.Lines.Add('Global hotkeys: not written yet (GlobalShortcuts portal).');
+  memoInfo.Lines.Add('Other applications'' windows: Wayland does not allow it.');
+  memoInfo.Lines.Add('');
+  memoInfo.Lines.Add('This backend is chosen whenever WAYLAND_DISPLAY is set,');
+  memoInfo.Lines.Add('including when the program itself runs under XWayland.');
 
 end;
 

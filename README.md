@@ -74,9 +74,17 @@ MouseInput.Click(mbLeft, []);
 
 ## hidctl
 
-Everything above, from a shell. It reads one command per line - from a file
-or standard input - and works in coordinates relative to the target window,
-so a test does not break because a window opened two pixels lower today.
+Everything above, from a shell - on Windows as well as Linux. It answers to
+xdotool's command names, chained on one line the way xdotool takes them:
+
+```sh
+hidctl search --name "Text Editor" windowactivate key ctrl+a type "Hello" key Return
+```
+
+It also runs scripts, one command per line from a file or standard input, in
+a vocabulary of its own that works in coordinates relative to the target
+window - so a test does not break because a window opened two pixels lower
+today.
 
 ```sh
 ./hidctl/hidctl --window "Some App" - <<EOF
@@ -91,17 +99,17 @@ EOF
 
 It covers the pointer, the keyboard, window find/wait/activate/geometry,
 screenshots of the window, the desktop, or an area, the clipboard, idle time,
-and power status. [hidctl/README.md](hidctl/README.md) has the full command
-list. We use it, against a nested X server, to drive the GUI tests of our
+and power status. `hidctl --help` prints every command;
+[hidctl/README.md](hidctl/README.md) says which of xdotool's it covers. We use it, against a nested X server, to drive the GUI tests of our
 other projects.
 
 ## What is tested, what is not
 
 | Platform | Status | Notes |
 |---|---|---|
-| Linux / X11 (gtk2, gtk3) | **Tested.** | All eight components and hidctl are exercised in a nested X server on every change: typing with Unicode, clicking, capture, window control, clipboard, idle, power. |
+| Linux / X11 (gtk2, gtk3) | **Tested.** | All eight components and hidctl are exercised in a nested X server on every change: typing with Unicode, clicking, capture, window control, clipboard, idle, power. Typing is checked on US, German, French, Spanish, and Russian keyboard layouts and with Caps Lock on. Qt builds compile; hotkeys and clipboard monitoring need GTK for now. |
 | Windows | **Tested under Wine; a real-Windows report is welcome.** | Input, window control, capture, clipboard, idle, and power status all pass under Wine. The input backends themselves are the long-used originals. Suspend/resume events cannot be simulated under Wine. |
-| Linux / Wayland | **Partly works by design, untested on a real compositor.** | Idle (GNOME and KDE services), power (logind/UPower), and clipboard monitoring should work - they ride D-Bus and GTK, not X. Synthetic input, global hotkeys, window control, and capture are blocked by Wayland's security model until portal backends exist; they report clear errors instead of pretending. |
+| Linux / Wayland | **Partly there, untested on a real compositor.** | Screenshots go through the desktop's screenshot portal (tested against that portal on an X11 session; capturing one window by title is not possible). Idle (GNOME and KDE services), power (logind/UPower), and clipboard monitoring ride D-Bus and GTK, not X. Keyboard and mouse use the kernel's uinput: written, compiled, **never run** - it needs write access to `/dev/uinput`, types as a US layout, and cannot type beyond ASCII. Global hotkeys (GlobalShortcuts portal) are not written. Finding and moving other applications' windows is the one thing Wayland itself rules out. |
 | macOS | **Written, never run.** | Power monitoring (NSWorkspace sleep/wake, IOKit battery), clipboard (NSPasteboard), and idle (Core Graphics) are implemented and waiting for someone with a Mac. Input and window backends are stubs. |
 
 **Wayland and macOS developers: we want your feedback.** If you can run the

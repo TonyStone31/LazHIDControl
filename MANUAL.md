@@ -146,7 +146,7 @@ The demos share Ctrl+Shift+F9; run one at a time or change its `ShortCut`.
 Published properties and events have source comments for Object Inspector help.
 The components and their GUI methods are intended for the main GUI thread.
 Windows and Linux/X11 use the existing backends. Hotkeys use GTK2/GTK3 on X11.
-Wayland input and screenshot capture are not implemented, and macOS is still
+Wayland support is partial - see "Wayland, in detail" - and macOS is still
 unsupported. Components report unavailable operations rather than simulating success.
 
 Window management has explicit macOS and Wayland backend placeholders. They
@@ -300,18 +300,42 @@ them with [hidctl](hidctl/README.md).
 
 ## Wayland, in detail
 
-Synthetic input on Wayland means emulating a device through the kernel's
+**Screenshots** come from the desktop's `org.freedesktop.portal.Screenshot`.
+The portal hands over the whole desktop and `THIDScreenshot` cuts the monitor,
+region, or dragged selection out of it. The desktop may ask the user for
+permission the first time. Capturing a window by title is not possible: a
+Wayland program cannot learn where another program's window is.
+
+**Keyboard and mouse** go through the kernel's
 [`uinput`](https://docs.kernel.org/input/uinput.html), since there is no XTest
-to ask. The checked-in `waylandmouseandkeyinput.pas` has event-writing code
-but never opens `/dev/uinput`, creates no virtual devices, and its key
-translation and coordinate handling need correction - it is a starting point,
-not a backend, and device permissions alone will not make it one. Global
-hotkeys want the `GlobalShortcuts` desktop portal; the current unit is a stub
-that registers nothing. Window management and capture would go through
-compositor protocols and the screenshot portal. None of this is hidden at run
-time: on a Wayland session these components fail with messages that say so,
-while idle, power, and clipboard monitoring - which ride D-Bus and GTK - work
-as described in their sections.
+to ask. `waylandmouseandkeyinput.pas` creates a virtual keyboard and a virtual
+absolute pointer that any compositor reads like hardware. This backend is
+written and compiles but has not been run on any machine yet - reports are
+welcome. It needs write access to `/dev/uinput`, which belongs to root by
+default. One udev rule gives it to whoever is logged in at the machine:
+
+```
+# /etc/udev/rules.d/60-uinput.rules
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"
+```
+
+Reload with `sudo udevadm control --reload && sudo udevadm trigger`. Without
+access, `THIDKeyboard` and `THIDMouse` raise an error that says so. A virtual
+keyboard presses keys, not characters: text is typed as a US layout would
+type it, characters beyond ASCII are skipped, and the lock keys cannot be
+read.
+
+**Global hotkeys** want the `GlobalShortcuts` desktop portal (KDE Plasma,
+GNOME 48 and later, Hyprland); that unit is still a stub and registration
+fails with a message. **Window management** has no cross-compositor protocol
+to use, so `THIDWindow` reports that it is unavailable. Idle, power, and
+clipboard monitoring ride D-Bus and GTK and work as described in their
+sections.
+
+A GTK2 program on a Wayland desktop runs through XWayland, the X server
+Wayland sessions carry for older programs. X calls made there reach only
+other XWayland programs - native Wayland windows are invisible to them - which
+is why this package does not fall back to its X11 backends on Wayland.
 
 ## Possible future work
 

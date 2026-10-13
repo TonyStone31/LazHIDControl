@@ -8,14 +8,14 @@
   by Sammarco Francesco, hotkey code adapted from Codebot. Source credits remain.
 - Homepage: https://github.com/TonyStone31/LazHIDControl
 - Description: Mouse/keyboard automation, global hotkeys, global input monitoring
-  and window management for Windows and X11, with an unfinished Wayland input backend.
+  and window management for Windows and X11, with partial, untested Wayland support.
 - License: **GPL-2.0-or-later** in package source notices; full GPL v2 text in
   `COPYING.GPL2`. Existing `LICENSE` contains GPL v3 (a permitted later version).
 - Lazarus dependencies: `LCL`, `FCL` with declared minimum **1.0.0.0** for FCL.
 - External dependencies on Linux: FPC X11/D-Bus units, linkable X11, Xtst and
   D-Bus libraries, `libXi` for global monitoring; usual LCL/widgetset libraries.
-  The unfinished Wayland backend targets uinput; access permissions alone
-  do not make it functional.
+  The Wayland input backend uses uinput and needs write access to `/dev/uinput`;
+  it has not been run on a Wayland machine yet.
 - Examples: `examples/automation/AutomationDemo.lpi`,
   `examples/hidcontroldemo/HIDControlDemo.lpi`, and the `hidctl/hidctl.lpi`
   command-line tool; all require `LazHIDControl`.
@@ -26,16 +26,15 @@
 
 ## Known limitations
 
-Wayland input does not open `/dev/uinput` or create virtual devices; event
-layout, key translation and mouse coordinates also need correction.
-Wayland hotkey registration and its portal message loop are stubs: registration
-remains false. Global monitoring and window management use X11 and do not cover
+Wayland input (uinput) is written but untested, types as a US layout, and cannot
+type beyond ASCII. Wayland screenshots use the screenshot portal. Wayland hotkey
+registration is a stub: registration remains false. Global monitoring and window management use X11 and do not cover
 native Wayland windows. macOS is not a supported submission target: dispatch is
 incomplete, hotkey/key-monitor code is stubbed, and global mouse monitoring and
 window management return nil. Platform behavior was preserved, not repaired.
 
-Every unit name carries the `hid` prefix, so nothing collides with Lazarus's
-bundled `mouseandkeyinput` package - installing both into the IDE is fine.
+The units that share a name with Lazarus's bundled `mouseandkeyinput` package
+carry a `hid` prefix here, so nothing collides - installing both into the IDE is fine.
 The package is `RunAndDesignTime`: install it for the palette components, or
 **Use → Add to Project** for library-only use.
 

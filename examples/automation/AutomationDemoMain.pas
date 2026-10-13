@@ -9,8 +9,9 @@ uses Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
 
 type
   TAutomationForm = class(TForm)
-    InputPanel, CapturePanel, IdlePanel, PowerPanel, ClipboardPanel: TPanel;
-    TextLabel, OutputLabel, WindowLabel, MonitorLabel, Status: TLabel;
+    KeyboardGroup, MouseGroup, WindowGroup, CaptureGroup, IdleGroup, PowerGroup, ClipboardGroup: TGroupBox;
+    MonitorsPanel: TPanel;
+    TextLabel, OutputLabel, KeyboardHint, WindowLabel, WindowXLabel, WindowYLabel, SourceLabel, MonitorLabel, Status: TLabel;
     TextInput, Output: TEdit;
     WindowInput: TComboBox;
     TypeButton, TypeLaterButton, MouseButton, SampleButton, CaptureButton, SaveButton: TButton;
