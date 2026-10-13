@@ -126,7 +126,8 @@ var
 begin
   for I := 1 to 60 do ScrollList.Items.Add('Line ' + IntToStr(I));
   Pages.ActivePage := TypingTab;
-  WatchBoxChange(nil);
+  // watching the whole system's keys is for the user to switch on, not us
+  Say('Tick the box above to watch keys and clicks everywhere.');
 end;
 
 procedure TAutomationForm.Say(const Message: string);

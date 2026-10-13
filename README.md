@@ -118,10 +118,14 @@ other projects.
 | Idle time | ✅ | ✅ | ✅ | GNOME and KDE |
 | Power status | ✅ | ✅ | ✅ | ✅ |
 | Sleep and wake events | ✅ | not tried | not tried | ✅ |
-| Watching keys and clicks system-wide | ✅ | ✅ | ✅ | not possible on Wayland |
+| Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | not possible on Wayland |
 | hidctl | ✅ | ✅ | ✅ | |
 
 Qt builds compile; hotkeys and clipboard monitoring need GTK for now.
+
+Watching keys and clicks is not one of the palette components. It is the
+`GlobalKeyMonitor` and `GlobalMouseMonitor` units, used from code; the demo
+shows how, behind a checkbox that starts switched off.
 
 **On a Mac the user has to allow it.** macOS asks before a program may do
 any of this to other programs, under System Settings > Privacy & Security:

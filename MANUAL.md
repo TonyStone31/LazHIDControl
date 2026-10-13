@@ -308,9 +308,10 @@ Every component sits on its form in the designer, a tab for each job:
   Ctrl+Shift+F10 captures from anywhere.
 - **Idle, power, clipboard** - the three monitors, live.
 
-The status bar shows the pointer, the last click and the last key anywhere on
-the system. That part uses the `GlobalKeyMonitor` and `GlobalMouseMonitor`
-units directly; they are not palette components.
+The status bar shows the pointer and, once you tick the box above it, the
+last click and the last key anywhere on the system. That part uses the
+`GlobalKeyMonitor` and `GlobalMouseMonitor` units directly; they are not
+palette components.
 
 Try the input demos in a nested X server (`Xephyr :9 & DISPLAY=:9 ...`) so a
 misaimed script cannot click on your real desktop. That is also how we drive

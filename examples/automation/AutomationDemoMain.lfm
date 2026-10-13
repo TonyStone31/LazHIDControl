@@ -49,8 +49,6 @@ object AutomationForm: TAutomationForm
       Top = 5
       Width = 700
       Caption = 'Show every key press and mouse click on the system in the status bar'
-      Checked = True
-      State = cbChecked
       TabOrder = 0
       OnChange = WatchBoxChange
     end
