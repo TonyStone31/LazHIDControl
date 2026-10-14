@@ -91,6 +91,9 @@ type
     Listener: TXGlobalKeyListener;
     DetectedKey: word;
     DetectedShift: TShiftState;
+    // the modifiers are kept from the raw stream: a raw event carries none,
+    // and asking the server afterwards races the release
+    Held: TShiftState;
     procedure NotifyKeyPress;
   public
     constructor Create(AListener: TXGlobalKeyListener);
@@ -159,22 +162,6 @@ begin
     Listener.OnKeyPress(DetectedKey, DetectedShift);
 end;
 
-// A raw event carries no modifiers, so ask the server what is held.
-function HeldModifiers(Display: PDisplay; Root: TWindow): TShiftState;
-var
-  RootFound, Child: TWindow;
-  RootX, RootY, WinX, WinY: cint;
-  Mask: cuint;
-begin
-  Result := [];
-  Mask := 0;
-  XQueryPointer(Display, Root, @RootFound, @Child, @RootX, @RootY, @WinX, @WinY, @Mask);
-  if Mask and ShiftMask <> 0 then Include(Result, ssShift);
-  if Mask and ControlMask <> 0 then Include(Result, ssCtrl);
-  if Mask and Mod1Mask <> 0 then Include(Result, ssAlt);
-  if Mask and Mod4Mask <> 0 then Include(Result, ssMeta);
-end;
-
 procedure TKeyMonitorThread.Execute;
 var
   Event: TXEvent;
@@ -183,6 +170,7 @@ var
   keycode: TKeyCode;
   keysyms_per_keycode: cint;
   keysym_map: PKeySym;
+  Modifier: TShiftStateEnum;
 begin
   while not Terminated do
   begin
@@ -196,7 +184,7 @@ begin
         // Get the event data
         if XGetEventData(Listener.Display, @Event.xcookie) then
         begin
-          if (Event.xcookie.extension = Listener.XI2Opcode) and (Event.xcookie.evtype = XI_RawKeyPress) then
+          if (Event.xcookie.extension = Listener.XI2Opcode) and (Event.xcookie.evtype in [XI_RawKeyPress, XI_RawKeyRelease]) then
           begin
             // Cast the data to XIRawEvent structure
             RawEvent := PXIRawEvent(Event.xcookie.Data);
@@ -212,9 +200,24 @@ begin
               Sym := keysym_map^;
               XFree(keysym_map);
 
-              DetectedKey := SymToKey(Sym);
-              DetectedShift := HeldModifiers(Listener.Display, Listener.RootWindow);
-              Synchronize(@NotifyKeyPress);
+              case Sym of
+                XK_SHIFT_L, XK_SHIFT_R: Modifier := ssShift;
+                XK_CONTROL_L, XK_CONTROL_R: Modifier := ssCtrl;
+                XK_ALT_L, XK_ALT_R: Modifier := ssAlt;
+                XK_SUPER_L, XK_SUPER_R: Modifier := ssMeta;
+                else
+                  Modifier := ssDouble;
+              end;
+              if Modifier <> ssDouble then
+                if Event.xcookie.evtype = XI_RawKeyPress then Include(Held, Modifier)
+                else
+                  Exclude(Held, Modifier);
+              if Event.xcookie.evtype = XI_RawKeyPress then
+              begin
+                DetectedKey := SymToKey(Sym);
+                DetectedShift := Held;
+                Synchronize(@NotifyKeyPress);
+              end;
             end;
           end;
           XFreeEventData(Listener.Display, @Event.xcookie);
@@ -286,9 +289,9 @@ begin
   if Active or (Display = nil) or not Assigned(XISelectEvents) then
     Exit;
 
-  // Set up event mask for XI_RawKeyPress
+  // presses to report, releases to keep the modifiers right
   FillChar(mask, SizeOf(mask), 0);
-  mask[XI_RawKeyPress shr 3] := 1 shl (XI_RawKeyPress and 7);
+  mask[XI_RawKeyPress shr 3] := (1 shl (XI_RawKeyPress and 7)) or (1 shl (XI_RawKeyRelease and 7));
 
   evmask.deviceid := XIAllMasterDevices;
   evmask.mask_len := SizeOf(mask);
