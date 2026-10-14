@@ -3,14 +3,16 @@ unit HIDInput;
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
 
-uses Classes, SysUtils, Controls, WindowManagerIntf, HIDWindow;
+uses Classes, SysUtils, Controls, Forms, WindowManagerIntf, HIDWindow;
 
 type
   THIDKeyboard = class(TComponent)
   private
     Delay: cardinal;
     KeyModifiers: TShiftState;
+    Note: string;
   public
+    constructor Create(AOwner: TComponent); override;
     procedure TypeText(const Text: string);
     procedure PressKey(Key: word);
     procedure KeyDown(Key: word);
@@ -19,11 +21,18 @@ type
     // Extra milliseconds to rest between typed characters. Zero types at the
     // backend's own pace. TypeText sends to whatever application has the focus.
     // On macOS nothing arrives until the user allows your program under
-    // Privacy & Security > Accessibility.
+    // Privacy & Security > Accessibility. On Wayland typing needs the udev rule
+    // in the manual, and text beyond ASCII goes through the desktop, which asks
+    // the user once - see PermissionNote.
     property TypingInterval: cardinal read Delay write Delay default 0;
     // Ctrl, Alt, and Shift held around PressKey calls. TypeText ignores this
     // and types its text literally.
     property Modifiers: TShiftState read KeyModifiers write KeyModifiers default [];
+    // Wayland: shown to the user once, just before the desktop asks whether
+    // this program may control the keyboard - which it does the first time
+    // TypeText has a character beyond ASCII. The desktop's own question is
+    // not ours to word; this is. Empty shows nothing. %s is the program's title.
+    property PermissionNote: string read Note write Note;
   end;
 
   THIDMouse = class(TComponent)
@@ -48,7 +57,8 @@ type
   published
     // Milliseconds MoveTo spends walking the pointer to its target in small
     // steps. Zero jumps straight there. On macOS the pointer and clicks need
-    // the user to allow your program under Privacy & Security > Accessibility.
+    // the user to allow your program under Privacy & Security > Accessibility;
+    // on Wayland they need the udev rule in the manual.
     property MovementDuration: cardinal read Duration write Duration default 0;
     // Ctrl, Alt, and Shift held during clicks, moves, and scrolls.
     property Modifiers: TShiftState read MouseModifiers write MouseModifiers default [];
@@ -78,9 +88,19 @@ begin
   if not Assigned(KeyInput) or not Assigned(MouseInput) then raise EInvalidOperation.Create('Input is not available on this platform.');
 end;
 
+constructor THIDKeyboard.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  Note := 'To type into other programs, %s needs your desktop''s permission to control the keyboard. ' +
+    'Your desktop will ask next. Leave the "allow restoring" box ticked and you will not be asked again.';
+end;
+
 procedure THIDKeyboard.TypeText(const Text: string);
 begin
   CheckAvailable(Self, Modifiers);
+  {$ifdef linux}
+  PortalNote := StringReplace(Note, '%s', Application.Title, []);
+  {$endif}
   KeyInput.PressString(Text, TypingInterval);
 end;
 

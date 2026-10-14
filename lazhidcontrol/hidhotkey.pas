@@ -41,7 +41,8 @@ type
     // application. The modifier keys may still be physically held at that moment.
     property OnHotkey: TNotifyEvent read Handler write Handler;
     // The shortcut could not be registered - already taken, or no backend for
-    // this platform. The message stays in LastError; no dialog is shown.
+    // this platform, which Wayland is for now. The message stays in LastError;
+    // no dialog is shown.
     property OnError: THIDHotkeyErrorEvent read ErrorHandler write ErrorHandler;
   end;
 

@@ -66,7 +66,8 @@ type
     // Runs when WaitForWindow gives up. CancelWait never fires this.
     property OnTimeout: TNotifyEvent read TimeoutHandler write TimeoutHandler;
     // An unsupported platform or a failed window operation; the message stays
-    // in LastError. No dialog is shown.
+    // in LastError. No dialog is shown. Wayland is unsupported throughout:
+    // it tells no program where another's windows are.
     property OnError: THIDWindowErrorEvent read ErrorHandler write ErrorHandler;
   end;
 

@@ -56,12 +56,17 @@ function InitializeWaylandKeyInput: TKeyInput;
 // Makes the two devices on first use.  False when /dev/uinput would not open.
 function UInputReady: boolean;
 
+var
+  // Put in front of the user before the desktop's own question the first
+  // time; THIDKeyboard sets it.  Empty shows nothing.
+  PortalNote: string = '';
+
 const
   UInputHelp = 'Wayland input needs write access to /dev/uinput; the manual has the udev rule.';
 
 implementation
 
-uses dbus, LinuxPortal, LinuxKeyCodes;
+uses Dialogs, dbus, LinuxPortal, LinuxKeyCodes;
 
 // Where the desktop's token for this application is kept.
 function TokenFile: string;
@@ -284,6 +289,8 @@ begin
   begin
     PortalTried := True;
     Portal := PortalConnect;
+    // a remembered yes needs no explaining
+    if (Portal <> nil) and (PortalNote <> '') and (SavedToken = '') then MessageDlg(PortalNote, mtInformation, [mbOK], 0);
     PortalOpen := (Portal <> nil) and Ask('CreateSession', 5000) and Ask('SelectDevices', 5000) and Ask('Start', 60000);
     // the question took the focus; wait for it to go back where the text is going
     if PortalOpen then Sleep(500);

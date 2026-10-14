@@ -90,6 +90,16 @@ into whatever then holds the focus - the way to hand text to an application
 that takes typing but not a paste - and its sample text exercises the Unicode
 path, currency to emoji.
 
+`PermissionNote` is for Wayland, where text beyond ASCII goes through the
+desktop and the desktop asks the user's permission the first time (see
+"Wayland, in detail"). The desktop's question is worded by the desktop; this
+is the sentence your program shows just before it, once, so the user knows
+what is being asked and why. `%s` becomes the program's title. The default
+reads: *To type into other programs, %s needs your desktop's permission to
+control the keyboard. Your desktop will ask next. Leave the "allow restoring"
+box ticked and you will not be asked again.* Set it blank to show nothing. It
+is never shown when the desktop already remembers the answer.
+
 `MovementDuration` controls mouse movement timing. Set `RelativeTo` to a form
 or control to make `MoveTo` use its client coordinates. For external windows,
 set `RelativeWindow` instead. Leave both blank for screen coordinates. `Modifiers` applies Ctrl, Alt, and Shift during mouse actions.
@@ -396,8 +406,9 @@ to allow it - on KDE, "Control input devices" with "Allow restoring on
 future sessions" ticked - and gives back a token that stands for the
 answer. The token is kept in the application's configuration directory
 (`GetAppConfigDir`, file `wayland-typing.token`), so the question comes once
-per application, not once per run; delete the file to be asked again. The
-portal is left alone until `TypeText` meets a character the virtual keyboard
+per application, not once per run; delete the file to be asked again.
+`THIDKeyboard.PermissionNote` is what the user reads just before the
+desktop's question. The portal is left alone until `TypeText` meets a character the virtual keyboard
 cannot press; from then on all typed text goes that way, which keeps it in
 order and right on any layout. If the user says no, or the desktop has no
 such portal, characters beyond ASCII are skipped as before. Tested on KDE
