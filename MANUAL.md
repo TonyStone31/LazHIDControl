@@ -372,8 +372,18 @@ KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinpu
 Reload with `sudo udevadm control --reload && sudo udevadm trigger`. Without
 access, `THIDKeyboard` and `THIDMouse` raise an error that says so. A virtual
 keyboard presses keys, not characters: text is typed as a US layout would
-type it, characters beyond ASCII are skipped, and the lock keys cannot be
-read.
+type it, and the lock keys cannot be read.
+
+**Unicode text** is typed through the desktop's
+`org.freedesktop.portal.RemoteDesktop`, whose `NotifyKeyboardKeysym` takes
+any character and does not care about the layout. The desktop asks the user
+to allow it ("Control input devices" on KDE), once in each run of the
+program, so the portal is left alone until `TypeText` meets a character the
+virtual keyboard cannot press. From then on all typed text goes that way,
+which keeps it in order and right on any layout. If the user says no, or
+the desktop has no such portal, characters beyond ASCII are skipped as
+before. Tested on KDE Plasma 6 with accents, Greek, Cyrillic, Chinese and
+emoji; GNOME has the same portal and has not been tried.
 
 The pointer goes where it is told in screen coordinates. A `THIDMouse` with
 `RelativeTo` or `RelativeWindow` set raises an error on Wayland instead of
@@ -383,9 +393,12 @@ screen, so there is nothing to measure from.
 **Global hotkeys** want the `GlobalShortcuts` desktop portal (KDE Plasma,
 GNOME 48 and later, Hyprland); that unit is still a stub and registration
 fails with a message. It will take more than code in a unit: asked by an
-ordinary program, KDE's portal answers "an app id is required" - it serves
-only programs installed with a desktop entry and started as that
-application. **Window management** has no cross-compositor protocol
+ordinary program, KDE's portal answers "an app id is required". The program
+has to give its id to `org.freedesktop.host.portal.Registry` before any
+other portal call, and that id has to be the name of an installed `.desktop`
+file. With both in place KDE shows the user the shortcut and it fires -
+tried on Plasma 6 with a script - so the unit can be written for programs
+that install a desktop entry. **Window management** has no cross-compositor protocol
 to use, so `THIDWindow` reports that it is unavailable. Power status and
 clipboard monitoring work as described in their sections. Idle time comes
 from the compositor on KDE; the `THIDSystemIdle` section has the detail.
@@ -400,7 +413,7 @@ is why this package does not fall back to its X11 backends on Wayland.
 ## Possible future work
 
 - Session lock/unlock notifications.
-- Unicode typing and hotkeys on Wayland through the RemoteDesktop and GlobalShortcuts portals.
+- Hotkeys on Wayland through the GlobalShortcuts portal, for programs with an installed desktop entry.
 - macOS on Apple Silicon, and its battery and sleep/wake events, on a real Mac.
 
 These are future options, not implemented features or release commitments.

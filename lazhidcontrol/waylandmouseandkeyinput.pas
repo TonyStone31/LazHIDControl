@@ -10,7 +10,12 @@ unit WaylandMouseAndKeyInput;
   It needs write access to /dev/uinput, which is root's by default; the
   manual has the udev rule.  What a virtual keyboard cannot do: it presses
   keys, not characters, so text comes out as a US layout would type it and
-  nothing beyond ASCII can be typed; and nothing reports the lock keys. }
+  nothing beyond ASCII can be typed; and nothing reports the lock keys.
+
+  Characters are another matter.  The desktop's RemoteDesktop portal takes
+  a keysym - any character at all - and types it whatever the layout.  It
+  asks the user first, every run, so it is left alone until some text has a
+  character in it that the virtual keyboard cannot press. }
 
 interface
 
@@ -33,6 +38,8 @@ type
     procedure DoDown(Key: word); override;
     procedure DoUp(Key: word); override;
   public
+    procedure PressUnicodeChar(unicode: cardinal); override;
+    procedure PressASCIIChar(ch: char); override;
     function GetCapsLockState: boolean; override;
     function GetNumLockState: boolean; override;
     function GetScrollLockState: boolean; override;
@@ -51,6 +58,8 @@ const
   UInputHelp = 'Wayland input needs write access to /dev/uinput; the manual has the udev rule.';
 
 implementation
+
+uses dbus, LinuxPortal;
 
 const
   EV_SYN = 0;
@@ -232,6 +241,91 @@ begin
   end;
 end;
 
+{ The portal: a session, the keyboard chosen in it, and Start, which is
+  where the desktop asks the user. }
+
+const
+  RemoteDesktop = 'org.freedesktop.portal.RemoteDesktop';
+
+var
+  Portal: PDBusConnection = nil;
+  PortalTried: boolean = False;
+  PortalOpen: boolean = False;
+  Session: string = '';
+
+function NewCall(const Method: string; out Args: DBusMessageIter): PDBusMessage;
+var
+  Path: PChar;
+begin
+  Result := dbus_message_new_method_call(PortalName, PortalPath, RemoteDesktop, PChar(Method));
+  dbus_message_iter_init_append(Result, @Args);
+  // every call but CreateSession starts with the session
+  Path := PChar(Session);
+  if Session <> '' then dbus_message_iter_append_basic(@Args, DBUS_TYPE_OBJECT_PATH, @Path);
+end;
+
+function Ask(const Method: string; WaitMs: cardinal): boolean;
+const
+  Keyboard: dbus_uint32_t = 1;
+var
+  Call: PDBusMessage;
+  Args, Options: DBusMessageIter;
+  Token, Parent: PChar;
+  Key, Value: string;
+begin
+  Call := NewCall(Method, Args);
+  Parent := '';
+  if Method = 'Start' then dbus_message_iter_append_basic(@Args, DBUS_TYPE_STRING, @Parent);
+  // the token names the request object, and the method's own name will do
+  Token := PChar(Method);
+  Key := '';
+  dbus_message_iter_open_container(@Args, DBUS_TYPE_ARRAY, '{sv}', @Options);
+  AddOption(Options, 'handle_token', DBUS_TYPE_STRING, 's', @Token);
+  if Method = 'CreateSession' then
+  begin
+    AddOption(Options, 'session_handle_token', DBUS_TYPE_STRING, 's', @Token);
+    Key := 'session_handle';
+  end;
+  if Method = 'SelectDevices' then AddOption(Options, 'types', DBUS_TYPE_UINT32, 'u', @Keyboard);
+  dbus_message_iter_close_container(@Args, @Options);
+  Result := PortalAsk(Portal, Call, WaitMs, Key, Value);
+  if Result and (Key <> '') then Session := Value;
+end;
+
+function PortalReady: boolean;
+begin
+  if not PortalTried then
+  begin
+    PortalTried := True;
+    Portal := PortalConnect;
+    PortalOpen := (Portal <> nil) and Ask('CreateSession', 5000) and Ask('SelectDevices', 5000) and Ask('Start', 60000);
+    // the question took the focus; wait for it to go back where the text is going
+    if PortalOpen then Sleep(500);
+  end;
+  Result := PortalOpen;
+end;
+
+// NotifyKeyboardKeysym(session, options, keysym, state), down and then up.
+procedure TypeKeysym(Sym: dbus_int32_t);
+var
+  Call, Reply: PDBusMessage;
+  Args, Options: DBusMessageIter;
+  State: dbus_uint32_t;
+begin
+  for State := 1 downto 0 do
+  begin
+    Call := NewCall('NotifyKeyboardKeysym', Args);
+    dbus_message_iter_open_container(@Args, DBUS_TYPE_ARRAY, '{sv}', @Options);
+    dbus_message_iter_close_container(@Args, @Options);
+    dbus_message_iter_append_basic(@Args, DBUS_TYPE_INT32, @Sym);
+    dbus_message_iter_append_basic(@Args, DBUS_TYPE_UINT32, @State);
+    // waiting for the reply keeps the characters in order
+    Reply := dbus_connection_send_with_reply_and_block(Portal, Call, 1000, nil);
+    dbus_message_unref(Call);
+    if Reply <> nil then dbus_message_unref(Reply);
+  end;
+end;
+
 { TWaylandMouseInput }
 
 procedure TWaylandMouseInput.DoDown(Button: TMouseButton);
@@ -279,6 +373,24 @@ begin
     Send(KeyboardFD, EV_KEY, KernelKey(Key), 0);
 end;
 
+procedure TWaylandKeyInput.PressUnicodeChar(unicode: cardinal);
+begin
+  if not PortalReady then Exit;
+  // Latin-1 keysyms are the code points; the rest of Unicode is $01000000 up
+  if unicode < $100 then TypeKeysym(unicode)
+  else
+    TypeKeysym($01000000 + unicode);
+end;
+
+procedure TWaylandKeyInput.PressASCIIChar(ch: char);
+begin
+  // once the portal is open all text goes that way: one road keeps it in
+  // order, and it comes out right on any layout
+  if PortalOpen and (ch >= ' ') then TypeKeysym(Ord(ch))
+  else
+    inherited PressASCIIChar(ch);
+end;
+
 function TWaylandKeyInput.GetCapsLockState: boolean;
 begin
   Result := False;
@@ -320,6 +432,7 @@ begin
 end;
 
 finalization
+  PortalClose(Portal);
   if KeyboardFD >= 0 then
   begin
     fpIOCtl(KeyboardFD, UI_DEV_DESTROY, nil);

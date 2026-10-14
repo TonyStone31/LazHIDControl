@@ -30,7 +30,8 @@
 
 ## Known limitations
 
-Wayland input (uinput) types as a US layout and cannot type beyond ASCII; it was
+Wayland input (uinput) types plain text as a US layout; text beyond ASCII goes
+through the RemoteDesktop portal, which asks the user each run. Both were
 tested on KDE Plasma 6. Wayland screenshots use the screenshot portal. Wayland hotkey
 registration is a stub: registration remains false. Global monitoring and window management use X11 and do not cover
 native Wayland windows. On macOS everything needs the user's permission under

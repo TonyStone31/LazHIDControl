@@ -226,6 +226,11 @@
         <UnitName Value="WaylandIdle"/>
       </Item>
       <Item>
+        <Filename Value="linuxportal.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="LinuxPortal"/>
+      </Item>
+      <Item>
         <Filename Value="linuxscreenshot.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="LinuxScreenshot"/>
