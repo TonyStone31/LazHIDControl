@@ -109,7 +109,7 @@ other projects.
 | | Linux / X11 | Windows | macOS | Linux / Wayland |
 |---|---|---|---|---|
 | Tested on | Mint, in a nested X server; GTK2 and GTK3 | Windows 10, in a virtual machine | macOS 15 on Intel, in a virtual machine; Lazarus 4.8, FPC 3.2.4 | KDE Plasma 6 on Ubuntu 26.04, in a virtual machine; GTK3 |
-| Typing, Unicode included | ✅ on US, German, French, Spanish and Russian layouts | ✅ | ✅ | ✅ on KDE; the desktop asks the user first when the text goes beyond ASCII |
+| Typing, Unicode included | ✅ on US, German, French, Spanish and Russian layouts | ✅ | ✅ | ✅ on KDE; the desktop asks the user once when the text goes beyond ASCII |
 | Keys with Ctrl, Alt, Shift | ✅ | ✅ | ✅ | ✅ |
 | Mouse: move, click, scroll | ✅ | ✅ | ✅ | ✅ in screen coordinates |
 | Global hotkeys | ✅ | ✅ | ✅ | not written; the portal serves only installed applications |
@@ -138,8 +138,8 @@ needs one udev rule to let the logged-in user write to `/dev/uinput`
 ([the manual](MANUAL.md#wayland-in-detail) has it). A virtual keyboard
 presses keys, not characters, so plain text arrives as a US layout would
 type it. Text with anything beyond ASCII in it goes through the desktop's
-RemoteDesktop portal instead, which types any character on any layout and
-asks the user to allow it, once each run. Wayland does not tell a program where
+RemoteDesktop portal instead, which types any character on any layout. The
+desktop asks the user to allow that once; the answer is remembered. Wayland does not tell a program where
 windows are, its own included, so the mouse works in screen coordinates only
 and other programs' windows are out of reach. Screenshots come from the
 desktop's portal. GNOME and other desktops have not been tried;

@@ -23,8 +23,7 @@ procedure PortalClose(var Connection: PDBusConnection);
 // One entry of an a{sv} options dictionary: a string ('s') or a number ('u').
 procedure AddOption(var Options: DBusMessageIter; Key: PChar; Kind: cint; Signature: PChar; Value: Pointer);
 { Sends Call, frees it, and waits for the Response.  True when the desktop
-  agreed; with a Key, also only when the results hold a string under it,
-  which comes back in Value. }
+  agreed.  Value is the string the results hold under Key, if they do. }
 function PortalAsk(Connection: PDBusConnection; Call: PDBusMessage; WaitMs: cardinal; const Key: string; out Value: string): boolean;
 
 implementation
@@ -87,7 +86,7 @@ begin
       dbus_message_iter_next(@Results);
     end;
   end;
-  Result := (Code = 0) and ((Key = '') or (Value <> ''));
+  Result := Code = 0;
 end;
 
 function PortalAsk(Connection: PDBusConnection; Call: PDBusMessage; WaitMs: cardinal; const Key: string; out Value: string): boolean;

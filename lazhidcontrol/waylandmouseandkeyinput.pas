@@ -14,8 +14,10 @@ unit WaylandMouseAndKeyInput;
 
   Characters are another matter.  The desktop's RemoteDesktop portal takes
   a keysym - any character at all - and types it whatever the layout.  It
-  asks the user first, every run, so it is left alone until some text has a
-  character in it that the virtual keyboard cannot press. }
+  asks the user first, so it is left alone until some text has a character
+  in it that the virtual keyboard cannot press; and the desktop gives back a
+  token that stands for the user's yes, which is kept in the application's
+  configuration directory so the question is asked once, not every run. }
 
 interface
 
@@ -60,6 +62,38 @@ const
 implementation
 
 uses dbus, LinuxPortal, LinuxKeyCodes;
+
+// Where the desktop's token for this application is kept.
+function TokenFile: string;
+begin
+  Result := GetAppConfigDir(False) + 'wayland-typing.token';
+end;
+
+function SavedToken: string;
+begin
+  Result := '';
+  if FileExists(TokenFile) then
+    with TStringList.Create do
+    try
+      LoadFromFile(TokenFile);
+      Result := Trim(Text);
+    finally
+      Free;
+    end;
+end;
+
+procedure SaveToken(const Token: string);
+begin
+  if (Token = '') or (Token = SavedToken) then Exit;
+  if ForceDirectories(ExtractFileDir(TokenFile)) then
+    with TStringList.Create do
+    try
+      Add(Token);
+      SaveToFile(TokenFile);
+    finally
+      Free;
+    end;
+end;
 
 const
   EV_SYN = 0;
@@ -203,11 +237,12 @@ end;
 function Ask(const Method: string; WaitMs: cardinal): boolean;
 const
   Keyboard: dbus_uint32_t = 1;
+  UntilRevoked: dbus_uint32_t = 2;
 var
   Call: PDBusMessage;
   Args, Options: DBusMessageIter;
-  Token, Parent: PChar;
-  Key, Value: string;
+  Token, Parent, Restore: PChar;
+  Key, Value, Saved: string;
 begin
   Call := NewCall(Method, Args);
   Parent := '';
@@ -222,10 +257,25 @@ begin
     AddOption(Options, 'session_handle_token', DBUS_TYPE_STRING, 's', @Token);
     Key := 'session_handle';
   end;
-  if Method = 'SelectDevices' then AddOption(Options, 'types', DBUS_TYPE_UINT32, 'u', @Keyboard);
+  if Method = 'SelectDevices' then
+  begin
+    AddOption(Options, 'types', DBUS_TYPE_UINT32, 'u', @Keyboard);
+    // ask the desktop to remember the answer, and hand back what it remembered last time
+    AddOption(Options, 'persist_mode', DBUS_TYPE_UINT32, 'u', @UntilRevoked);
+    Saved := SavedToken;
+    Restore := PChar(Saved);
+    if Saved <> '' then AddOption(Options, 'restore_token', DBUS_TYPE_STRING, 's', @Restore);
+  end;
+  if Method = 'Start' then Key := 'restore_token';
   dbus_message_iter_close_container(@Args, @Options);
   Result := PortalAsk(Portal, Call, WaitMs, Key, Value);
-  if Result and (Key <> '') then Session := Value;
+  if Method = 'CreateSession' then
+  begin
+    Session := Value;
+    Result := Result and (Session <> '');
+  end;
+  // the token can change each time; the latest is the one that works next run
+  if Result and (Method = 'Start') then SaveToken(Value);
 end;
 
 function PortalReady: boolean;

@@ -32,7 +32,7 @@
 ## Known limitations
 
 Wayland input (uinput) types plain text as a US layout; text beyond ASCII goes
-through the RemoteDesktop portal, which asks the user each run. Watching keys
+through the RemoteDesktop portal, which asks the user once per application. Watching keys
 and clicks reads the kernel's input devices with a udev rule. All tested on KDE
 Plasma 6. Wayland screenshots use the screenshot portal. Wayland hotkey
 registration is a stub: registration remains false. Global monitoring and window management use X11 and do not cover

@@ -392,13 +392,17 @@ type it, and the lock keys cannot be read.
 **Unicode text** is typed through the desktop's
 `org.freedesktop.portal.RemoteDesktop`, whose `NotifyKeyboardKeysym` takes
 any character and does not care about the layout. The desktop asks the user
-to allow it ("Control input devices" on KDE), once in each run of the
-program, so the portal is left alone until `TypeText` meets a character the
-virtual keyboard cannot press. From then on all typed text goes that way,
-which keeps it in order and right on any layout. If the user says no, or
-the desktop has no such portal, characters beyond ASCII are skipped as
-before. Tested on KDE Plasma 6 with accents, Greek, Cyrillic, Chinese and
-emoji; GNOME has the same portal and has not been tried.
+to allow it - on KDE, "Control input devices" with "Allow restoring on
+future sessions" ticked - and gives back a token that stands for the
+answer. The token is kept in the application's configuration directory
+(`GetAppConfigDir`, file `wayland-typing.token`), so the question comes once
+per application, not once per run; delete the file to be asked again. The
+portal is left alone until `TypeText` meets a character the virtual keyboard
+cannot press; from then on all typed text goes that way, which keeps it in
+order and right on any layout. If the user says no, or the desktop has no
+such portal, characters beyond ASCII are skipped as before. Tested on KDE
+Plasma 6 with accents, Greek, Cyrillic, Chinese and emoji, asked once across
+runs; GNOME has the same portal and has not been tried.
 
 The pointer goes where it is told in screen coordinates. A `THIDMouse` with
 `RelativeTo` or `RelativeWindow` set raises an error on Wayland instead of
