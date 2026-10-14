@@ -6,13 +6,13 @@ and watch the clipboard, the power supply, and session idle time. Ten
 nonvisual components to drop on a form, the library underneath them, and a
 command-line tool that drives any program from a script.
 
-Three pieces, three directories:
+The repository has three parts:
 
 | | |
 |---|---|
-| [`hidctl/`](hidctl/) | The command-line automation tool. Does the work people reach for xdotool to do, in one binary, on an API you can also call from Pascal. |
+| [`hidctl/`](hidctl/) | The command-line automation tool. Covers most of what xdotool does, in one binary, using the same API you can call from Pascal. |
 | [`lazhidcontrol/`](lazhidcontrol/) | The package: components, input backends, window management. |
-| [`examples/`](examples/) | The demo: every component at work, a tab for each job. |
+| [`examples/`](examples/) | The demo program, with a tab for each area. |
 
 ## The components
 
@@ -23,15 +23,15 @@ Three pieces, three directories:
 | `THIDMouse` | Moves, clicks, and scrolls; coordinates can be screen, control, or window relative. |
 | `THIDWindow` | Finds windows by title, class, or process; waits for them, activates, moves, resizes. |
 | `THIDScreenshot` | Captures the desktop, a monitor, a window, a rectangle, or a drag selection. |
-| `THIDClipboardMonitor` | Fires `OnChanged` when anything lands on the clipboard, without reading it. |
+| `THIDClipboardMonitor` | Fires `OnChanged` when the clipboard content changes, without reading it. |
 | `THIDPowerMonitor` | Sleep and wake notifications, power source, battery percentage, charging. |
 | `THIDSystemIdle` | Fires `OnIdle` and `OnActive` as session input stops and resumes. |
 | `THIDInputMonitor` | Reports key presses and mouse clicks anywhere on the system, for recording a task to play back. |
-| `THIDPermission` | Tells the user what this desktop needs allowed and gets it allowed: the udev rule on Wayland through the system's password dialog, the Privacy & Security prompts on macOS. |
+| `THIDPermission` | Explains which permissions this desktop needs and requests them: the udev rule on Wayland through the system's password dialog, the Privacy & Security prompts on macOS. |
 
-Every component has palette icons, Object Inspector hints on every property,
-an `OnError` event instead of surprise dialogs, and does nothing in the
-designer or at form load beyond what you enabled.
+Every component has palette icons and Object Inspector hints on every
+property, reports errors through `OnError` rather than dialogs, and does
+nothing in the designer or at form load beyond what you enabled.
 
 [MANUAL.md](MANUAL.md) covers each component in detail, the library beneath
 them, and the per-platform notes.
@@ -48,10 +48,10 @@ lazbuild examples/automation/AutomationDemo.lpi
 lazbuild hidctl/hidctl.lpi
 ```
 
-Dependencies are `LCL` and `FCL`. Linux also wants the X11, Xtst and D-Bus
-libraries that every desktop already has.
+Dependencies are `LCL` and `FCL`. Linux also needs the X11, Xtst and D-Bus
+libraries, which every desktop has.
 
-## A taste
+## Example
 
 ```pascal
 // Drop a THIDWindow and a THIDMouse on a form, or create them in code:
@@ -70,23 +70,22 @@ Or skip the components and use the library directly:
 uses HIDMouseAndKeyInput, LCLType;
 KeyInput.PressString('Hello World!');
 KeyInput.Press(VK_RETURN);
-MouseInput.Move([], 100, 100, 500);  // walk there over half a second
+MouseInput.Move([], 100, 100, 500);  // move there over 500 ms
 MouseInput.Click(mbLeft, []);
 ```
 
 ## hidctl
 
-Everything above, from a shell - on Linux, Windows and macOS. It answers to
-xdotool's command names, chained on one line the way xdotool takes them:
+The same functions from a shell, on Linux, Windows and macOS. It accepts
+xdotool's command names, chained on one line as xdotool does:
 
 ```sh
 hidctl search --name "Text Editor" windowactivate key ctrl+a type "Hello" key Return
 ```
 
-It also runs scripts, one command per line from a file or standard input, in
-a vocabulary of its own that works in coordinates relative to the target
-window - so a test does not break because a window opened two pixels lower
-today.
+It also runs scripts, one command per line from a file or standard input,
+with its own commands that use coordinates relative to the target window, so
+a script still works when the window opens somewhere else.
 
 ```sh
 ./hidctl/hidctl --window "Some App" - <<EOF
@@ -102,7 +101,7 @@ EOF
 It covers the pointer, the keyboard, window find/wait/activate/geometry,
 screenshots of the window, the desktop, or an area, the clipboard, idle time,
 and power status. `hidctl --help` prints every command;
-[hidctl/README.md](hidctl/README.md) says which of xdotool's it covers. We use it, against a nested X server, to drive the GUI tests of our
+[hidctl/README.md](hidctl/README.md) lists which xdotool commands it supports. We use it, against a nested X server, to drive the GUI tests of our
 other projects.
 
 ## What is tested, what is not
@@ -134,8 +133,8 @@ Without a permission the call fails or comes back empty; nothing crashes.
 One Mac difference: a minimized window is not in the window list, so keep
 its handle if you mean to bring it back.
 
-**On Wayland the user is asked one thing, once**, and the package does the
-asking. Which thing depends on what the program does:
+**On Wayland the user grants access once**, through a prompt the package
+starts. Which prompt depends on what the program does:
 
 - *Typing and the mouse only:* the desktop's own "may this program control
   input devices" question, through its RemoteDesktop portal, the first time
@@ -146,21 +145,20 @@ asking. Which thing depends on what the program does:
 - *Watching keys and clicks as well:* there is no portal for watching, so
   that takes a small udev rule, and the same password installs a second
   rule that lets typing and the mouse go through the kernel's virtual
-  devices - the desktop's question is then never needed. Drop
+  devices, so the portal prompt is not used. Drop
   `THIDPermission` on the form with both needs and call `Ask`: it shows the
   user what is being allowed and the exact files, then the system's own
   password dialog installs them. The manual has the rules for anyone who
   would rather write them by hand.
 
-The one exception: a virtual keyboard presses keys, not characters, so
-text beyond ASCII still goes through the desktop's question the first time
-it comes up. Set `THIDKeyboard.WaylandUnicode` off and it never does;
+One exception: a virtual keyboard presses keys, not characters, so text
+beyond ASCII still goes through the desktop's portal prompt the first time. Set `THIDKeyboard.WaylandUnicode` off and it never does;
 `TypeText` refuses such text instead.
 
-Plain text through the virtual keyboard arrives as a US layout would type
-it. Wayland does not tell a program where windows are, its own included, so
-the mouse works in screen coordinates only and other programs' windows are
-out of reach. Screenshots come from the desktop's portal. KDE Plasma 6 is
+Text sent through the virtual keyboard is typed with a US layout. Wayland
+does not tell a program where windows are, its own included, so the mouse
+works in screen coordinates only and other programs' windows cannot be
+targeted. Screenshots come from the desktop's portal. KDE Plasma 6 is
 what was tested; GNOME and other desktops have not been, and
 [reports are welcome](https://github.com/TonyStone31/LazHIDControl/issues).
 
@@ -168,7 +166,7 @@ what was tested; GNOME and other desktops have not been, and
 a program that, so `THIDInputMonitor` does not watch clicks there - its
 `OnError` says why - and a recorder cannot say where anything was clicked. Per-desktop workarounds exist, and this package
 does not use them: it has to work the same everywhere with nothing extra to
-install. The one road that does is the desktop's screen-sharing portal,
+install. The only option that does is the desktop's screen-sharing portal,
 which can report the cursor alongside the screen - [TODO.md](TODO.md) has
 the plan, the costs and a first step, for anyone who wants to take it on.
 
