@@ -165,8 +165,8 @@ what was tested; GNOME and other desktops have not been, and
 [reports are welcome](https://github.com/TonyStone31/LazHIDControl/issues).
 
 **Still wanted on Wayland: where the pointer is.** No Wayland desktop tells
-a program that, so clicks are watched without a position and a recorder
-cannot say where they were. Per-desktop workarounds exist, and this package
+a program that, so `THIDInputMonitor` does not watch clicks there - its
+`OnError` says why - and a recorder cannot say where anything was clicked. Per-desktop workarounds exist, and this package
 does not use them: it has to work the same everywhere with nothing extra to
 install. The one road that does is the desktop's screen-sharing portal,
 which can report the cursor alongside the screen - [TODO.md](TODO.md) has

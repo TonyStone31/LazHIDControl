@@ -32,7 +32,7 @@ uses
   {$ELSEIF DEFINED(DARWIN)}
   CocoaGlobalMouseMonitor
   {$ELSEIF DEFINED(LINUX)}
-  XGlobalMouseMonitor, EvdevMonitor, SysUtils
+  XGlobalMouseMonitor, SysUtils
   {$ELSE}
   XGlobalMouseMonitor
   {$ENDIF};
@@ -40,8 +40,8 @@ uses
 function CreateGlobalMouseListener: TGlobalMouseListener;
 begin
   {$IF DEFINED(LINUX)}
-  // a Wayland compositor shows a program no clicks but its own; the kernel shows them all
-  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then Exit(InitializeEvdevMouseListener);
+  // a Wayland desktop tells no program where the pointer is, so there is nothing honest to report
+  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then Exit(nil);
   {$ENDIF}
   Result := InitializeGlobalMouseListener;
 end;

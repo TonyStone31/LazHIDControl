@@ -3,35 +3,29 @@ unit EvdevMonitor;
 {$mode objfpc}{$H+}
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 
-{ Keys and mouse buttons straight from the kernel's input devices, for a
-  Wayland session, where the compositor shows a program nothing but its own.
-  Reading /dev/input/event* needs permission; the manual has the udev rule.
+{ Keys straight from the kernel's input devices, for a Wayland session,
+  where the compositor shows a program nothing but its own.  Reading
+  /dev/input/event* needs permission; the manual has the udev rule.
 
   The kernel knows keys, not layouts, so letters are reported as a US
-  keyboard has them.  And it does not know where the pointer is - the
-  compositor keeps that to itself - so a click arrives without a position. }
+  keyboard has them.  Clicks are not watched here: the kernel does not know
+  where the pointer is, and a click without a position is no use. }
 
 interface
 
-uses GlobalKeyMonitorIntf, GlobalMouseMonitorIntf;
+uses GlobalKeyMonitorIntf;
 
 function InitializeEvdevKeyListener: TGlobalKeyListener;
-function InitializeEvdevMouseListener: TGlobalMouseListener;
 
 const
-  EvdevHelp = 'Watching the keyboard and mouse on Wayland needs read access to /dev/input: THIDPermission gets it, or the manual has the udev rule.';
+  EvdevHelp = 'Watching the keyboard on Wayland needs read access to /dev/input: THIDPermission gets it, or the manual has the udev rule.';
 
 implementation
 
-uses Classes, SysUtils, Controls, LCLType, BaseUnix, LinuxKeyCodes;
+uses Classes, SysUtils, LCLType, BaseUnix, LinuxKeyCodes;
 
 const
   EV_KEY = 1;
-  BTN_LEFT = $110;
-  BTN_RIGHT = $111;
-  BTN_MIDDLE = $112;
-  BTN_SIDE = $113;
-  BTN_EXTRA = $114;
 
 type
   // struct input_event
@@ -43,8 +37,8 @@ type
 
   TKeyHandler = procedure(Code: word; Down: boolean) of object;
 
-  { One thread reads every device it may open and reports each key or
-    button going down or up.  New devices are looked for every two seconds,
+  { One thread reads every device it may open and reports each key going
+    down or up.  New devices are looked for every two seconds,
     so a keyboard plugged in later, or access granted later, is picked up. }
   TReader = class(TThread)
   private
@@ -68,15 +62,6 @@ type
   private
     Reader: TReader;
     Held: TShiftState;
-    procedure Seen(Code: word; Down: boolean);
-  protected
-    procedure DoStartMonitoring; override;
-    procedure DoStopMonitoring; override;
-  end;
-
-  TEvdevMouseListener = class(TGlobalMouseListener)
-  private
-    Reader: TReader;
     procedure Seen(Code: word; Down: boolean);
   protected
     procedure DoStartMonitoring; override;
@@ -233,51 +218,9 @@ begin
   if Down and (Key <> 0) and Assigned(OnKeyPress) then OnKeyPress(Key, Held);
 end;
 
-{ TEvdevMouseListener }
-
-procedure TEvdevMouseListener.DoStartMonitoring;
-begin
-  Reader := TReader.Create(@Seen);
-  IsActive := Reader.Opened;
-  if not IsActive then FreeAndNil(Reader);
-end;
-
-procedure TEvdevMouseListener.DoStopMonitoring;
-begin
-  if Reader <> nil then
-  begin
-    Reader.Terminate;
-    Reader.WaitFor;
-    FreeAndNil(Reader);
-  end;
-  IsActive := False;
-end;
-
-procedure TEvdevMouseListener.Seen(Code: word; Down: boolean);
-var
-  Button: TMouseButton;
-begin
-  if not Down then Exit;
-  case Code of
-    BTN_LEFT: Button := mbLeft;
-    BTN_RIGHT: Button := mbRight;
-    BTN_MIDDLE: Button := mbMiddle;
-    BTN_SIDE: Button := mbExtra1;
-    BTN_EXTRA: Button := mbExtra2;
-    else
-      Exit;
-  end;
-  if Assigned(OnMouseClick) then OnMouseClick(Button, -1, -1);
-end;
-
 function InitializeEvdevKeyListener: TGlobalKeyListener;
 begin
   Result := TEvdevKeyListener.Create;
-end;
-
-function InitializeEvdevMouseListener: TGlobalMouseListener;
-begin
-  Result := TEvdevMouseListener.Create;
 end;
 
 end.

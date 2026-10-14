@@ -8,9 +8,9 @@ is big, so two people do not build the same thing.
 **The problem.** A Wayland desktop never tells a program where the pointer
 is, and no permission the user can grant changes that. The kernel only
 reports that the mouse moved by so much; the desktop alone knows where it
-ended up. So `THIDInputMonitor` reports clicks with -1, -1, and a recorder
-cannot capture where anything was clicked. Playing clicks back is fine -
-that already works to the pixel.
+ended up. So `THIDInputMonitor` does not watch clicks there - `OnError`
+says why - and a recorder cannot capture where anything was clicked.
+Playing clicks back is fine - that already works to the pixel.
 
 **What other tools do.** Mostly nothing: ydotool, dotool and wtype only play
 back; xdotool and its relatives are X11 tools. The rest ask one desktop its

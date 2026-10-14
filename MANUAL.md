@@ -280,12 +280,14 @@ arrives until the user allows the program under Privacy & Security > Input
 Monitoring. On Wayland the compositor shows a program nothing but its own
 input, so the component reads the kernel's input devices instead -
 `/dev/input/event*`, which takes the second line of the udev rule in
-"Wayland, in detail". That gives every key with its modifiers and every
-mouse button, from any number of keyboards and mice, plugged in whenever.
-Two things the kernel does not know: the layout, so letters are reported as
-a US keyboard has them; and where the pointer is, so `OnMouseClick` arrives
-with the button and -1, -1. Without the rule the component says what it
-needs.
+"Wayland, in detail". That gives every key with its modifiers, from any
+number of keyboards, plugged in whenever; letters are reported as a US
+keyboard has them, since the kernel knows no layout. Clicks are not watched
+on Wayland: no desktop there tells a program where the pointer is, so a
+click could not say where it was, and **OnError** says exactly that rather
+than handing over half an answer - a user whose program wanted it learns
+why it is missing. [TODO.md](TODO.md) has the one road that could fix it.
+Without the rule the component says what it needs.
 
 It sees everything typed, passwords included. Say so in your program when
 it is running.
@@ -465,7 +467,7 @@ SUBSYSTEM=="input", KERNEL=="event*", TAG+="uaccess"
 ```
 
 The first is for typing and the mouse, the second for `THIDInputMonitor`,
-which reads what the keyboard and mouse do. `THIDPermission` writes exactly
+which reads the keyboard. `THIDPermission` writes exactly
 these, after explaining them to the user, and asks for the first only where
 it is the better deal: the program watches input too, or the desktop has no
 portal. By hand, reload with
