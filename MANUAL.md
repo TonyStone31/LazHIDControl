@@ -81,6 +81,18 @@ HIDMouse1.MoveTo(100, 100);
 HIDMouse1.Click(mbLeft);
 ```
 
+**Keys and characters are different things**, and only characters vary by
+platform. `PressKey`, `KeyDown` and `KeyUp` press a key - a place on the
+keyboard, which the user's layout turns into a letter - and behave the same
+everywhere, Wayland included; that is also why a recorded run of keys plays
+back right. `TypeText` sends characters, and a character with no key on the
+keyboard (é, €, 中, an emoji) needs the system's own way in: `SendInput` with
+`KEYEVENTF_UNICODE` on Windows, a briefly borrowed spare key on X11,
+`CGEventKeyboardSetUnicodeString` on macOS, and on Wayland the desktop's
+portal, which asks the user once. Shortcuts such as Ctrl+Shift+U or Alt and
+a number are not used: they belong to an input method or to one program,
+and in the programs that do not know them they type garbage.
+
 `TypingInterval` adds milliseconds between characters. `Modifiers` applies
 Ctrl, Alt, and Shift to `PressKey`; `TypeText` sends literal text. Existing
 UTF-8 handling and line-ending normalization stay in the keyboard backend.
@@ -90,15 +102,21 @@ into whatever then holds the focus - the way to hand text to an application
 that takes typing but not a paste - and its sample text exercises the Unicode
 path, currency to emoji.
 
-`PermissionNote` is for Wayland, where text beyond ASCII goes through the
-desktop and the desktop asks the user's permission the first time (see
+`PermissionNote` is for Wayland, where the desktop may ask the user's
+permission the first time the program types or moves the mouse (see
 "Wayland, in detail"). The desktop's question is worded by the desktop; this
 is the sentence your program shows just before it, once, so the user knows
-what is being asked and why. `%s` becomes the program's title. The default
-reads: *To type into other programs, %s needs your desktop's permission to
-control the keyboard. Your desktop will ask next. Leave the "allow restoring"
-box ticked and you will not be asked again.* Set it blank to show nothing. It
-is never shown when the desktop already remembers the answer.
+what is being asked and why. `%s` becomes the program's title. Left empty it
+reads: *To type and use the mouse in other programs, %s needs your desktop's
+permission. Your desktop will ask next. If it offers to remember the answer,
+let it, and you will not be asked again.* It is never shown when the desktop
+already remembers the answer, and `THIDMouse` uses it too.
+
+`WaylandUnicode` matters only where the udev rule already lets the program
+type on Wayland. A virtual keyboard cannot press characters beyond ASCII, so
+those still need the desktop's question, the first time one comes up. Turn
+it off and the question is never asked: `TypeText` raises on such text
+before typing any of it.
 
 `MovementDuration` controls mouse movement timing. Set `RelativeTo` to a form
 or control to make `MoveTo` use its client coordinates. For external windows,
@@ -290,7 +308,9 @@ programs' windows. Then:
 - `Ask` shows the package's dialog - the explanation, the files, **Allow**
   or **Not now** - and grants on Allow. True when nothing is missing after.
 
-On **Linux under Wayland** a grant writes one small file per need under
+On **Linux under Wayland** `hnInput` is missing only where the desktop has
+no RemoteDesktop portal or `hnWatching` is wanted too; elsewhere the desktop
+asks by itself, the first time. A grant writes one small file per need under
 `/etc/udev/rules.d` (the lines are in "Wayland, in detail") through
 `pkexec`, so the system's own dialog asks for the administrator password,
 once; then udev is reloaded and the devices are open to the session at
@@ -406,14 +426,20 @@ them with [hidctl](hidctl/README.md).
 ## Wayland, in detail
 
 The short version, for what the user sees. A Wayland desktop lets no
-program touch the keyboard and mouse on its own, so the user is asked, once
-each, for up to two things: the administrator password, which `THIDPermission`
-asks for through the system's own dialog and which installs the udev rule
-that typing, the mouse and watching run on; and, only when text beyond
-ASCII is typed, the desktop's own "may this program control input devices"
-question, which `THIDKeyboard` introduces with `PermissionNote` and whose
-answer the desktop remembers. Neither question comes back. The rest of this
-section is how each piece works.
+program touch the keyboard and mouse on its own, so the user is asked once,
+and the package picks the lighter question:
+
+- A program that only types and clicks gets the desktop's own "may this
+  program control input devices" question, which `THIDKeyboard` introduces
+  with `PermissionNote` and whose answer the desktop remembers. No password.
+- A program that also watches the keyboard needs the administrator password
+  for that anyway - no portal hands out watching - so `THIDPermission` asks
+  for it once and installs both udev rules, and typing and the mouse run on
+  the kernel's virtual devices without the desktop's question. Text beyond
+  ASCII is the one thing that still brings that question, once, unless
+  `WaylandUnicode` is off.
+
+Neither question comes back. The rest of this section is how each piece works.
 
 **Screenshots** come from the desktop's `org.freedesktop.portal.Screenshot`.
 The portal hands over the whole desktop and `THIDScreenshot` cuts the monitor,
@@ -421,13 +447,14 @@ region, or dragged selection out of it. The desktop may ask the user for
 permission the first time. Capturing a window by title is not possible: a
 Wayland program cannot learn where another program's window is.
 
-**Keyboard and mouse** go through the kernel's
-[`uinput`](https://docs.kernel.org/input/uinput.html), since there is no XTest
-to ask. `waylandmouseandkeyinput.pas` creates a virtual keyboard and a virtual
-absolute pointer that any compositor reads like hardware. Tested on KDE Plasma
-6: typing, keys with modifiers, moving, clicking and the scroll wheel. It
-needs write access to `/dev/uinput`, which belongs to root by default. One
-udev rule gives it to whoever is logged in at the machine:
+**Keyboard and mouse** go one of two ways, chosen at the first input in
+`waylandmouseandkeyinput.pas`: the kernel's virtual devices when the
+program may already write to them, the desktop's portal otherwise.
+
+The kernel's [`uinput`](https://docs.kernel.org/input/uinput.html) makes a
+virtual keyboard and a virtual absolute pointer that any compositor reads
+like hardware. It needs write access to `/dev/uinput`, which belongs to root
+by default. One udev rule gives it to whoever is logged in at the machine:
 
 ```
 # /etc/udev/rules.d/60-lazhidcontrol-uinput.rules
@@ -439,31 +466,41 @@ SUBSYSTEM=="input", KERNEL=="event*", TAG+="uaccess"
 
 The first is for typing and the mouse, the second for `THIDInputMonitor`,
 which reads what the keyboard and mouse do. `THIDPermission` writes exactly
-these, after explaining them to the user; by hand, reload with
+these, after explaining them to the user, and asks for the first only where
+it is the better deal: the program watches input too, or the desktop has no
+portal. By hand, reload with
 `sudo udevadm control --reload && sudo udevadm trigger`. Be clear with
 whoever installs it about what it is: the access goes to the person sitting
 at the machine, for every program they run, not to one program - Linux has
 no narrower grant for a device outside a Flatpak. Deleting the file and
 reloading takes it back from then on; a program that already has a device
-open keeps it until it exits. Without access, `THIDKeyboard` and `THIDMouse`
-raise an error that says so. A virtual keyboard presses keys, not
+open keeps it until it exits. A virtual keyboard presses keys, not
 characters: text is typed as a US layout would type it, and the lock keys
 cannot be read.
 
-**Unicode text** is typed through the desktop's
-`org.freedesktop.portal.RemoteDesktop`, whose `NotifyKeyboardKeysym` takes
-any character and does not care about the layout. The desktop asks the user
-to allow it - on KDE, "Control input devices" with "Allow restoring on
-future sessions" ticked - and gives back a token that stands for the
-answer. The token is kept in the application's configuration directory
-(`GetAppConfigDir`, file `wayland-typing.token`), so the question comes once
-per application, not once per run; delete the file to be asked again.
-`THIDKeyboard.PermissionNote` is what the user reads just before the
-desktop's question. The portal is left alone until `TypeText` meets a
-character the virtual keyboard cannot press; from then on all typed text
-goes that way, which keeps it in order and right on any layout. If the user says no, or the desktop has no
-such portal, characters beyond ASCII are skipped as before. Tested on KDE
-Plasma 6 with accents, Greek, Cyrillic, Chinese and emoji, asked once across
+The desktop's `org.freedesktop.portal.RemoteDesktop` (KDE Plasma and GNOME;
+not the wlroots desktops) needs no file and no password. The desktop asks
+the user - on KDE, "Control input devices" with "Allow restoring on future
+sessions" ticked - and gives back a token that stands for the answer. The
+token is kept in the application's configuration directory
+(`GetAppConfigDir`, file `wayland-input.token`), so the question comes once
+per application, not once per run; delete the file to be asked again. KDE
+then shows a "remote control session started" notice each run, which is a
+notice and not a question. Keys go as the same kernel key codes; text goes
+by `NotifyKeyboardKeysym`, which takes any character and does not care
+about the layout. The pointer is the awkward part: without sharing the
+screen the portal only moves it by an amount, and nothing says where it is,
+so each move pushes it into the top right corner - which no desktop acts on
+unless told to - and brings it back from there. On one screen that lands
+exactly; more than one screen has not been tried. KDE puts its question
+behind a full-screen window, so ask before going full screen.
+
+On the uinput road, text beyond ASCII still goes through the portal, which
+is the desktop's question once; from then on all typed text goes that way,
+which keeps it in order and right on any layout. If the user says no,
+those characters are skipped. With `WaylandUnicode` off it is never asked
+and `TypeText` raises instead. Tested on KDE Plasma 6, both roads: clicks
+to the pixel, keys, the wheel, and accents to emoji, asked once across
 runs; GNOME has the same portal and has not been tried.
 
 The pointer goes where it is told in screen coordinates. A `THIDMouse` with

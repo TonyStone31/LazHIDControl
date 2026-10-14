@@ -6,11 +6,20 @@ interface
 uses Classes, SysUtils, Controls, Forms, WindowManagerIntf, HIDWindow;
 
 type
+  { Keys and characters are two different things. PressKey, KeyDown and KeyUp
+    press a key - a place on the keyboard, which the user's layout turns into
+    a character - and work the same everywhere. TypeText sends characters,
+    and each system has its own way to deliver one the keyboard has no key
+    for: Windows, X11 and macOS need nothing, Wayland asks the user once (see
+    WaylandUnicode). Not Ctrl+Shift+U or Alt codes: those belong to some
+    programs and not others. }
   THIDKeyboard = class(TComponent)
   private
     Delay: cardinal;
     KeyModifiers: TShiftState;
     Note: string;
+    Unicode: boolean;
+    procedure SetPermissionNote(const Value: string);
   public
     constructor Create(AOwner: TComponent); override;
     procedure TypeText(const Text: string);
@@ -21,18 +30,23 @@ type
     // Extra milliseconds to rest between typed characters. Zero types at the
     // backend's own pace. TypeText sends to whatever application has the focus.
     // On macOS nothing arrives until the user allows your program under
-    // Privacy & Security > Accessibility. On Wayland typing needs a udev rule,
-    // which THIDPermission installs, and text beyond ASCII goes through the
-    // desktop, which asks the user once - see PermissionNote.
+    // Privacy & Security > Accessibility. On Wayland the desktop asks the user
+    // once - see PermissionNote and WaylandUnicode.
     property TypingInterval: cardinal read Delay write Delay default 0;
     // Ctrl, Alt, and Shift held around PressKey calls. TypeText ignores this
     // and types its text literally.
     property Modifiers: TShiftState read KeyModifiers write KeyModifiers default [];
     // Wayland: shown to the user once, just before the desktop asks whether
-    // this program may control the keyboard - which it does the first time
-    // TypeText has a character beyond ASCII. The desktop's own question is
-    // not ours to word; this is. Empty shows nothing. %s is the program's title.
-    property PermissionNote: string read Note write Note;
+    // this program may control the keyboard and mouse. The desktop's own
+    // question is not ours to word; this is. Empty uses the package's own
+    // sentence. %s is the program's title. THIDMouse uses it too.
+    property PermissionNote: string read Note write SetPermissionNote;
+    // Wayland, where THIDPermission's udev rule lets the program type: keys
+    // need nothing more, but a character with no key on the keyboard - é, €,
+    // emoji - goes through the desktop, which asks the user once. False never
+    // asks, and TypeText raises on such text instead of typing any of it.
+    // Plain text without the desktop is pressed as a US layout has it.
+    property WaylandUnicode: boolean read Unicode write Unicode default True;
   end;
 
   THIDMouse = class(TComponent)
@@ -58,7 +72,7 @@ type
     // Milliseconds MoveTo spends walking the pointer to its target in small
     // steps. Zero jumps straight there. On macOS the pointer and clicks need
     // the user to allow your program under Privacy & Security > Accessibility;
-    // on Wayland they need a udev rule, which THIDPermission installs.
+    // on Wayland the desktop asks the user once (THIDKeyboard.PermissionNote).
     property MovementDuration: cardinal read Duration write Duration default 0;
     // Ctrl, Alt, and Shift held during clicks, moves, and scrolls.
     property Modifiers: TShiftState read MouseModifiers write MouseModifiers default [];
@@ -75,14 +89,33 @@ type
 implementation
 
 uses HIDMouseAndKeyInput, WindowManager
-  {$ifdef linux}, WaylandMouseAndKeyInput{$endif};
+  {$ifdef linux}, LazUTF8, WaylandMouseAndKeyInput{$endif};
+
+resourcestring
+  DefaultPermissionNote = 'To type and use the mouse in other programs, %s needs your desktop''s permission. ' +
+    'Your desktop will ask next. If it offers to remember the answer, let it, and you will not be asked again.';
+
+{$ifdef linux}
+function OnWayland: boolean;
+begin
+  Result := GetEnvironmentVariable('WAYLAND_DISPLAY') <> '';
+end;
+{$endif}
 
 { Raises when input cannot be sent from here, saying why. }
 procedure CheckAvailable(Component: TComponent; Modifiers: TShiftState);
+{$ifdef linux}
+var
+  Problem: string;
+{$endif}
 begin
   if csDesigning in Component.ComponentState then raise EInvalidOperation.Create('Input is disabled in the designer.');
   {$ifdef linux}
-  if (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') and not UInputReady then raise EInvalidOperation.Create(UInputHelp);
+  if OnWayland then
+  begin
+    Problem := WaylandInputProblem;
+    if Problem <> '' then raise EInvalidOperation.Create(Problem);
+  end;
   {$endif}
   if Modifiers - [ssCtrl, ssAlt, ssShift] <> [] then raise EInvalidOperation.Create('Supported modifiers are Ctrl, Alt, and Shift.');
   if not Assigned(KeyInput) or not Assigned(MouseInput) then raise EInvalidOperation.Create('Input is not available on this platform.');
@@ -91,15 +124,27 @@ end;
 constructor THIDKeyboard.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  Note := 'To type into other programs, %s needs your desktop''s permission to control the keyboard. ' +
-    'Your desktop will ask next. Leave the "allow restoring" box ticked and you will not be asked again.';
+  Unicode := True;
+end;
+
+procedure THIDKeyboard.SetPermissionNote(const Value: string);
+begin
+  Note := Value;
+  {$ifdef linux}
+  if Value = '' then PortalNote := DefaultPermissionNote
+  else
+    PortalNote := Value;
+  {$endif}
 end;
 
 procedure THIDKeyboard.TypeText(const Text: string);
 begin
   CheckAvailable(Self, Modifiers);
   {$ifdef linux}
-  PortalNote := StringReplace(Note, '%s', Application.Title, []);
+  PortalForText := WaylandUnicode;
+  // all or nothing: refuse before the first character
+  if OnWayland and not WaylandUnicode and TextNeedsPortal and (UTF8Length(Text) <> Length(Text)) then
+    raise EInvalidOperation.Create('This text has characters a keyboard cannot type on Wayland without the desktop''s permission, and WaylandUnicode is off.');
   {$endif}
   KeyInput.PressString(Text, TypingInterval);
 end;
@@ -155,7 +200,7 @@ begin
   CheckAvailable(Self, Modifiers);
   {$ifdef linux}
   // a Wayland program is never told where its own windows are on the screen
-  if (Assigned(RelativeTo) or Assigned(RelativeWindow)) and (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') then
+  if (Assigned(RelativeTo) or Assigned(RelativeWindow)) and OnWayland then
     raise EInvalidOperation.Create('On Wayland MoveTo takes screen coordinates only; RelativeTo and RelativeWindow cannot work there.');
   {$endif}
   if Assigned(RelativeWindow) then MoveToWindow(RelativeWindow.Handle, X, Y)
@@ -214,5 +259,10 @@ begin
     Inc(Steps);
   end;
 end;
+
+{$ifdef linux}
+initialization
+  PortalNote := DefaultPermissionNote;
+{$endif}
 
 end.

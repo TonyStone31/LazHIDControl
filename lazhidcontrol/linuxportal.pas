@@ -25,6 +25,8 @@ procedure AddOption(var Options: DBusMessageIter; Key: PChar; Kind: cint; Signat
 { Sends Call, frees it, and waits for the Response.  True when the desktop
   agreed.  Value is the string the results hold under Key, if they do. }
 function PortalAsk(Connection: PDBusConnection; Call: PDBusMessage; WaitMs: cardinal; const Key: string; out Value: string): boolean;
+// The version of one portal, such as org.freedesktop.portal.RemoteDesktop; 0 when this desktop has none.
+function PortalVersion(Connection: PDBusConnection; const Name: string): cardinal;
 
 implementation
 
@@ -131,6 +133,35 @@ begin
     end;
     Application.ProcessMessages;
   end;
+end;
+
+function PortalVersion(Connection: PDBusConnection; const Name: string): cardinal;
+var
+  Call, Reply: PDBusMessage;
+  Args, variant: DBusMessageIter;
+  Iface, Prop: PChar;
+  Version: dbus_uint32_t;
+begin
+  Result := 0;
+  Call := dbus_message_new_method_call(PortalName, PortalPath, 'org.freedesktop.DBus.Properties', 'Get');
+  Iface := PChar(Name);
+  Prop := 'version';
+  dbus_message_iter_init_append(Call, @Args);
+  dbus_message_iter_append_basic(@Args, DBUS_TYPE_STRING, @Iface);
+  dbus_message_iter_append_basic(@Args, DBUS_TYPE_STRING, @Prop);
+  Reply := dbus_connection_send_with_reply_and_block(Connection, Call, 2000, nil);
+  dbus_message_unref(Call);
+  if Reply = nil then Exit;
+  if (dbus_message_iter_init(Reply, @Args) <> 0) and (dbus_message_iter_get_arg_type(@Args) = DBUS_TYPE_VARIANT) then
+  begin
+    dbus_message_iter_recurse(@Args, @variant);
+    if dbus_message_iter_get_arg_type(@variant) = DBUS_TYPE_UINT32 then
+    begin
+      dbus_message_iter_get_basic(@variant, @Version);
+      Result := Version;
+    end;
+  end;
+  dbus_message_unref(Reply);
 end;
 
 end.

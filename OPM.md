@@ -15,8 +15,8 @@
 - External dependencies on Linux: FPC X11/D-Bus units, linkable X11, Xtst and
   D-Bus libraries, `libXi` for global monitoring on X11; usual LCL/widgetset libraries.
   On Wayland global monitoring reads `/dev/input/event*`, which needs a udev rule.
-  The Wayland input backend uses uinput and needs write access to `/dev/uinput`;
-  Wayland idle time loads `libwayland-client.so.0` at run time. Both were
+  Wayland input goes through the desktop's RemoteDesktop portal, or through
+  uinput where `/dev/uinput` is writable; Wayland idle time loads `libwayland-client.so.0` at run time. Both were
   tested on KDE Plasma 6.
 - Examples: `examples/automation/AutomationDemo.lpi` and the `hidctl/hidctl.lpi`
   command-line tool; both require `LazHIDControl`.
@@ -31,8 +31,9 @@
 
 ## Known limitations
 
-Wayland input (uinput) types plain text as a US layout; text beyond ASCII goes
-through the RemoteDesktop portal, which asks the user once per application. Watching keys
+Wayland input asks the user once per application through the RemoteDesktop
+portal, or uses uinput where a udev rule allows it; uinput types plain text as
+a US layout, and text beyond ASCII still goes through the portal. Watching keys
 and clicks reads the kernel's input devices with a udev rule. All tested on KDE
 Plasma 6. Wayland screenshots use the screenshot portal. Wayland hotkey
 registration is a stub: registration remains false. Global monitoring and window management use X11 and do not cover

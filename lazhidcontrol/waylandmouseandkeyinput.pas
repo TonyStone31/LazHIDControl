@@ -3,21 +3,23 @@ unit WaylandMouseAndKeyInput;
 {$mode objfpc}{$H+}
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 
-{ Keyboard and mouse for Wayland sessions.  There is no XTest to ask there,
-  so this makes two virtual devices through the kernel's uinput, and the
-  compositor reads them like hardware - any compositor, and X11 too.
+{ Keyboard and mouse for Wayland sessions, which give no program XTest's
+  kind of access.  There are two roads.
 
-  It needs write access to /dev/uinput, which is root's by default; the
-  manual has the udev rule.  What a virtual keyboard cannot do: it presses
-  keys, not characters, so text comes out as a US layout would type it and
-  nothing beyond ASCII can be typed; and nothing reports the lock keys.
+  The kernel's uinput: two virtual devices the compositor reads like
+  hardware, on any compositor.  It needs write access to /dev/uinput, the
+  udev rule THIDPermission installs - one password, and the same one a
+  program that watches the keyboard needs anyway.  It presses keys, not
+  characters: text comes out as a US layout types it, nothing beyond ASCII.
 
-  Characters are another matter.  The desktop's RemoteDesktop portal takes
-  a keysym - any character at all - and types it whatever the layout.  It
-  asks the user first, so it is left alone until some text has a character
-  in it that the virtual keyboard cannot press; and the desktop gives back a
-  token that stands for the user's yes, which is kept in the application's
-  configuration directory so the question is asked once, not every run. }
+  The desktop's RemoteDesktop portal, on KDE and GNOME: no password and no
+  file; the desktop asks the user once and hands back a token for the yes,
+  kept in the application's configuration directory.  It types any
+  character whatever the layout, but only moves the pointer by an amount.
+
+  uinput is taken when it is open to us already, so a program that has the
+  rule meets the portal only for text uinput cannot type; otherwise the
+  portal.  Nothing reports the lock keys on either road. }
 
 interface
 
@@ -53,16 +55,20 @@ type
 function InitializeWaylandMouseInput: TMouseInput;
 function InitializeWaylandKeyInput: TKeyInput;
 
-// Makes the two devices on first use.  False when /dev/uinput would not open.
-function UInputReady: boolean;
+// Picks the road at the first input, asking the desktop if it must.
+// Empty when input works, else why it does not.
+function WaylandInputProblem: string;
+// True when this desktop has the RemoteDesktop portal.
+function RemoteControlOffered: boolean;
+// True when text beyond ASCII would need the portal's question.
+function TextNeedsPortal: boolean;
 
 var
-  // Put in front of the user before the desktop's own question the first
-  // time; THIDKeyboard sets it.  Empty shows nothing.
+  // Shown once, just before the desktop's own question; %s is the program's
+  // title.  THIDKeyboard sets it.  Empty shows nothing.
   PortalNote: string = '';
-
-const
-  UInputHelp = 'Wayland input needs write access to /dev/uinput: THIDPermission gets it, or the manual has the udev rule.';
+  // False never opens the portal for text while uinput is the road.
+  PortalForText: boolean = True;
 
 implementation
 
@@ -71,7 +77,7 @@ uses Dialogs, dbus, LinuxPortal, LinuxKeyCodes;
 // Where the desktop's token for this application is kept.
 function TokenFile: string;
 begin
-  Result := GetAppConfigDir(False) + 'wayland-typing.token';
+  Result := GetAppConfigDir(False) + 'wayland-input.token';
 end;
 
 function SavedToken: string;
@@ -153,10 +159,8 @@ begin
   fpWrite(FD, Event, SizeOf(Event));
 end;
 
-// FD by reference: the first call is what opens the devices.
-procedure Send(var FD: cint; Kind, Code: word; Value: longint);
+procedure Send(FD: cint; Kind, Code: word; Value: longint);
 begin
-  if not UInputReady then Exit;
   Emit(FD, Kind, Code, Value);
   Emit(FD, EV_SYN, 0, 0);
 end;
@@ -207,17 +211,7 @@ begin
   Result := (KeyboardFD >= 0) and (PointerFD >= 0);
 end;
 
-function KernelButton(Button: TMouseButton): word;
-begin
-  case Button of
-    mbRight: Result := BTN_RIGHT;
-    mbMiddle: Result := BTN_MIDDLE;
-    else
-      Result := BTN_LEFT;
-  end;
-end;
-
-{ The portal: a session, the keyboard chosen in it, and Start, which is
+{ The portal: a session, the devices chosen in it, and Start, which is
   where the desktop asks the user. }
 
 const
@@ -225,9 +219,21 @@ const
 
 var
   Portal: PDBusConnection = nil;
+  Looked: boolean = False;
   PortalTried: boolean = False;
   PortalOpen: boolean = False;
   Session: string = '';
+
+function RemoteControlOffered: boolean;
+begin
+  if not Looked then
+  begin
+    Looked := True;
+    Portal := PortalConnect;
+    if (Portal <> nil) and (PortalVersion(Portal, RemoteDesktop) = 0) then PortalClose(Portal);
+  end;
+  Result := Portal <> nil;
+end;
 
 function NewCall(const Method: string; out Args: DBusMessageIter): PDBusMessage;
 var
@@ -242,7 +248,7 @@ end;
 
 function Ask(const Method: string; WaitMs: cardinal): boolean;
 const
-  Keyboard: dbus_uint32_t = 1;
+  KeyboardAndPointer: dbus_uint32_t = 3;
   UntilRevoked: dbus_uint32_t = 2;
 var
   Call: PDBusMessage;
@@ -265,7 +271,7 @@ begin
   end;
   if Method = 'SelectDevices' then
   begin
-    AddOption(Options, 'types', DBUS_TYPE_UINT32, 'u', @Keyboard);
+    AddOption(Options, 'types', DBUS_TYPE_UINT32, 'u', @KeyboardAndPointer);
     // ask the desktop to remember the answer, and hand back what it remembered last time
     AddOption(Options, 'persist_mode', DBUS_TYPE_UINT32, 'u', @UntilRevoked);
     Saved := SavedToken;
@@ -285,46 +291,132 @@ begin
 end;
 
 function PortalReady: boolean;
+var
+  Asking: boolean;
 begin
-  if not PortalTried then
+  if not PortalTried and RemoteControlOffered then
   begin
     PortalTried := True;
-    Portal := PortalConnect;
     // a remembered yes needs no explaining
-    if (Portal <> nil) and (PortalNote <> '') and (SavedToken = '') then MessageDlg(PortalNote, mtInformation, [mbOK], 0);
-    PortalOpen := (Portal <> nil) and Ask('CreateSession', 5000) and Ask('SelectDevices', 5000) and Ask('Start', 60000);
-    // the question took the focus; wait for it to go back where the text is going
-    if PortalOpen then Sleep(500);
+    Asking := SavedToken = '';
+    if Asking and (PortalNote <> '') then MessageDlg(StringReplace(PortalNote, '%s', Application.Title, []), mtInformation, [mbOK], 0);
+    PortalOpen := Ask('CreateSession', 5000) and Ask('SelectDevices', 5000) and Ask('Start', 60000);
+    // the question took the focus; wait for it to go back where the input is going
+    if PortalOpen and Asking then Sleep(500);
   end;
   Result := PortalOpen;
 end;
 
-// NotifyKeyboardKeysym(session, options, keysym, state), down and then up.
-procedure TypeKeysym(Sym: dbus_int32_t);
+// One of the portal's Notify calls: the session, no options, then Values typed by Kinds - i, u or d each.
+procedure Notify(const Method, Kinds: string; const Values: array of double);
 var
   Call, Reply: PDBusMessage;
   Args, Options: DBusMessageIter;
-  State: dbus_uint32_t;
+  I: integer;
+  Int: dbus_int32_t;
+  UInt: dbus_uint32_t;
+  real: double;
 begin
-  for State := 1 downto 0 do
-  begin
-    Call := NewCall('NotifyKeyboardKeysym', Args);
-    dbus_message_iter_open_container(@Args, DBUS_TYPE_ARRAY, '{sv}', @Options);
-    dbus_message_iter_close_container(@Args, @Options);
-    dbus_message_iter_append_basic(@Args, DBUS_TYPE_INT32, @Sym);
-    dbus_message_iter_append_basic(@Args, DBUS_TYPE_UINT32, @State);
-    // waiting for the reply keeps the characters in order
-    Reply := dbus_connection_send_with_reply_and_block(Portal, Call, 1000, nil);
-    dbus_message_unref(Call);
-    if Reply <> nil then dbus_message_unref(Reply);
+  Call := NewCall(Method, Args);
+  dbus_message_iter_open_container(@Args, DBUS_TYPE_ARRAY, '{sv}', @Options);
+  dbus_message_iter_close_container(@Args, @Options);
+  for I := 0 to High(Values) do
+    case Kinds[I + 1] of
+      'i':
+      begin
+        Int := Round(Values[I]);
+        dbus_message_iter_append_basic(@Args, DBUS_TYPE_INT32, @Int);
+      end;
+      'u':
+      begin
+        UInt := Round(Values[I]);
+        dbus_message_iter_append_basic(@Args, DBUS_TYPE_UINT32, @UInt);
+      end;
+      else
+      begin
+        real := Values[I];
+        dbus_message_iter_append_basic(@Args, DBUS_TYPE_DOUBLE, @real);
+      end;
+    end;
+  // waiting for the reply keeps the events in order
+  Reply := dbus_connection_send_with_reply_and_block(Portal, Call, 1000, nil);
+  dbus_message_unref(Call);
+  if Reply <> nil then dbus_message_unref(Reply);
+end;
+
+// Latin-1 keysyms are the code points; the rest of Unicode is $01000000 up.
+procedure TypeChar(Code: cardinal);
+begin
+  if Code >= $100 then Code := $01000000 + Code;
+  Notify('NotifyKeyboardKeysym', 'iu', [Code, 1]);
+  Notify('NotifyKeyboardKeysym', 'iu', [Code, 0]);
+end;
+
+{ Which road, chosen at the first input.  A failure is tried again each
+  time, since access can be granted while the program runs. }
+
+var
+  Road: (Undecided, Kernel, Desktop) = Undecided;
+
+function Chosen: boolean;
+begin
+  if Road = Undecided then
+    if UInputReady then Road := Kernel
+    else if PortalReady then Road := Desktop;
+  Result := Road <> Undecided;
+end;
+
+function WaylandInputProblem: string;
+begin
+  if Chosen then Result := ''
+  else if PortalTried then Result := 'The desktop did not allow this program to control the keyboard and mouse.'
+  else
+    Result := 'Wayland input needs the desktop''s remote control portal, or write access to /dev/uinput: THIDPermission gets that, or the manual has the udev rule.';
+end;
+
+function TextNeedsPortal: boolean;
+begin
+  Result := Chosen and (Road = Kernel) and not PortalOpen;
+end;
+
+procedure PressKey(Code: word; State: integer);
+begin
+  if (Code = 0) or not Chosen then Exit;
+  if Road = Desktop then Notify('NotifyKeyboardKeycode', 'iu', [Code, State])
+  else
+    Send(KeyboardFD, EV_KEY, Code, State);
+end;
+
+procedure PressButton(Which: TMouseButton; State: integer);
+var
+  Code: word;
+begin
+  if not Chosen then Exit;
+  case Which of
+    mbRight: Code := BTN_RIGHT;
+    mbMiddle: Code := BTN_MIDDLE;
+    else
+      Code := BTN_LEFT;
   end;
+  if Road = Desktop then Notify('NotifyPointerButton', 'iu', [Code, State])
+  else
+    Send(PointerFD, EV_KEY, Code, State);
+end;
+
+// Positive is up.
+procedure Turn(Steps: integer);
+begin
+  if not Chosen then Exit;
+  if Road = Desktop then Notify('NotifyPointerAxisDiscrete', 'ui', [0, -Steps])
+  else
+    Send(PointerFD, EV_REL, REL_WHEEL, Steps);
 end;
 
 { TWaylandMouseInput }
 
 procedure TWaylandMouseInput.DoDown(Button: TMouseButton);
 begin
-  Send(PointerFD, EV_KEY, KernelButton(Button), 1);
+  PressButton(Button, 1);
   ButtonWentDown := GetTickCount64;
 end;
 
@@ -332,12 +424,24 @@ procedure TWaylandMouseInput.DoUp(Button: TMouseButton);
 begin
   // a press and release in the same instant is not always taken for a click
   while GetTickCount64 - ButtonWentDown < 40 do Sleep(5);
-  Send(PointerFD, EV_KEY, KernelButton(Button), 0);
+  PressButton(Button, 0);
 end;
 
 procedure TWaylandMouseInput.DoMove(ScreenX, ScreenY: integer);
+var
+  Right: integer;
 begin
-  if not UInputReady then Exit;
+  if not Chosen then Exit;
+  if Road = Desktop then
+  begin
+    // The portal moves the pointer by an amount and nothing says where it
+    // is, so it goes into the top right corner first - which no desktop
+    // acts on unless told to - and comes back from there.
+    Right := Screen.DesktopLeft + Screen.DesktopWidth - 1;
+    Notify('NotifyPointerMotion', 'dd', [AbsMax, -AbsMax]);
+    Notify('NotifyPointerMotion', 'dd', [ScreenX - Right, ScreenY - Screen.DesktopTop]);
+    Exit;
+  end;
   Emit(PointerFD, EV_ABS, ABS_X, MulDiv(ScreenX - Screen.DesktopLeft, AbsMax, Screen.DesktopWidth - 1));
   Emit(PointerFD, EV_ABS, ABS_Y, MulDiv(ScreenY - Screen.DesktopTop, AbsMax, Screen.DesktopHeight - 1));
   Emit(PointerFD, EV_SYN, 0, 0);
@@ -345,42 +449,37 @@ end;
 
 procedure TWaylandMouseInput.DoScrollUp;
 begin
-  Send(PointerFD, EV_REL, REL_WHEEL, 1);
+  Turn(1);
 end;
 
 procedure TWaylandMouseInput.DoScrollDown;
 begin
-  Send(PointerFD, EV_REL, REL_WHEEL, -1);
+  Turn(-1);
 end;
 
 { TWaylandKeyInput }
 
 procedure TWaylandKeyInput.DoDown(Key: word);
 begin
-  if KernelKey(Key) <> 0 then
-    Send(KeyboardFD, EV_KEY, KernelKey(Key), 1);
+  PressKey(KernelKey(Key), 1);
 end;
 
 procedure TWaylandKeyInput.DoUp(Key: word);
 begin
-  if KernelKey(Key) <> 0 then
-    Send(KeyboardFD, EV_KEY, KernelKey(Key), 0);
+  PressKey(KernelKey(Key), 0);
 end;
 
 procedure TWaylandKeyInput.PressUnicodeChar(unicode: cardinal);
 begin
-  if not PortalReady then Exit;
-  // Latin-1 keysyms are the code points; the rest of Unicode is $01000000 up
-  if unicode < $100 then TypeKeysym(unicode)
-  else
-    TypeKeysym($01000000 + unicode);
+  // what uinput cannot type, the portal can, if asking for it is allowed
+  if Chosen and ((Road = Desktop) or PortalForText) and PortalReady then TypeChar(unicode);
 end;
 
 procedure TWaylandKeyInput.PressASCIIChar(ch: char);
 begin
   // once the portal is open all text goes that way: one road keeps it in
   // order, and it comes out right on any layout
-  if PortalOpen and (ch >= ' ') then TypeKeysym(Ord(ch))
+  if PortalOpen and (ch >= ' ') then TypeChar(Ord(ch))
   else
     inherited PressASCIIChar(ch);
 end;

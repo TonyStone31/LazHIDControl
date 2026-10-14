@@ -9,7 +9,10 @@ unit HIDPermission;
 
   Linux under Wayland: a udev rule, one small file under /etc/udev/rules.d,
   installed through pkexec so the system asks for the administrator password
-  itself.  macOS: the Privacy & Security panes, through the system's own
+  itself.  Typing and the mouse need it only where the desktop has no
+  remote control portal, or where the program watches input too: that needs
+  the password anyway, and one question is better than two.
+  macOS: the Privacy & Security panes, through the system's own
   prompts.  Linux under X11, and Windows: nothing to do. }
 
 interface
@@ -49,7 +52,8 @@ type
     // What the program does, so the user is asked for that and nothing more.
     // hnInput is THIDKeyboard and THIDMouse, hnWatching is THIDInputMonitor,
     // hnCapture is THIDScreenshot of other programs' windows (macOS only;
-    // Wayland's portal asks by itself).
+    // Wayland's portal asks by itself). On KDE and GNOME under Wayland the
+    // desktop asks for hnInput by itself too, unless hnWatching is wanted.
     property Needs: THIDNeeds read Wanted write Wanted default [hnInput];
     // Granting failed - the password was not given, pkexec is missing, or the
     // desktop said no. The message stays in LastError; no dialog is shown.
@@ -59,7 +63,7 @@ type
 implementation
 
 uses Forms, Controls, Process, HIDPermissionDialog
-  {$if defined(linux)}, BaseUnix{$elseif defined(darwin)}, MacOSAll{$endif};
+  {$if defined(linux)}, BaseUnix, WaylandMouseAndKeyInput{$elseif defined(darwin)}, MacOSAll{$endif};
 
 {$ifdef linux}
 const
@@ -213,7 +217,8 @@ begin
   Result := [];
   {$if defined(linux)}
   if not OnWayland then Exit;
-  if (hnInput in Needs) and (fpAccess('/dev/uinput', W_OK) <> 0) then Include(Result, hnInput);
+  if (hnInput in Needs) and (fpAccess('/dev/uinput', W_OK) <> 0) and ((hnWatching in Needs) or not RemoteControlOffered) then
+    Include(Result, hnInput);
   if (hnWatching in Needs) and not EventsReadable then Include(Result, hnWatching);
   {$elseif defined(darwin)}
   if (hnInput in Needs) and not AXIsProcessTrusted then Include(Result, hnInput);

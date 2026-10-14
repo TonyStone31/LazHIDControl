@@ -109,8 +109,8 @@ const
     'Not xdotool: search takes plain text, not a regular expression; of its',
     'options only those shown do anything (--window, --clearmodifiers, --sync',
     'and --onlyvisible are accepted and ignored); commands not listed are not',
-    'implemented.  On Wayland the keyboard and mouse need write access to',
-    '/dev/uinput and the window commands are unavailable.',
+    'implemented.  On Wayland the keyboard and mouse use /dev/uinput if it is',
+    'writable, else the desktop asks once; window commands are unavailable.',
     '',
     'https://github.com/TonyStone31/LazHIDControl');
 
