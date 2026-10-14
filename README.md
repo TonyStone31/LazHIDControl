@@ -134,20 +134,28 @@ Without a permission the call fails or comes back empty; nothing crashes.
 One Mac difference: a minimized window is not in the window list, so keep
 its handle if you mean to bring it back.
 
-**On Wayland the user is asked, once each, for two things**, and the
-package does the asking:
+**On Wayland the user is asked one thing, once**, and the package does the
+asking. Which thing depends on what the program does:
 
-- *Typing, the mouse, and watching* go through the kernel's input devices,
-  which a desktop user may not touch until a small udev rule says so. Drop
-  `THIDPermission` on the form and call `Ask`: it shows the user what is
-  being allowed and the exact file, then the system's own password dialog
-  installs it. That is one password, once, and it holds for every later run;
-  the manual has the rule for anyone who would rather write it by hand.
-- *Text beyond ASCII* cannot be typed by a virtual keyboard, which presses
-  keys, not characters. It goes through the desktop's RemoteDesktop portal
-  instead, which types any character on any layout. The desktop asks the
-  user to allow that the first time, with `THIDKeyboard.PermissionNote`
-  shown first to say why; the answer is remembered per application.
+- *Typing and the mouse only:* the desktop's own "may this program control
+  input devices" question, through its RemoteDesktop portal, the first time
+  input is sent. No password, no system file, and the desktop remembers the
+  answer for that program. `THIDKeyboard.PermissionNote` is shown just
+  before it, to say why. Desktops without that portal - the wlroots ones,
+  such as Sway - take the password route below instead.
+- *Watching keys and clicks as well:* there is no portal for watching, so
+  that takes a small udev rule, and the same password installs a second
+  rule that lets typing and the mouse go through the kernel's virtual
+  devices - the desktop's question is then never needed. Drop
+  `THIDPermission` on the form with both needs and call `Ask`: it shows the
+  user what is being allowed and the exact files, then the system's own
+  password dialog installs them. The manual has the rules for anyone who
+  would rather write them by hand.
+
+The one exception: a virtual keyboard presses keys, not characters, so
+text beyond ASCII still goes through the desktop's question the first time
+it comes up. Set `THIDKeyboard.WaylandUnicode` off and it never does;
+`TypeText` refuses such text instead.
 
 Plain text through the virtual keyboard arrives as a US layout would type
 it. Wayland does not tell a program where windows are, its own included, so
@@ -155,6 +163,14 @@ the mouse works in screen coordinates only and other programs' windows are
 out of reach. Screenshots come from the desktop's portal. KDE Plasma 6 is
 what was tested; GNOME and other desktops have not been, and
 [reports are welcome](https://github.com/TonyStone31/LazHIDControl/issues).
+
+**Still wanted on Wayland: where the pointer is.** No Wayland desktop tells
+a program that, so clicks are watched without a position and a recorder
+cannot say where they were. Per-desktop workarounds exist, and this package
+does not use them: it has to work the same everywhere with nothing extra to
+install. The one road that does is the desktop's screen-sharing portal,
+which can report the cursor alongside the screen - [TODO.md](TODO.md) has
+the plan, the costs and a first step, for anyone who wants to take it on.
 
 **Still wanted from a real Mac:** Apple Silicon, battery changes, and
 sleep/wake events - a virtual machine has none of them. `sh tests/run_macos.sh`
