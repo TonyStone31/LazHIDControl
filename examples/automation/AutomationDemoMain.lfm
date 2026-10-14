@@ -8,7 +8,6 @@ object AutomationForm: TAutomationForm
   ClientWidth = 960
   DefaultMonitor = dmPrimary
   OnCreate = FormCreate
-  OnDestroy = FormDestroy
   LCLVersion = '5.99.0.0'
   object StatusBar: TStatusBar
     Left = 0
@@ -671,6 +670,13 @@ object AutomationForm: TAutomationForm
     OnChanged = ClipboardChanged
     OnError = ClipboardError
     Left = 648
+    Top = 560
+  end
+  object InputMonitor: THIDInputMonitor
+    OnKeyPress = KeySeen
+    OnMouseClick = ClickSeen
+    OnError = Error
+    Left = 696
     Top = 560
   end
 end

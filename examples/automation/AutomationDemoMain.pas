@@ -10,7 +10,7 @@ interface
 
 uses Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls, ComCtrls, Spin, Menus, LCLType, LCLIntf, LCLProc, LazUTF8, Clipbrd,
   WindowManagerIntf, WindowManager, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard,
-  GlobalKeyMonitor, GlobalMouseMonitor, PowerInput;
+  HIDMonitor, PowerInput;
 
 type
   TAutomationForm = class(TForm)
@@ -64,10 +64,12 @@ type
     SystemIdle: THIDSystemIdle;
     Power: THIDPowerMonitor;
     ClipboardMonitor: THIDClipboardMonitor;
+    InputMonitor: THIDInputMonitor;
     procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure PointerTimerTick(Sender: TObject);
     procedure WatchBoxChange(Sender: TObject);
+    procedure KeySeen(Sender: TObject; Key: word; Shift: TShiftState);
+    procedure ClickSeen(Sender: TObject; Button: TMouseButton; X, Y: integer);
     procedure Error(Sender: TObject; const Message: string);
     procedure TypeButtonClick(Sender: TObject);
     procedure TypeLaterButtonClick(Sender: TObject);
@@ -103,10 +105,6 @@ type
     procedure ClipboardError(Sender: TObject; const Message: string);
     procedure CopyButtonClick(Sender: TObject);
   private
-    Keys: TGlobalKeyListener;
-    Clicks: TGlobalMouseListener;
-    procedure KeySeen(Key: word; Shift: TShiftState);
-    procedure ClickSeen(Button: TMouseButton; X, Y: integer);
     procedure Say(const Message: string);
     procedure TypeSource;
     procedure TypeAfterHotkey(Data: PtrInt);
@@ -140,41 +138,20 @@ begin
   Say(Message);
 end;
 
-{ ---- the status bar: the global key and mouse monitors ----
+{ ---- the status bar: THIDInputMonitor ----
 
-  These are not components; they are the GlobalKeyMonitor and
-  GlobalMouseMonitor units, used directly.  They see keys and clicks in every
-  program, which is what recording a task to play back needs - and why macOS
-  asks the user's permission first and Wayland refuses outright. }
-
-procedure TAutomationForm.FormDestroy(Sender: TObject);
-begin
-  FreeAndNil(Keys);
-  FreeAndNil(Clicks);
-end;
+  It sees keys and clicks in every program, which is what recording a task
+  to play back needs - and why macOS asks the user's permission first and
+  Wayland refuses outright. }
 
 procedure TAutomationForm.WatchBoxChange(Sender: TObject);
 begin
-  FreeAndNil(Keys);
-  FreeAndNil(Clicks);
-  if not WatchBox.Checked then
-  begin
-    Say('Not watching keys and clicks.');
-    Exit;
-  end;
-  Keys := CreateGlobalKeyListener;
-  Keys.OnKeyPress := @KeySeen;
-  Keys.StartMonitoring;
-  Clicks := CreateGlobalMouseListener;
-  Clicks.OnMouseClick := @ClickSeen;
-  Clicks.StartMonitoring;
-  if Keys.Active and Clicks.Active then Say('Watching every key and click on the system.')
-  else if Clicks.Active then Say('Watching clicks. Keys are not available here; on a Mac allow this program under Input Monitoring.')
-  else
-    Say('Keys and clicks cannot be watched in this session.');
+  InputMonitor.Enabled := WatchBox.Checked;
+  if not WatchBox.Checked then Say('Not watching keys and clicks.')
+  else if InputMonitor.LastError = '' then Say('Watching every key and click on the system.');
 end;
 
-procedure TAutomationForm.KeySeen(Key: word; Shift: TShiftState);
+procedure TAutomationForm.KeySeen(Sender: TObject; Key: word; Shift: TShiftState);
 var
   Pressed: string;
 begin
@@ -183,7 +160,7 @@ begin
   StatusBar.Panels[2].Text := Format('Last key: %s (%d)', [Pressed, Key]);
 end;
 
-procedure TAutomationForm.ClickSeen(Button: TMouseButton; X, Y: integer);
+procedure TAutomationForm.ClickSeen(Sender: TObject; Button: TMouseButton; X, Y: integer);
 const
   Names: array[TMouseButton] of string = ('left', 'right', 'middle', 'extra 1', 'extra 2');
 begin

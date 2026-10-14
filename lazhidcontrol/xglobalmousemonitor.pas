@@ -215,9 +215,10 @@ begin
 
   RootWindow := XDefaultRootWindow(Display);
 
-  // Check if XInput2 is available
+  // 2.1, not 2.0: from 2.1 on raw events still arrive while another program
+  // holds a grab, which is every click made inside an open menu
   major := 2;
-  minor := 0;
+  minor := 1;
   if XIQueryVersion(Display, @major, @minor) <> 0 then
     raise Exception.Create('XInput2 not available');
 

@@ -159,6 +159,22 @@ begin
     Listener.OnKeyPress(DetectedKey, DetectedShift);
 end;
 
+// A raw event carries no modifiers, so ask the server what is held.
+function HeldModifiers(Display: PDisplay; Root: TWindow): TShiftState;
+var
+  RootFound, Child: TWindow;
+  RootX, RootY, WinX, WinY: cint;
+  Mask: cuint;
+begin
+  Result := [];
+  Mask := 0;
+  XQueryPointer(Display, Root, @RootFound, @Child, @RootX, @RootY, @WinX, @WinY, @Mask);
+  if Mask and ShiftMask <> 0 then Include(Result, ssShift);
+  if Mask and ControlMask <> 0 then Include(Result, ssCtrl);
+  if Mask and Mod1Mask <> 0 then Include(Result, ssAlt);
+  if Mask and Mod4Mask <> 0 then Include(Result, ssMeta);
+end;
+
 procedure TKeyMonitorThread.Execute;
 var
   Event: TXEvent;
@@ -197,7 +213,7 @@ begin
               XFree(keysym_map);
 
               DetectedKey := SymToKey(Sym);
-              DetectedShift := [];  // XInput2 raw events don't have modifier state easily accessible
+              DetectedShift := HeldModifiers(Listener.Display, Listener.RootWindow);
               Synchronize(@NotifyKeyPress);
             end;
           end;

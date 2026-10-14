@@ -232,6 +232,31 @@ inactivity or whether an application is busy.
 The automation demo has a checkbox for a five-second threshold. Leave the mouse
 and keyboard alone, then move or type to see the two events.
 
+## THIDInputMonitor
+
+Reports every key press and mouse click on the system, not only the ones in
+your own windows. It is there for recording what somebody does so it can be
+played back with `THIDKeyboard` and `THIDMouse`, and for seeing what a key
+really sends.
+
+Set **Enabled** to True in code, or in the Object Inspector to start with the
+form. **OnKeyPress** gives the LCL virtual key and the Ctrl, Alt, Shift and
+Meta held with it; **OnMouseClick** gives the button and where on the screen.
+Both run on the main thread. **WatchKeys** and **WatchClicks** choose what is
+watched; set them before enabling. If one of the two cannot start, **OnError**
+says which, and `WatchingKeys` and `WatchingClicks` tell what is running.
+
+Windows uses low-level hooks. Linux/X11 uses XInput2 raw events (`libXi.so.6`),
+which keep coming while a menu is open. macOS uses an event tap, and no key
+arrives until the user allows the program under Privacy & Security > Input
+Monitoring. A Wayland session lets no program do this, and the component
+says so instead of watching the little that XWayland would show.
+
+It sees everything typed, passwords included. Say so in your program when
+it is running.
+
+The demo's status bar is this component, behind a checkbox that starts off.
+
 ## THIDPowerMonitor
 
 Set **Enabled** to True and assign **OnSuspend**, **OnResume**, and
@@ -317,9 +342,7 @@ Every component sits on its form in the designer, a tab for each job:
 - **Idle, power, clipboard** - the three monitors, live.
 
 The status bar shows the pointer and, once you tick the box above it, the
-last click and the last key anywhere on the system. That part uses the
-`GlobalKeyMonitor` and `GlobalMouseMonitor` units directly; they are not
-palette components.
+last click and the last key anywhere on the system - `THIDInputMonitor`.
 
 Try the input demos in a nested X server (`Xephyr :9 & DISPLAY=:9 ...`) so a
 misaimed script cannot click on your real desktop. That is also how we drive
@@ -364,9 +387,10 @@ ordinary program, KDE's portal answers "an app id is required" - it serves
 only programs installed with a desktop entry and started as that
 application. **Window management** has no cross-compositor protocol
 to use, so `THIDWindow` reports that it is unavailable. Power status and
-clipboard monitoring work as described in their sections. Idle time is asked
-of GNOME's and the freedesktop screen-saver services; KDE Plasma 6 answers
-that it has none to give, and `THIDSystemIdle` reports that.
+clipboard monitoring work as described in their sections. Idle time comes
+from the compositor on KDE; the `THIDSystemIdle` section has the detail.
+Nothing may watch other programs' keys and clicks, so `THIDInputMonitor`
+reports that it cannot.
 
 A GTK2 program on a Wayland desktop runs through XWayland, the X server
 Wayland sessions carry for older programs. X calls made there reach only

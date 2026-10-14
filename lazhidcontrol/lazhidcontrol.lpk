@@ -207,6 +207,10 @@
         <UnitName Value="HIDSystemIdle"/>
       </Item>
       <Item>
+        <Filename Value="hidmonitor.pas"/>
+        <UnitName Value="HIDMonitor"/>
+      </Item>
+      <Item>
         <Filename Value="idleinput.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="IdleInput"/>

@@ -2,7 +2,7 @@
 
 Desktop automation for Lazarus / Free Pascal: type, click, scroll, register
 global hotkeys, find and control other programs' windows, take screenshots,
-and watch the clipboard, the power supply, and session idle time. Eight
+and watch the clipboard, the power supply, and session idle time. Nine
 nonvisual components to drop on a form, the library underneath them, and a
 command-line tool that drives any program from a script.
 
@@ -26,6 +26,7 @@ Three pieces, three directories:
 | `THIDClipboardMonitor` | Fires `OnChanged` when anything lands on the clipboard, without reading it. |
 | `THIDPowerMonitor` | Sleep and wake notifications, power source, battery percentage, charging. |
 | `THIDSystemIdle` | Fires `OnIdle` and `OnActive` as session input stops and resumes. |
+| `THIDInputMonitor` | Reports key presses and mouse clicks anywhere on the system, for recording a task to play back. |
 
 Every component has palette icons, Object Inspector hints on every property,
 an `OnError` event instead of surprise dialogs, and does nothing in the
@@ -122,10 +123,6 @@ other projects.
 | hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
 
 Qt builds compile; hotkeys and clipboard monitoring need GTK for now.
-
-Watching keys and clicks is not one of the palette components. It is the
-`GlobalKeyMonitor` and `GlobalMouseMonitor` units, used from code; the demo
-shows how, behind a checkbox that starts switched off.
 
 **On a Mac the user has to allow it.** macOS asks before a program may do
 any of this to other programs, under System Settings > Privacy & Security:
