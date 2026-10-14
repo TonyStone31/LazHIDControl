@@ -405,6 +405,16 @@ them with [hidctl](hidctl/README.md).
 
 ## Wayland, in detail
 
+The short version, for what the user sees. A Wayland desktop lets no
+program touch the keyboard and mouse on its own, so the user is asked, once
+each, for up to two things: the administrator password, which `THIDPermission`
+asks for through the system's own dialog and which installs the udev rule
+that typing, the mouse and watching run on; and, only when text beyond
+ASCII is typed, the desktop's own "may this program control input devices"
+question, which `THIDKeyboard` introduces with `PermissionNote` and whose
+answer the desktop remembers. Neither question comes back. The rest of this
+section is how each piece works.
+
 **Screenshots** come from the desktop's `org.freedesktop.portal.Screenshot`.
 The portal hands over the whole desktop and `THIDScreenshot` cuts the monitor,
 region, or dragged selection out of it. The desktop may ask the user for
@@ -436,9 +446,9 @@ at the machine, for every program they run, not to one program - Linux has
 no narrower grant for a device outside a Flatpak. Deleting the file and
 reloading takes it back from then on; a program that already has a device
 open keeps it until it exits. Without access, `THIDKeyboard` and `THIDMouse`
-raise an error that says so. A virtual
-keyboard presses keys, not characters: text is typed as a US layout would
-type it, and the lock keys cannot be read.
+raise an error that says so. A virtual keyboard presses keys, not
+characters: text is typed as a US layout would type it, and the lock keys
+cannot be read.
 
 **Unicode text** is typed through the desktop's
 `org.freedesktop.portal.RemoteDesktop`, whose `NotifyKeyboardKeysym` takes
@@ -449,9 +459,9 @@ answer. The token is kept in the application's configuration directory
 (`GetAppConfigDir`, file `wayland-typing.token`), so the question comes once
 per application, not once per run; delete the file to be asked again.
 `THIDKeyboard.PermissionNote` is what the user reads just before the
-desktop's question. The portal is left alone until `TypeText` meets a character the virtual keyboard
-cannot press; from then on all typed text goes that way, which keeps it in
-order and right on any layout. If the user says no, or the desktop has no
+desktop's question. The portal is left alone until `TypeText` meets a
+character the virtual keyboard cannot press; from then on all typed text
+goes that way, which keeps it in order and right on any layout. If the user says no, or the desktop has no
 such portal, characters beyond ASCII are skipped as before. Tested on KDE
 Plasma 6 with accents, Greek, Cyrillic, Chinese and emoji, asked once across
 runs; GNOME has the same portal and has not been tried.

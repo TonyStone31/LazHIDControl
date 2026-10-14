@@ -120,7 +120,7 @@ other projects.
 | Idle time | ✅ | ✅ | ✅ | ✅ on KDE; GNOME untested |
 | Power status | ✅ | ✅ | ✅ | ✅ |
 | Sleep and wake events | ✅ | not tried | not tried | not tried |
-| Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | ✅ keys and buttons from the kernel's input devices, with a udev rule; no click positions |
+| Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | ✅ keys and buttons from the kernel's input devices, once `THIDPermission` has installed its rule; no click positions |
 | hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
 
 Qt builds compile; hotkeys and clipboard monitoring need GTK for now.
@@ -134,19 +134,27 @@ Without a permission the call fails or comes back empty; nothing crashes.
 One Mac difference: a minimized window is not in the window list, so keep
 its handle if you mean to bring it back.
 
-**On Wayland** keyboard and mouse go through the kernel's uinput, which
-needs one udev rule to let the logged-in user write to `/dev/uinput`.
-`THIDPermission` installs it after telling the user what it is, through the
-desktop's own administrator-password dialog; or write it by hand from
-[the manual](MANUAL.md#wayland-in-detail). A virtual keyboard
-presses keys, not characters, so plain text arrives as a US layout would
-type it. Text with anything beyond ASCII in it goes through the desktop's
-RemoteDesktop portal instead, which types any character on any layout. The
-desktop asks the user to allow that once; the answer is remembered. Wayland does not tell a program where
-windows are, its own included, so the mouse works in screen coordinates only
-and other programs' windows are out of reach. Screenshots come from the
-desktop's portal. GNOME and other desktops have not been tried;
-[tell us how it goes](https://github.com/TonyStone31/LazHIDControl/issues).
+**On Wayland the user is asked, once each, for two things**, and the
+package does the asking:
+
+- *Typing, the mouse, and watching* go through the kernel's input devices,
+  which a desktop user may not touch until a small udev rule says so. Drop
+  `THIDPermission` on the form and call `Ask`: it shows the user what is
+  being allowed and the exact file, then the system's own password dialog
+  installs it. That is one password, once, and it holds for every later run;
+  the manual has the rule for anyone who would rather write it by hand.
+- *Text beyond ASCII* cannot be typed by a virtual keyboard, which presses
+  keys, not characters. It goes through the desktop's RemoteDesktop portal
+  instead, which types any character on any layout. The desktop asks the
+  user to allow that the first time, with `THIDKeyboard.PermissionNote`
+  shown first to say why; the answer is remembered per application.
+
+Plain text through the virtual keyboard arrives as a US layout would type
+it. Wayland does not tell a program where windows are, its own included, so
+the mouse works in screen coordinates only and other programs' windows are
+out of reach. Screenshots come from the desktop's portal. KDE Plasma 6 is
+what was tested; GNOME and other desktops have not been, and
+[reports are welcome](https://github.com/TonyStone31/LazHIDControl/issues).
 
 **Still wanted from a real Mac:** Apple Silicon, battery changes, and
 sleep/wake events - a virtual machine has none of them. `sh tests/run_macos.sh`

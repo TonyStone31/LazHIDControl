@@ -105,6 +105,8 @@ above work in a script too.
 | `clipget` | print the clipboard's text |
 | `idle` | print the session's idle time in milliseconds |
 | `power` | print power source, battery percentage and charging |
+| `permissions` | what this desktop has allowed: typing, watching (Wayland and macOS; elsewhere always allowed) |
+| `grant`, `revoke` | ask the desktop to allow them, or take it back - the system's own password dialog on Wayland |
 
 Exits non-zero if a command fails or the window is not found.
 
