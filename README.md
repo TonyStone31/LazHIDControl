@@ -119,7 +119,7 @@ other projects.
 | Idle time | ✅ | ✅ | ✅ | ✅ on KDE; GNOME untested |
 | Power status | ✅ | ✅ | ✅ | ✅ |
 | Sleep and wake events | ✅ | not tried | not tried | not tried |
-| Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | not possible on Wayland |
+| Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | ✅ keys and buttons from the kernel's input devices, with a udev rule; no click positions |
 | hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
 
 Qt builds compile; hotkeys and clipboard monitoring need GTK for now.

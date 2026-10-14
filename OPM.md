@@ -13,7 +13,8 @@
   `COPYING.GPL2`. Existing `LICENSE` contains GPL v3 (a permitted later version).
 - Lazarus dependencies: `LCL`, `FCL` with declared minimum **1.0.0.0** for FCL.
 - External dependencies on Linux: FPC X11/D-Bus units, linkable X11, Xtst and
-  D-Bus libraries, `libXi` for global monitoring; usual LCL/widgetset libraries.
+  D-Bus libraries, `libXi` for global monitoring on X11; usual LCL/widgetset libraries.
+  On Wayland global monitoring reads `/dev/input/event*`, which needs a udev rule.
   The Wayland input backend uses uinput and needs write access to `/dev/uinput`;
   Wayland idle time loads `libwayland-client.so.0` at run time. Both were
   tested on KDE Plasma 6.
@@ -31,8 +32,9 @@
 ## Known limitations
 
 Wayland input (uinput) types plain text as a US layout; text beyond ASCII goes
-through the RemoteDesktop portal, which asks the user each run. Both were
-tested on KDE Plasma 6. Wayland screenshots use the screenshot portal. Wayland hotkey
+through the RemoteDesktop portal, which asks the user each run. Watching keys
+and clicks reads the kernel's input devices with a udev rule. All tested on KDE
+Plasma 6. Wayland screenshots use the screenshot portal. Wayland hotkey
 registration is a stub: registration remains false. Global monitoring and window management use X11 and do not cover
 native Wayland windows. On macOS everything needs the user's permission under
 Privacy & Security first (Accessibility, Screen Recording, Input Monitoring).

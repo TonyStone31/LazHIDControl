@@ -226,6 +226,16 @@
         <UnitName Value="WaylandIdle"/>
       </Item>
       <Item>
+        <Filename Value="linuxkeycodes.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="LinuxKeyCodes"/>
+      </Item>
+      <Item>
+        <Filename Value="evdevmonitor.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="EvdevMonitor"/>
+      </Item>
+      <Item>
         <Filename Value="linuxportal.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="LinuxPortal"/>

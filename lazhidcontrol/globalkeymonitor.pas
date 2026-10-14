@@ -36,6 +36,9 @@ uses
     {$ELSE}
     XGlobalKeyMonitor,
     {$ENDIF}
+    {$IFDEF LINUX}
+    EvdevMonitor,
+    {$ENDIF}
   {$ENDIF}
   Classes, SysUtils, LCLType;
 
@@ -50,7 +53,10 @@ implementation
 
 function CreateGlobalKeyListener: TGlobalKeyListener;
 begin
-  // on Linux this is X11 only: a Wayland session shows a program no keys but its own
+  {$IFDEF LINUX}
+  // a Wayland compositor shows a program no keys but its own; the kernel shows them all
+  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then Exit(InitializeEvdevKeyListener);
+  {$ENDIF}
   Result := InitializeGlobalKeyListener;
 end;
 

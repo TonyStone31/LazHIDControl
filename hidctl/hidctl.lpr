@@ -434,7 +434,14 @@ var
         end;
       end;
 
-      if Cmd = 'find' then
+      // the window commands, which a Wayland session has no backend for
+      if (WindowMgr = nil) and (Pos(' ' + Cmd + ' ', ' find waitfor title activate geometry at search getactivewindow getwindowfocus getwindowname getwindowpid getwindowgeometry '
+        + 'windowactivate windowfocus windowraise windowmove windowsize windowminimize windowclose windowmap windowunmap minimize restore get_num_desktops get_desktop set_desktop ') > 0) then
+      begin
+        WriteLn(Cmd, ': there is no window control on this desktop');
+        Failed := True;
+      end
+      else if Cmd = 'find' then
         Find(Rest, 0)
       else if Cmd = 'waitfor' then
         Find(Trim(Copy(Rest, Length(P[1]) + 1, MaxInt)), StrToInt(P[1]))

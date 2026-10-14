@@ -31,12 +31,18 @@ uses
   WinGlobalMouseMonitor
   {$ELSEIF DEFINED(DARWIN)}
   CocoaGlobalMouseMonitor
+  {$ELSEIF DEFINED(LINUX)}
+  XGlobalMouseMonitor, EvdevMonitor, SysUtils
   {$ELSE}
   XGlobalMouseMonitor
   {$ENDIF};
 
 function CreateGlobalMouseListener: TGlobalMouseListener;
 begin
+  {$IF DEFINED(LINUX)}
+  // a Wayland compositor shows a program no clicks but its own; the kernel shows them all
+  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then Exit(InitializeEvdevMouseListener);
+  {$ENDIF}
   Result := InitializeGlobalMouseListener;
 end;
 

@@ -3,7 +3,7 @@ unit HIDMonitor;
 // Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
 interface
 
-uses Classes, SysUtils, Controls, GlobalKeyMonitor, GlobalMouseMonitor;
+uses Classes, SysUtils, Controls, GlobalKeyMonitor, GlobalMouseMonitor{$ifdef linux}, EvdevMonitor{$endif};
 
 type
   THIDMonitorKeyEvent = procedure(Sender: TObject; Key: word; Shift: TShiftState) of object;
@@ -39,8 +39,9 @@ type
     // True starts watching once the form loads. Nothing runs in the designer.
     property Enabled: boolean read Requested write SetEnabled default False;
     // Watch the keyboard. Set before enabling. On macOS the user must allow
-    // the program under Privacy & Security > Input Monitoring; a Wayland
-    // session allows no one, keys or clicks.
+    // the program under Privacy & Security > Input Monitoring. On Wayland the
+    // keys come from the kernel's input devices, which takes the udev rule
+    // in the manual; letters are then reported as a US keyboard has them.
     property WatchKeys: boolean read WantKeys write WantKeys default True;
     // Watch mouse buttons. Set before enabling.
     property WatchClicks: boolean read WantClicks write WantClicks default True;
@@ -48,7 +49,8 @@ type
     // modifiers held with it. Runs on the main thread. Keep passwords in mind:
     // this sees everything typed.
     property OnKeyPress: THIDMonitorKeyEvent read KeyHandler write KeyHandler;
-    // A mouse button went down somewhere; X and Y are screen coordinates.
+    // A mouse button went down somewhere; X and Y are screen coordinates,
+    // or -1 on Wayland, which does not say where the pointer is.
     property OnMouseClick: THIDMonitorClickEvent read ClickHandler write ClickHandler;
     // Watching could not start, or only half of it could. The message also
     // stays in LastError.
@@ -82,9 +84,18 @@ begin
   ErrorText := ErrorText + Message;
 end;
 
+{ What stopped it, on this platform. }
+function Blocked(const What: string): string;
+begin
+  {$if defined(darwin)}
+  if What = 'Keys' then Exit('Keys cannot be watched until this program is allowed under Privacy & Security > Input Monitoring.');
+  {$elseif defined(linux)}
+  if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then Exit(What + ' cannot be watched. ' + EvdevHelp);
+  {$endif}
+  Result := What + ' cannot be watched in this session.';
+end;
+
 procedure THIDInputMonitor.SetEnabled(Value: boolean);
-var
-  Possible: boolean;
 begin
   Requested := Value;
   if (csLoading in ComponentState) or (csDesigning in ComponentState) then Exit;
@@ -92,13 +103,7 @@ begin
   FreeAndNil(ClickListener);
   ErrorText := '';
   if not Value then Exit;
-  Possible := True;
-  {$ifdef linux}
-  // XWayland would start, and then show only what goes to other XWayland programs
-  Possible := GetEnvironmentVariable('WAYLAND_DISPLAY') = '';
-  if not Possible then Fail('Keys and clicks cannot be watched on Wayland.');
-  {$endif}
-  if Possible and WatchKeys then
+  if WatchKeys then
   begin
     KeyListener := CreateGlobalKeyListener;
     if Assigned(KeyListener) then
@@ -106,14 +111,9 @@ begin
       KeyListener.OnKeyPress := @KeyPressed;
       KeyListener.StartMonitoring;
     end;
-    if not WatchingKeys then
-    {$ifdef darwin}
-      Fail('Keys cannot be watched until this program is allowed under Privacy & Security > Input Monitoring.');
-      {$else}
-      Fail('Keys cannot be watched in this session.');
-    {$endif}
+    if not WatchingKeys then Fail(Blocked('Keys'));
   end;
-  if Possible and WatchClicks then
+  if WatchClicks then
   begin
     ClickListener := CreateGlobalMouseListener;
     if Assigned(ClickListener) then
@@ -121,7 +121,7 @@ begin
       ClickListener.OnMouseClick := @Clicked;
       ClickListener.StartMonitoring;
     end;
-    if not WatchingClicks then Fail('Mouse clicks cannot be watched in this session.');
+    if not WatchingClicks then Fail(Blocked('Mouse clicks'));
   end;
   if (ErrorText <> '') and Assigned(ErrorHandler) then ErrorHandler(Self, ErrorText);
 end;

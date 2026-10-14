@@ -169,6 +169,12 @@ begin
           begin
             // Cast the data to XIRawEvent structure
             RawEvent := PXIRawEvent(Event.xcookie.Data);
+            // 4 to 7 are the wheel, not buttons
+            if RawEvent^.detail in [4..7] then
+            begin
+              XFreeEventData(Listener.Display, @Event.xcookie);
+              Continue;
+            end;
 
             // Get mouse position
             XQueryPointer(Listener.Display, Listener.RootWindow, @root, @child, @rootX, @rootY, @winX, @winY, @mask);

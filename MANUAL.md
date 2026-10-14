@@ -249,8 +249,15 @@ says which, and `WatchingKeys` and `WatchingClicks` tell what is running.
 Windows uses low-level hooks. Linux/X11 uses XInput2 raw events (`libXi.so.6`),
 which keep coming while a menu is open. macOS uses an event tap, and no key
 arrives until the user allows the program under Privacy & Security > Input
-Monitoring. A Wayland session lets no program do this, and the component
-says so instead of watching the little that XWayland would show.
+Monitoring. On Wayland the compositor shows a program nothing but its own
+input, so the component reads the kernel's input devices instead -
+`/dev/input/event*`, which takes the second line of the udev rule in
+"Wayland, in detail". That gives every key with its modifiers and every
+mouse button, from any number of keyboards and mice, plugged in whenever.
+Two things the kernel does not know: the layout, so letters are reported as
+a US keyboard has them; and where the pointer is, so `OnMouseClick` arrives
+with the button and -1, -1. Without the rule the component says what it
+needs.
 
 It sees everything typed, passwords included. Say so in your program when
 it is running.
@@ -365,12 +372,20 @@ needs write access to `/dev/uinput`, which belongs to root by default. One
 udev rule gives it to whoever is logged in at the machine:
 
 ```
-# /etc/udev/rules.d/60-uinput.rules
+# /etc/udev/rules.d/60-lazhidcontrol.rules
 KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"
+SUBSYSTEM=="input", KERNEL=="event*", TAG+="uaccess"
 ```
 
-Reload with `sudo udevadm control --reload && sudo udevadm trigger`. Without
-access, `THIDKeyboard` and `THIDMouse` raise an error that says so. A virtual
+The first line is for typing and the mouse, the second for
+`THIDInputMonitor`, which reads what the keyboard and mouse do. Reload with
+`sudo udevadm control --reload && sudo udevadm trigger`. Be clear with
+whoever installs it about what it is: the access goes to the person sitting
+at the machine, for every program they run, not to one program - Linux has
+no narrower grant for a device outside a Flatpak. Deleting the file and
+reloading takes it back from then on; a program that already has a device
+open keeps it until it exits. Without access, `THIDKeyboard` and `THIDMouse`
+raise an error that says so. A virtual
 keyboard presses keys, not characters: text is typed as a US layout would
 type it, and the lock keys cannot be read.
 
@@ -402,8 +417,7 @@ that install a desktop entry. **Window management** has no cross-compositor prot
 to use, so `THIDWindow` reports that it is unavailable. Power status and
 clipboard monitoring work as described in their sections. Idle time comes
 from the compositor on KDE; the `THIDSystemIdle` section has the detail.
-Nothing may watch other programs' keys and clicks, so `THIDInputMonitor`
-reports that it cannot.
+`THIDInputMonitor` reads the kernel's input devices, as its section says.
 
 A GTK2 program on a Wayland desktop runs through XWayland, the X server
 Wayland sessions carry for older programs. X calls made there reach only
