@@ -7,11 +7,11 @@ procedure Register;
 
 implementation
 
-uses LResources, Classes, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard, HIDMonitor;
+uses LResources, Classes, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard, HIDMonitor, HIDPermission;
 
 procedure Register;
 begin
-  RegisterComponents('LazHIDControl', [THIDHotkey, THIDKeyboard, THIDMouse, THIDScreenshot, THIDWindow, THIDSystemIdle, THIDPowerMonitor, THIDClipboardMonitor, THIDInputMonitor]);
+  RegisterComponents('LazHIDControl', [THIDHotkey, THIDKeyboard, THIDMouse, THIDScreenshot, THIDWindow, THIDSystemIdle, THIDPowerMonitor, THIDClipboardMonitor, THIDInputMonitor, THIDPermission]);
 end;
 
 initialization

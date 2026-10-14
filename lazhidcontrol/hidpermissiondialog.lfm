@@ -1,0 +1,73 @@
+object HIDPermissionDialog: THIDPermissionDialog
+  Left = 10
+  Height = 330
+  Top = 10
+  Width = 560
+  BorderStyle = bsDialog
+  Caption = 'Permission needed'
+  ClientHeight = 330
+  ClientWidth = 560
+  Position = poScreenCenter
+  LCLVersion = '5.99.0.0'
+  object Explain: TLabel
+    Left = 16
+    Height = 120
+    Top = 16
+    Width = 528
+    Align = alTop
+    BorderSpacing.Left = 16
+    BorderSpacing.Top = 16
+    BorderSpacing.Right = 16
+    Caption = 'Explain'
+    WordWrap = True
+  end
+  object DetailsMemo: TMemo
+    Left = 16
+    Height = 110
+    Top = 152
+    Width = 528
+    Align = alClient
+    BorderSpacing.Left = 16
+    BorderSpacing.Top = 16
+    BorderSpacing.Right = 16
+    Font.Name = 'Monospace'
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 0
+    WordWrap = False
+  end
+  object Buttons: TPanel
+    Left = 0
+    Height = 52
+    Top = 278
+    Width = 560
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 52
+    ClientWidth = 560
+    TabOrder = 1
+    object AllowButton: TButton
+      Left = 180
+      Height = 32
+      Top = 10
+      Width = 270
+      Anchors = [akTop, akRight]
+      Caption = 'Allow'
+      Default = True
+      ModalResult = 1
+      TabOrder = 0
+    end
+    object LaterButton: TButton
+      Left = 458
+      Height = 32
+      Top = 10
+      Width = 90
+      Anchors = [akTop, akRight]
+      Cancel = True
+      Caption = 'Not now'
+      ModalResult = 2
+      TabOrder = 1
+    end
+  end
+end

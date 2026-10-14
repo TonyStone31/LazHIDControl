@@ -21,9 +21,9 @@ type
     // Extra milliseconds to rest between typed characters. Zero types at the
     // backend's own pace. TypeText sends to whatever application has the focus.
     // On macOS nothing arrives until the user allows your program under
-    // Privacy & Security > Accessibility. On Wayland typing needs the udev rule
-    // in the manual, and text beyond ASCII goes through the desktop, which asks
-    // the user once - see PermissionNote.
+    // Privacy & Security > Accessibility. On Wayland typing needs a udev rule,
+    // which THIDPermission installs, and text beyond ASCII goes through the
+    // desktop, which asks the user once - see PermissionNote.
     property TypingInterval: cardinal read Delay write Delay default 0;
     // Ctrl, Alt, and Shift held around PressKey calls. TypeText ignores this
     // and types its text literally.
@@ -58,7 +58,7 @@ type
     // Milliseconds MoveTo spends walking the pointer to its target in small
     // steps. Zero jumps straight there. On macOS the pointer and clicks need
     // the user to allow your program under Privacy & Security > Accessibility;
-    // on Wayland they need the udev rule in the manual.
+    // on Wayland they need a udev rule, which THIDPermission installs.
     property MovementDuration: cardinal read Duration write Duration default 0;
     // Ctrl, Alt, and Shift held during clicks, moves, and scrolls.
     property Modifiers: TShiftState read MouseModifiers write MouseModifiers default [];

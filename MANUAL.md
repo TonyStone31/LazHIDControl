@@ -274,6 +274,44 @@ it is running.
 
 The demo's status bar is this component, behind a checkbox that starts off.
 
+## THIDPermission
+
+What this desktop wants allowed before the program may type, click, watch
+the keyboard or capture other programs' windows - and getting it allowed,
+with the user told plainly what they are allowing. Set **Needs** to what
+the program does: `hnInput` for `THIDKeyboard` and `THIDMouse`,
+`hnWatching` for `THIDInputMonitor`, `hnCapture` for screenshots of other
+programs' windows. Then:
+
+- `Missing` is what of that is not allowed yet, `Granted` is "nothing".
+- `Explanation` is the plain text for the user and `Details` the exact
+  files a grant installs, for programs that want their own dialog.
+- `Grant` does it the desktop's way. `Revoke` takes it back.
+- `Ask` shows the package's dialog - the explanation, the files, **Allow**
+  or **Not now** - and grants on Allow. True when nothing is missing after.
+
+On **Linux under Wayland** a grant writes one small file per need under
+`/etc/udev/rules.d` (the lines are in "Wayland, in detail") through
+`pkexec`, so the system's own dialog asks for the administrator password,
+once; then udev is reloaded and the devices are open to the session at
+once. The dialog says what the user should know: the access goes to whoever
+is sitting at the machine and every program they run, not to one program.
+`Revoke` deletes the files; the devices already open to the session stay so
+until the next login. Under X11 nothing is needed and `Granted` is True.
+
+On **macOS** `Missing` asks the system (`AXIsProcessTrusted`,
+`CGPreflightListenEventAccess`, `CGPreflightScreenCaptureAccess`) and
+`Grant` raises the system's own prompts, which also list the program in
+Privacy & Security for the user to tick. Accessibility takes effect at once;
+Input Monitoring and Screen Recording from the next start of the program.
+`Revoke` opens the pane. On **Windows** there is nothing to allow.
+
+`OnError` reports a grant that did not happen - the password dialog closed,
+pkexec missing, the account not an administrator; the message stays in
+`LastError`. The demo's Typing tab has an **Allow on this computer** button
+that calls `Ask`; it is hidden where nothing is needed. hidctl has
+`permissions`, `grant` and `revoke`.
+
 ## THIDPowerMonitor
 
 Set **Enabled** to True and assign **OnSuspend**, **OnResume**, and
@@ -382,13 +420,16 @@ needs write access to `/dev/uinput`, which belongs to root by default. One
 udev rule gives it to whoever is logged in at the machine:
 
 ```
-# /etc/udev/rules.d/60-lazhidcontrol.rules
+# /etc/udev/rules.d/60-lazhidcontrol-uinput.rules
 KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"
+
+# /etc/udev/rules.d/60-lazhidcontrol-input.rules
 SUBSYSTEM=="input", KERNEL=="event*", TAG+="uaccess"
 ```
 
-The first line is for typing and the mouse, the second for
-`THIDInputMonitor`, which reads what the keyboard and mouse do. Reload with
+The first is for typing and the mouse, the second for `THIDInputMonitor`,
+which reads what the keyboard and mouse do. `THIDPermission` writes exactly
+these, after explaining them to the user; by hand, reload with
 `sudo udevadm control --reload && sudo udevadm trigger`. Be clear with
 whoever installs it about what it is: the access goes to the person sitting
 at the machine, for every program they run, not to one program - Linux has

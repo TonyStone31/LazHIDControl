@@ -211,6 +211,15 @@
         <UnitName Value="HIDMonitor"/>
       </Item>
       <Item>
+        <Filename Value="hidpermission.pas"/>
+        <UnitName Value="HIDPermission"/>
+      </Item>
+      <Item>
+        <Filename Value="hidpermissiondialog.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="HIDPermissionDialog"/>
+      </Item>
+      <Item>
         <Filename Value="idleinput.pas"/>
         <AddToUsesPkgSection Value="False"/>
         <UnitName Value="IdleInput"/>

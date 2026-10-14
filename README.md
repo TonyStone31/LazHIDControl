@@ -2,7 +2,7 @@
 
 Desktop automation for Lazarus / Free Pascal: type, click, scroll, register
 global hotkeys, find and control other programs' windows, take screenshots,
-and watch the clipboard, the power supply, and session idle time. Nine
+and watch the clipboard, the power supply, and session idle time. Ten
 nonvisual components to drop on a form, the library underneath them, and a
 command-line tool that drives any program from a script.
 
@@ -27,6 +27,7 @@ Three pieces, three directories:
 | `THIDPowerMonitor` | Sleep and wake notifications, power source, battery percentage, charging. |
 | `THIDSystemIdle` | Fires `OnIdle` and `OnActive` as session input stops and resumes. |
 | `THIDInputMonitor` | Reports key presses and mouse clicks anywhere on the system, for recording a task to play back. |
+| `THIDPermission` | Tells the user what this desktop needs allowed and gets it allowed: the udev rule on Wayland through the system's password dialog, the Privacy & Security prompts on macOS. |
 
 Every component has palette icons, Object Inspector hints on every property,
 an `OnError` event instead of surprise dialogs, and does nothing in the
@@ -134,8 +135,10 @@ One Mac difference: a minimized window is not in the window list, so keep
 its handle if you mean to bring it back.
 
 **On Wayland** keyboard and mouse go through the kernel's uinput, which
-needs one udev rule to let the logged-in user write to `/dev/uinput`
-([the manual](MANUAL.md#wayland-in-detail) has it). A virtual keyboard
+needs one udev rule to let the logged-in user write to `/dev/uinput`.
+`THIDPermission` installs it after telling the user what it is, through the
+desktop's own administrator-password dialog; or write it by hand from
+[the manual](MANUAL.md#wayland-in-detail). A virtual keyboard
 presses keys, not characters, so plain text arrives as a US layout would
 type it. Text with anything beyond ASCII in it goes through the desktop's
 RemoteDesktop portal instead, which types any character on any layout. The

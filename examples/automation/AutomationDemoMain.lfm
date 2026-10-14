@@ -103,6 +103,15 @@ object AutomationForm: TAutomationForm
           TabOrder = 2
           OnClick = TypeLaterButtonClick
         end
+        object PermissionButton: TButton
+          Left = 764
+          Height = 32
+          Top = 8
+          Width = 180
+          Caption = 'Allow on this computer'
+          TabOrder = 3
+          OnClick = PermissionButtonClick
+        end
         object HotkeyLabel: TLabel
           Left = 8
           Height = 17
@@ -677,6 +686,12 @@ object AutomationForm: TAutomationForm
     OnMouseClick = ClickSeen
     OnError = Error
     Left = 696
+    Top = 560
+  end
+  object Permission: THIDPermission
+    Needs = [hnInput, hnWatching]
+    OnError = Error
+    Left = 744
     Top = 560
   end
 end

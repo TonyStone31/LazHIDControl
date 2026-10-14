@@ -1,7 +1,7 @@
 # LazHIDControl OPM maintainer notes
 
 - Package: `LazHIDControl`, runtime and design time (`RunAndDesignTime`); the listed units and the generated `lazhidcontrol.pas` entry point.
-- Palette components: `THIDHotkey`, `THIDKeyboard`, `THIDMouse`, `THIDScreenshot`, `THIDWindow`, `THIDSystemIdle`, `THIDPowerMonitor`, `THIDClipboardMonitor`, `THIDInputMonitor`.
+- Palette components: `THIDHotkey`, `THIDKeyboard`, `THIDMouse`, `THIDScreenshot`, `THIDWindow`, `THIDSystemIdle`, `THIDPowerMonitor`, `THIDClipboardMonitor`, `THIDInputMonitor`, `THIDPermission`.
 - Package file: `lazhidcontrol/lazhidcontrol.lpk`.
 - Version: **1.0.0.0**; unchanged for submission.
 - Maintainer: Tony Stone; original input code by Tom Gregorovic, Cocoa input

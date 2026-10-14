@@ -10,7 +10,7 @@ interface
 
 uses Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls, ComCtrls, Spin, Menus, LCLType, LCLIntf, LCLProc, LazUTF8, Clipbrd,
   WindowManagerIntf, WindowManager, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDSystemIdle, HIDPower, HIDClipboard,
-  HIDMonitor, PowerInput;
+  HIDMonitor, HIDPermission, PowerInput;
 
 type
   TAutomationForm = class(TForm)
@@ -65,9 +65,12 @@ type
     Power: THIDPowerMonitor;
     ClipboardMonitor: THIDClipboardMonitor;
     InputMonitor: THIDInputMonitor;
+    Permission: THIDPermission;
+    PermissionButton: TButton;
     procedure FormCreate(Sender: TObject);
     procedure PointerTimerTick(Sender: TObject);
     procedure WatchBoxChange(Sender: TObject);
+    procedure PermissionButtonClick(Sender: TObject);
     procedure KeySeen(Sender: TObject; Key: word; Shift: TShiftState);
     procedure ClickSeen(Sender: TObject; Button: TMouseButton; X, Y: integer);
     procedure Error(Sender: TObject; const Message: string);
@@ -126,6 +129,20 @@ begin
   Pages.ActivePage := TypingTab;
   // watching the whole system's keys is for the user to switch on, not us
   Say('Tick the box above to watch keys and clicks everywhere.');
+  // Wayland and macOS want the user's say-so first; elsewhere there is nothing to ask
+  PermissionButton.Visible := not Permission.Granted;
+  if PermissionButton.Visible then Say('This desktop needs permission before typing and watching work - press "Allow on this computer".');
+end;
+
+procedure TAutomationForm.PermissionButtonClick(Sender: TObject);
+begin
+  if Permission.Ask then
+  begin
+    PermissionButton.Visible := False;
+    Say('Allowed. Typing, the mouse and watching work now.');
+  end
+  else if Permission.LastError = '' then
+    Say('Not allowed yet.');
 end;
 
 procedure TAutomationForm.Say(const Message: string);

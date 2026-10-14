@@ -19,7 +19,7 @@ function InitializeEvdevKeyListener: TGlobalKeyListener;
 function InitializeEvdevMouseListener: TGlobalMouseListener;
 
 const
-  EvdevHelp = 'Watching the keyboard and mouse on Wayland needs read access to /dev/input; the manual has the udev rule.';
+  EvdevHelp = 'Watching the keyboard and mouse on Wayland needs read access to /dev/input: THIDPermission gets it, or the manual has the udev rule.';
 
 implementation
 

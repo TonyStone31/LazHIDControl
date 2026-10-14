@@ -40,8 +40,8 @@ type
     property Enabled: boolean read Requested write SetEnabled default False;
     // Watch the keyboard. Set before enabling. On macOS the user must allow
     // the program under Privacy & Security > Input Monitoring. On Wayland the
-    // keys come from the kernel's input devices, which takes the udev rule
-    // in the manual; letters are then reported as a US keyboard has them.
+    // keys come from the kernel's input devices, which takes a udev rule that
+    // THIDPermission installs; letters are then reported as a US keyboard has them.
     property WatchKeys: boolean read WantKeys write WantKeys default True;
     // Watch mouse buttons. Set before enabling.
     property WatchClicks: boolean read WantClicks write WantClicks default True;

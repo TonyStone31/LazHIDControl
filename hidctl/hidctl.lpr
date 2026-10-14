@@ -29,10 +29,11 @@ uses
   WindowManagerIntf,
   HIDScreenshot,
   IdleInput,
-  PowerInput;
+  PowerInput,
+  HIDPermission;
 
 const
-  Help: array[0..76] of string = (
+  Help: array[0..78] of string = (
     'hidctl - drive the mouse, keyboard and windows from a shell',
     '',
     '  hidctl [--window <title>] <script>     run a script, one command a line',
@@ -92,6 +93,8 @@ const
     '  clipset <text>               clipget',
     '  idle                         print the session''s idle time in ms',
     '  power                        print power source, battery, charging',
+    '  permissions                  what this desktop has allowed: typing, watching',
+    '  grant                        ask the desktop to allow them; revoke takes it back',
     '  echo <text>',
     '',
     'Keys',
@@ -139,7 +142,7 @@ const
   { Every command word, so a chain on the command line knows where one
     command's arguments stop and the next command starts. }
   Commands = ' find waitfor title activate geometry minimize restore at dwell click dblclick press release drag scroll key hold let type ' +
-    'wait shot shotdesk shotarea clipset clipget idle power echo search getactivewindow getwindowfocus getwindowname getwindowpid ' +
+    'wait shot shotdesk shotarea clipset clipget idle power permissions grant revoke echo search getactivewindow getwindowfocus getwindowname getwindowpid ' +
     'getwindowgeometry windowactivate windowfocus windowraise windowmove windowsize windowminimize windowclose windowmap windowunmap ' +
     'mousemove mousemove_relative mousedown mouseup getmouselocation getdisplaygeometry keydown keyup sleep get_num_desktops ' + 'get_desktop set_desktop ';
 
@@ -390,6 +393,7 @@ var
     I, Ms, Delay, Times: integer;
     Btm: TMouseButton;
     Q: QWord;
+    Perm: THIDPermission;
     Seconds: double;
 
     { A leading window id on the xdotool window commands: "windowmove 123 10 20"
@@ -669,6 +673,23 @@ var
       end
       else if Cmd = 'clipget' then
         WriteLn('clip ', Clipboard.AsText)
+      else if (Cmd = 'permissions') or (Cmd = 'grant') or (Cmd = 'revoke') then
+      begin
+        Perm := THIDPermission.Create(nil);
+        try
+          Perm.Needs := [hnInput, hnWatching];
+          if Cmd = 'grant' then Failed := not Perm.Grant
+          else if Cmd = 'revoke' then Failed := not Perm.Revoke;
+          if Failed then WriteLn(Cmd, ': ', Perm.LastError)
+          else
+          begin
+            WriteLn('typing ', BoolToStr(hnInput in Perm.Missing, 'missing', 'allowed'));
+            WriteLn('watching ', BoolToStr(hnWatching in Perm.Missing, 'missing', 'allowed'));
+          end;
+        finally
+          Perm.Free;
+        end;
+      end
       else if Cmd = 'idle' then
       begin
         if QuerySystemIdle(Q, Msg) then

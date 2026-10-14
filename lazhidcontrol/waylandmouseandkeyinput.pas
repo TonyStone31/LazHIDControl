@@ -62,7 +62,7 @@ var
   PortalNote: string = '';
 
 const
-  UInputHelp = 'Wayland input needs write access to /dev/uinput; the manual has the udev rule.';
+  UInputHelp = 'Wayland input needs write access to /dev/uinput: THIDPermission gets it, or the manual has the udev rule.';
 
 implementation
 
@@ -171,10 +171,11 @@ var
 begin
   if not Tried then
   begin
-    Tried := True;
     KeyboardFD := fpOpen('/dev/uinput', O_WRONLY or O_NONBLOCK);
     PointerFD := fpOpen('/dev/uinput', O_WRONLY or O_NONBLOCK);
-    if (KeyboardFD >= 0) and (PointerFD >= 0) then
+    // access can be granted while the program runs, so a failure is tried again
+    Tried := (KeyboardFD >= 0) and (PointerFD >= 0);
+    if Tried then
     begin
       Setup := Default(TDeviceSetup);
       Setup.Name := 'LazHIDControl keyboard';
