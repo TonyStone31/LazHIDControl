@@ -7,7 +7,7 @@ function QueryLinuxIdle(out Milliseconds: QWord; out Message: string): boolean;
 
 implementation
 
-uses SysUtils, DynLibs, ctypes, X, XLib, dbus;
+uses SysUtils, DynLibs, ctypes, X, XLib, dbus, WaylandIdle;
   {$push}{$packrecords c}
 type
   TXIdleInfo = record
@@ -55,8 +55,9 @@ begin
     Message := 'The X11 screen-saver extension could not report idle time.';
 end;
 
-// GNOME's IdleMonitor answers in milliseconds; the freedesktop ScreenSaver
-// interface, which KDE provides, answers in whole seconds.
+// GNOME's IdleMonitor answers in milliseconds, the freedesktop ScreenSaver
+// interface in whole seconds.  KDE's Wayland session answers neither; it
+// is asked through WaylandIdle.
 function QueryBusIdle(const Dest, Path, Intf, Method: string; out Milliseconds: QWord): boolean;
 var
   Connection: PDBusConnection;
@@ -114,10 +115,11 @@ begin
     if Result then Exit;
   end;
   Result := QueryBusIdle('org.gnome.Mutter.IdleMonitor', '/org/gnome/Mutter/IdleMonitor/Core', 'org.gnome.Mutter.IdleMonitor', 'GetIdletime', Milliseconds) or
-    QueryBusIdle('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver', 'org.freedesktop.ScreenSaver', 'GetSessionIdleTime', Milliseconds);
+    QueryWaylandIdle(Milliseconds) or QueryBusIdle('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver', 'org.freedesktop.ScreenSaver',
+    'GetSessionIdleTime', Milliseconds);
   if Result then Message := ''
   else if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
-    Message := 'This Wayland desktop gives out no idle time. GNOME''s does; KDE Plasma 6 does not.';
+    Message := 'This Wayland desktop gives out no idle time.';
 end;
 
 finalization

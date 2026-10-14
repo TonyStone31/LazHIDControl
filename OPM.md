@@ -15,7 +15,8 @@
 - External dependencies on Linux: FPC X11/D-Bus units, linkable X11, Xtst and
   D-Bus libraries, `libXi` for global monitoring; usual LCL/widgetset libraries.
   The Wayland input backend uses uinput and needs write access to `/dev/uinput`;
-  it was tested on KDE Plasma 6.
+  Wayland idle time loads `libwayland-client.so.0` at run time. Both were
+  tested on KDE Plasma 6.
 - Examples: `examples/automation/AutomationDemo.lpi` and the `hidctl/hidctl.lpi`
   command-line tool; both require `LazHIDControl`.
 - Verified here: Linux x86-64, GTK2 and GTK3, Lazarus **4.99** (trunk), FPC **3.3.1**.

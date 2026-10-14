@@ -212,12 +212,20 @@ and `LastError`. Re-enable to retry. Disabling the component does not fire event
 Windows uses the current session's `GetLastInputInfo`. Linux/X11 queries the
 screen-saver extension using `libXss.so.1` (an optional runtime dependency, loaded
 only when checking). macOS uses FPC's Core Graphics binding; the idle query
-is tested there, the idle/active transitions are not. Backend selection is automatic: X11 sessions use the
-X11 query; Wayland sessions, and X11 sessions whose query fails, ask the GNOME
-Mutter IdleMonitor and then the freedesktop ScreenSaver service that KDE
-provides. Other Wayland sessions currently report unsupported until native
-idle-notify is implemented. No XWayland idle fallback is used. A real
-GNOME or KDE Wayland desktop still needs testing. OS-reported activity
+is tested there, the idle/active transitions are not. Backend selection is
+automatic: X11 sessions use the X11 query. Wayland sessions, and X11 sessions
+whose query fails, ask GNOME's Mutter IdleMonitor, then the compositor itself
+through the `ext-idle-notify` protocol (KWin and the wlroots compositors have
+it; `libwayland-client.so.0` is loaded for it when needed), then the
+freedesktop ScreenSaver service. Tested on KDE Plasma 6; GNOME on Wayland
+still needs testing. No XWayland idle fallback is used.
+
+A compositor does not say how long the session has been idle, only that a
+time asked for in advance has gone by. So through `ext-idle-notify` the
+count starts once a second has passed without input, it can run up to one
+**PollInterval** behind, and nothing is known from before the first check.
+
+OS-reported activity
 may include synthetic input. This detects session inactivity, not application
 inactivity or whether an application is busy.
 
@@ -368,7 +376,6 @@ is why this package does not fall back to its X11 backends on Wayland.
 ## Possible future work
 
 - Session lock/unlock notifications.
-- Idle on Wayland through the `ext-idle-notify` protocol, which KDE needs.
 - Unicode typing and hotkeys on Wayland through the RemoteDesktop and GlobalShortcuts portals.
 - macOS on Apple Silicon, and its battery and sleep/wake events, on a real Mac.
 

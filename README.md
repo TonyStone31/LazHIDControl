@@ -115,7 +115,7 @@ other projects.
 | Windows: find, activate, move, size, minimize | ✅ | ✅ | ✅ | not possible on Wayland |
 | Screenshots | ✅ | ✅ | ✅ | ✅ through the desktop's portal; it asks the user once |
 | Clipboard monitoring | ✅ | ✅ | ✅ | ✅ |
-| Idle time | ✅ | ✅ | ✅ | not on KDE; GNOME untested |
+| Idle time | ✅ | ✅ | ✅ | ✅ on KDE; GNOME untested |
 | Power status | ✅ | ✅ | ✅ | ✅ |
 | Sleep and wake events | ✅ | not tried | not tried | not tried |
 | Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | not possible on Wayland |
