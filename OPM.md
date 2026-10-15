@@ -4,13 +4,16 @@
 - Palette components: `THIDHotkey`, `THIDKeyboard`, `THIDMouse`, `THIDScreenshot`, `THIDWindow`, `THIDSystemIdle`, `THIDPowerMonitor`, `THIDClipboardMonitor`, `THIDInputMonitor`, `THIDPermission`.
 - Package file: `lazhidcontrol/lazhidcontrol.lpk`.
 - Version: **1.0.0.0**; unchanged for submission.
-- Maintainer: Tony Stone; original input code by Tom Gregorovic, Cocoa input
-  by Sammarco Francesco, hotkey code adapted from Codebot. Source credits remain.
+- Maintainer: Tony Stone. The package began from input code by Tom
+  Gregorovic, Cocoa input by Sammarco Francesco and hotkey code adapted from
+  Codebot; those units were rewritten from a specification in October 2026.
+  The README carries the credits.
 - Homepage: https://github.com/TonyStone31/LazHIDControl
 - Description: Mouse/keyboard automation, global hotkeys, global input monitoring
   and window management for Windows, X11 and macOS, with partial Wayland support.
 - License: **GPL-2.0-or-later** in package source notices; full GPL v2 text in
   `COPYING.GPL2`. Existing `LICENSE` contains GPL v3 (a permitted later version).
+  The keyboard, mouse and hotkey units are 0BSD.
 - Lazarus dependencies: `LCL`, `FCL` with declared minimum **1.0.0.0** for FCL.
 - External dependencies on Linux: FPC X11/D-Bus units, linkable X11, Xtst and
   D-Bus libraries, `libXi` for global monitoring on X11; usual LCL/widgetset libraries.

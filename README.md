@@ -112,6 +112,7 @@ other projects.
 | Typing, Unicode included | ✅ on US, German, French, Spanish and Russian layouts | ✅ | ✅ | ✅ on KDE; the desktop asks the user once when the text goes beyond ASCII |
 | Keys with Ctrl, Alt, Shift | ✅ | ✅ | ✅ | ✅ |
 | Mouse: move, click, scroll | ✅ | ✅ | ✅ | ✅ in screen coordinates |
+| Back and forward mouse buttons | ✅ sent; a GTK3 Lazarus program does not receive them, a fault in the LCL | ✅ | not passed on in the virtual machine | not tried |
 | Global hotkeys | ✅ | ✅ | ✅ | not written; the portal serves only installed applications |
 | Windows: find, activate, move, size, minimize | ✅ | ✅ | ✅ | not possible on Wayland |
 | Screenshots | ✅ | ✅ | ✅ | ✅ through the desktop's portal; it asks the user once |
@@ -122,7 +123,14 @@ other projects.
 | Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | ✅ keys and buttons from the kernel's input devices, once `THIDPermission` has installed its rule; no click positions |
 | hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
 
-Qt builds compile; hotkeys and clipboard monitoring need GTK for now.
+Qt builds compile. Clipboard monitoring needs GTK. The X11 hotkey backend no
+longer does, but `THIDHotkey` enables it only on GTK2 and GTK3 until a Qt
+build has been tested.
+
+`tests/inputcheck` types into its own window and clicks, drags and scrolls on
+its own controls, then checks what arrived (29 checks); `tests/hotkeycheck`
+registers global hotkeys and presses them (23). Both take over the keyboard
+and mouse, so run them in a nested X server or a virtual machine.
 
 **On a Mac the user has to allow it.** macOS asks before a program may do
 any of this to other programs, under System Settings > Privacy & Security:
@@ -183,8 +191,15 @@ The demo on macOS, listing the Mac's windows and showing its typing test sheet:
 ## License and credits
 
 **GPL-2.0-or-later**; [COPYING.GPL2](COPYING.GPL2) holds version 2 and
-[LICENSE](LICENSE) version 3, an allowed later version.
+[LICENSE](LICENSE) version 3, an allowed later version. The keyboard, mouse
+and hotkey units are 0BSD, as their headers say.
 
-Original input code by Tom Gregorovic, Cocoa input by Sammarco Francesco,
-hotkey code adapted from Codebot. Components, window management, hidctl, and
-everything since: Tony Stone. Source notices remain in place.
+LazHIDControl began from Tom Gregorovic's MouseAndKeyInput (2008), with
+Cocoa input by Sammarco Francesco and hotkeys adapted from the Codebot
+library by Anthony Walter. Their work was the foundation of this package.
+Because that code was under the GPL, the keyboard, mouse and hotkey units
+were written new in October 2026 from a written specification by a writer
+who never saw the earlier code, so the package could be offered under a less
+restrictive license.
+
+Components, window management, hidctl, and everything since: Tony Stone.

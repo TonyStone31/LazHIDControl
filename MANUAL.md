@@ -32,8 +32,8 @@ Hotkeys without the component go through `HotkeyInput`:
 uses HotkeyInput, LCLType;
 
 MyHotkey := CreateHotkey(VK_F9, [ssCtrl, ssShift], @OnHotkeyPressed);
-MyHotkey.Register;
-if not MyHotkey.Registered then ... // taken, or no backend here
+MyHotkey.Register;                  // EHotkeyError says why, if refused
+if not MyHotkey.Registered then ... // no backend here (Wayland)
 ...
 MyHotkey.Free;                      // releases the binding
 ```
@@ -61,11 +61,16 @@ The component owns its binding and releases it when destroyed. Constructors
 are passive and the designer never grabs keys. Published properties and events
 include source comments for the Object Inspector's hints and information box.
 Windows, GTK2/GTK3 Linux/X11, and macOS register global shortcuts (macOS
-through Carbon's hotkey call, which needs no Accessibility permission). Wayland
-hotkeys remain unfinished; unsupported registration reports failure.
+through Carbon's hotkey call, which needs no Accessibility permission). Any
+key can be part of a shortcut, F13 to F24 and the punctuation keys included.
+A combination another program already holds is refused, and `LastError` says
+so. Wayland hotkeys remain unfinished; unsupported registration reports
+failure.
 
-The event runs on the GUI thread. Hotkey modifiers may still be held: if you
-replay typing, wait for their release first. The automation demo's hotkey
+The event is queued to the GUI thread's message loop, so a handler may free
+or unregister any hotkey, its own included. On Windows and X11, holding the
+keys down does not repeat it. Hotkey modifiers may still be held when it runs: if you replay
+typing, wait for their release first. The automation demo's hotkey
 simply presses its own Capture button.
 
 ## THIDKeyboard and THIDMouse
@@ -122,6 +127,8 @@ before typing any of it.
 or control to make `MoveTo` use its client coordinates. For external windows,
 set `RelativeWindow` instead. Leave both blank for screen coordinates. `Modifiers` applies Ctrl, Alt, and Shift during mouse actions.
 `DoubleClick` is available too; `Scroll` uses positive steps for up, negative for down.
+`mbExtra1` and `mbExtra2` are the back and forward buttons. A Lazarus program
+built for GTK3 does not see them: the LCL's GTK3 widgetset drops them.
 
 `KeyDown`/`KeyUp` and `ButtonDown`/`ButtonUp` are explicit paired operations for
 custom gestures. Pair them in your code, using `try/finally` when needed. The
@@ -174,7 +181,9 @@ The demos share Ctrl+Shift+F9; run one at a time or change its `ShortCut`.
 
 Published properties and events have source comments for Object Inspector help.
 The components and their GUI methods are intended for the main GUI thread.
-Windows and Linux/X11 use the existing backends. Hotkeys use GTK2/GTK3 on X11.
+Windows and Linux/X11 use the existing backends. Hotkeys on X11 read their own
+X connection; the component enables them for GTK2/GTK3 builds until a Qt build
+has been tested.
 Linux/X11 is tested in a nested X server; Windows was tested on Windows 10 in
 a virtual machine, with hidctl and the demo.
 macOS was tested on macOS Sequoia 15 in a virtual machine: typing, the mouse,

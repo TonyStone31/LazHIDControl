@@ -62,3 +62,10 @@ particular desktop.
 - GNOME has the same portals as KDE and has not been tried at all.
 - Global hotkeys on Wayland: the GlobalShortcuts portal; the manual's
   "Wayland, in detail" has what KDE needs before it will answer.
+- Hotkeys in Qt builds: the X11 backend no longer needs GTK; run
+  `tests/hotkeycheck` on a Qt5 build, then widen `HOTKEYBACKEND` in
+  `hidhotkey.pas`.
+- macOS keyboard checks: `tests/inputcheck` skips them over SSH. Run it as an
+  application with the Accessibility permission.
+- The back and forward buttons in GTK3 programs wait on a fix in the LCL's
+  GTK3 widgetset.

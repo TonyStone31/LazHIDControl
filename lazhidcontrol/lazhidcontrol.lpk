@@ -5,7 +5,7 @@
     <Name Value="LazHIDControl"/>
     <Type Value="RunAndDesignTime"/>
     <AddToProjectUsesSection Value="True"/>
-    <Author Value="Tony Stone - Original input implementation by Tom Gregorovic; hotkey support adapted from Codebot"/>
+    <Author Value="Tony Stone - begun from MouseAndKeyInput by Tom Gregorovic, Cocoa input by Sammarco Francesco and hotkeys after Codebot by Anthony Walter; those units rewritten in 2026"/>
     <CompilerOptions>
       <Version Value="11"/>
       <PathDelim Value="\"/>

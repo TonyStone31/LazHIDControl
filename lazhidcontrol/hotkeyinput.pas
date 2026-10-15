@@ -5,6 +5,10 @@ unit HotkeyInput;
 
 { CreateHotkey makes a hotkey of the kind the running system needs. }
 
+{ The hotkey units began as an adaptation of the Codebot library by Anthony
+  Walter.  They were written new in 2026 from a specification so the
+  package could be offered under a less restrictive license. }
+
 interface
 
 uses

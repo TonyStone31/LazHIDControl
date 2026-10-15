@@ -6,6 +6,11 @@ unit HIDMouseAndKeyInput;
 { The two objects that send keys and mouse events, made for the system the
   program runs on. }
 
+{ The input units began as Tom Gregorovic's MouseAndKeyInput (2008), with
+  Cocoa input by Sammarco Francesco.  They were written new in 2026 from a
+  specification so the package could be offered under a less restrictive
+  license. }
+
 interface
 
 uses

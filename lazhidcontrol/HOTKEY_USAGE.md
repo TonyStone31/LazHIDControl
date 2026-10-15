@@ -5,7 +5,7 @@ The LazHIDControl package includes cross-platform global hotkey registration sup
 ## Platforms Supported
 
 - **Windows**: Implemented using RegisterHotKey
-- **X11 (Linux/Unix)**: Fully supported using XGrabKey
+- **X11 (Linux/Unix)**: XGrabKey on the package's own X connection, read on the main thread; no GTK hook
 - **Wayland**: Not implemented. The GlobalShortcuts portal refuses a program that has no installed desktop entry ("an app id is required")
 - **macOS**: Implemented using Carbon's RegisterEventHotKey (Ctrl, Alt/Option, Shift)
 
@@ -77,23 +77,30 @@ Without this delay, the Ctrl/Shift/Alt keys from your hotkey combination may sti
 
 ### Platform Detection
 
-Check the `Registered` property after calling `Register()` to detect if hotkey registration succeeded:
+`Register` raises `EHotkeyError` when the system refuses the combination;
+the message says why (another program holds it, the key is not on this
+keyboard, a modifier other than Ctrl, Alt or Shift). Where there is no
+backend at all, as on Wayland, it raises nothing and `Registered` stays
+false:
 
 ```pascal
-MyHotkey.Register;
+try
+  MyHotkey.Register;
+except
+  on E: EHotkeyError do
+    StatusBar1.Panels[0].Text := E.Message;
+end;
 if MyHotkey.Registered then
-  StatusBar1.Panels[0].Text := 'Hotkey active'
-else
-  StatusBar1.Panels[0].Text := 'Hotkey not available on this platform';
+  StatusBar1.Panels[0].Text := 'Hotkey active';
 ```
+
+`THIDHotkey` catches the exception and reports it through `OnError`.
 
 ### Supported Key Codes
 
-The hotkey system supports:
-- Function keys (VK_F1 through VK_F12)
-- Letters (VK_A through VK_Z)
-- Numbers (VK_0 through VK_9)
-- Common keys (VK_SPACE, VK_RETURN, VK_ESCAPE, VK_TAB)
+Any key the keyboard has: letters, digits, F1 to F24, the number pad, the
+navigation keys and the punctuation keys. Register hotkeys from the main
+thread; handlers run there too, queued to the message loop.
 
 ### Modifiers
 
@@ -137,7 +144,9 @@ end;
 
 ## Attribution
 
-The hotkey implementation is adapted from the [Codebot Pascal Library](http://cross.codebot.org) by Codebot.
+The hotkey units began as an adaptation of the [Codebot Pascal Library](http://cross.codebot.org)
+by Anthony Walter. They were written new in October 2026 from a specification so
+the package could be offered under a less restrictive license.
 
 ## See Also
 
