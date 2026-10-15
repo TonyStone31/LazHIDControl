@@ -386,12 +386,13 @@ Enabling establishes a baseline; existing clipboard contents do not fire an
 initial event. **PollInterval** defaults to 250 milliseconds, and multiple
 changes between checks may produce one event. `Check` supports manual checking.
 
-Windows uses its clipboard sequence counter. GTK2 and GTK3 use the clipboard
-owner-change signal; macOS uses `NSPasteboard.changeCount`, tested with
-Unicode text.
-GTK3 on Wayland is subject to the clipboard visibility provided by GTK and the
-compositor; unrestricted background clipboard access is not promised. Other
-widgetsets currently report unsupported. This monitors the ordinary clipboard,
+Windows uses its clipboard sequence counter and macOS
+`NSPasteboard.changeCount`, tested with Unicode text. On X11 the monitor
+opens its own X connection and the XFixes extension (`libXfixes.so.3`,
+loaded at run time) reports each new clipboard owner, whatever the
+widgetset. A GTK3 program talking to Wayland directly uses GTK's
+owner-change signal instead, and sees what GTK and the compositor let it
+see; unrestricted background clipboard access is not promised there. This monitors the ordinary clipboard,
 not X11 primary-selection text. Identical copied contents can still trigger an
 event. **OnError** reports failures and disables monitoring.
 

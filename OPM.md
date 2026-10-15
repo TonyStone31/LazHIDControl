@@ -15,7 +15,7 @@
   header. Releases before October 2026 were GPL-2.0-or-later.
 - Lazarus dependencies: `LCL`, `FCL` with declared minimum **1.0.0.0** for FCL.
 - External dependencies on Linux: FPC X11/D-Bus units, linkable X11, Xtst and
-  D-Bus libraries, `libXi` for global monitoring on X11; usual LCL/widgetset libraries.
+  D-Bus libraries, `libXi` for global monitoring and `libXfixes` for clipboard monitoring on X11, both loaded at run time; usual LCL/widgetset libraries.
   On Wayland global monitoring reads `/dev/input/event*`, which needs a udev rule.
   Wayland input goes through the desktop's RemoteDesktop portal, or through
   uinput where `/dev/uinput` is writable; Wayland idle time loads `libwayland-client.so.0` at run time. Both were
