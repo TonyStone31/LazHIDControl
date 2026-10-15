@@ -1,6 +1,6 @@
 unit HIDHotkey;
 {$mode objfpc}{$H+}
-{$if defined(windows) or defined(darwin) or (defined(linux) and (defined(LCLgtk2) or defined(LCLgtk3)))}{$define HOTKEYBACKEND}{$endif}
+{$if defined(windows) or defined(darwin) or (defined(linux) and (defined(LCLgtk2) or defined(LCLgtk3) or defined(LCLqt5) or defined(LCLqt6)))}{$define HOTKEYBACKEND}{$endif}
 // Copyright (c) 2026 Tony Stone. 0BSD.
 interface
 

@@ -156,7 +156,7 @@ begin
 end;
 {$endif}
 
-// GTK's own signal, for a GTK program talking to Wayland directly.
+// GTK's own signal, for a GTK program on Wayland with no X server to ask.
 procedure THIDClipboardMonitor.WatchGtk;
 begin
   {$if defined(LCLgtk2) or defined(LCLgtk3)}
@@ -239,12 +239,9 @@ begin
   Value := NSPasteboard.generalPasteboard.changeCount;
   Result := True;
   {$else}
-  if (XDisplay = nil) and (SignalID = 0) then
-  {$ifdef LCLgtk3}
-    if (GetEnvironmentVariable('WAYLAND_DISPLAY') <> '') or not WatchX then WatchGtk;
-    {$else}
-    if not WatchX then WatchGtk;
-  {$endif}
+  // XWayland passes on Wayland clipboard changes too; GTK's signal only
+  // reports them while the program has the focus
+  if (XDisplay = nil) and (SignalID = 0) and not WatchX then WatchGtk;
   if XDisplay <> nil then
     while XPending(XDisplay) > 0 do
     begin

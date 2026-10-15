@@ -182,8 +182,7 @@ The demos share Ctrl+Shift+F9; run one at a time or change its `ShortCut`.
 Published properties and events have source comments for Object Inspector help.
 The components and their GUI methods are intended for the main GUI thread.
 Windows and Linux/X11 use the existing backends. Hotkeys on X11 read their own
-X connection; the component enables them for GTK2/GTK3 builds until a Qt build
-has been tested.
+X connection, so GTK2, GTK3 and Qt5 builds all have them.
 Linux/X11 is tested in a nested X server; Windows was tested on Windows 10 in
 a virtual machine, with hidctl and the demo.
 macOS was tested on macOS Sequoia 15 in a virtual machine: typing, the mouse,
@@ -390,9 +389,11 @@ Windows uses its clipboard sequence counter and macOS
 `NSPasteboard.changeCount`, tested with Unicode text. On X11 the monitor
 opens its own X connection and the XFixes extension (`libXfixes.so.3`,
 loaded at run time) reports each new clipboard owner, whatever the
-widgetset. A GTK3 program talking to Wayland directly uses GTK's
-owner-change signal instead, and sees what GTK and the compositor let it
-see; unrestricted background clipboard access is not promised there. This monitors the ordinary clipboard,
+widgetset. On a Wayland desktop the same works through XWayland, which
+passes on what Wayland programs copy whether or not this program has the
+focus (tested on KDE Plasma 6). Only a GTK program with no X server to reach
+falls back to GTK's owner-change signal, which on Wayland reports changes
+only while the program has the focus. This monitors the ordinary clipboard,
 not X11 primary-selection text. Identical copied contents can still trigger an
 event. **OnError** reports failures and disables monitoring.
 

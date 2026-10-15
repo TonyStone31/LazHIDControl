@@ -28,8 +28,8 @@
   clipboard, idle and power status all passed. macOS: built with the released
   Lazarus **4.8** and FPC **3.2.4** on macOS Sequoia 15 (Intel) in a virtual
   machine; typing, mouse, window control, screenshots, hotkeys, clipboard,
-  idle and power status passed. Qt builds compile
-  but were not run. No minimum Lazarus/FPC version has been established.
+  idle and power status passed. Qt5: built and run on Ubuntu 26.04 with its
+  packaged Lazarus 4.4 and FPC 3.2.2; input, hotkeys and clipboard passed. No minimum Lazarus/FPC version has been established.
 
 ## Known limitations
 

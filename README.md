@@ -108,28 +108,27 @@ other projects.
 
 | | Linux / X11 | Windows | macOS | Linux / Wayland |
 |---|---|---|---|---|
-| Tested on | Mint, in a nested X server; GTK2 and GTK3 | Windows 10, in a virtual machine | macOS 15 on Intel, in a virtual machine; Lazarus 4.8, FPC 3.2.4 | KDE Plasma 6 on Ubuntu 26.04, in a virtual machine; GTK3 |
+| Tested on | Mint, in a nested X server; GTK2 and GTK3. Qt5 on Ubuntu 26.04 with its own Lazarus 4.4 and FPC 3.2.2 | Windows 10, in a virtual machine | macOS 15 on Intel, in a virtual machine; Lazarus 4.8, FPC 3.2.4 | KDE Plasma 6 on Ubuntu 26.04, in a virtual machine; GTK3 |
 | Typing, Unicode included | ✅ on US, German, French, Spanish and Russian layouts | ✅ | ✅ | ✅ on KDE; the desktop asks the user once when the text goes beyond ASCII |
 | Keys with Ctrl, Alt, Shift | ✅ | ✅ | ✅ | ✅ |
 | Mouse: move, click, scroll | ✅ | ✅ | ✅ | ✅ in screen coordinates |
-| Back and forward mouse buttons | ✅ sent; a GTK3 Lazarus program does not receive them, a fault in the LCL | ✅ | not passed on in the virtual machine | not tried |
+| Back and forward mouse buttons | ✅ GTK2 and Qt5; a GTK3 Lazarus program does not receive them, a fault in the LCL | ✅ | not passed on in the virtual machine | not tried |
 | Global hotkeys | ✅ | ✅ | ✅ | not written; the portal serves only installed applications |
 | Windows: find, activate, move, size, minimize | ✅ | ✅ | ✅ | not possible on Wayland |
 | Screenshots | ✅ | ✅ | ✅ | ✅ through the desktop's portal; it asks the user once |
-| Clipboard monitoring | ✅ | ✅ | ✅ | ✅ |
+| Clipboard monitoring | ✅ | ✅ | ✅ | ✅ through XWayland, which passes on what Wayland programs copy |
 | Idle time | ✅ | ✅ | ✅ | ✅ on KDE; GNOME untested |
 | Power status | ✅ | ✅ | ✅ | ✅ |
 | Sleep and wake events | ✅ | not tried | not tried | not tried |
 | Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | ✅ keys and buttons from the kernel's input devices, once `THIDPermission` has installed its rule; no click positions |
 | hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
 
-Qt builds compile. On X11, clipboard monitoring and the hotkey backend no
-longer depend on GTK, but no Qt build has been run yet, and `THIDHotkey`
-enables hotkeys only on GTK2 and GTK3 until one has.
+Qt5 builds pass the same input, hotkey and clipboard checks as GTK2 on
+X11. Qt6 has not been tried.
 
 The keyboard, mouse and hotkey rows were checked again on 15 October 2026,
-after those units were rewritten: on Linux (GTK2 and GTK3) and Windows with
-the two test programs below, on macOS with the hotkey test and by typing
+after those units were rewritten: on Linux (GTK2, GTK3 and Qt5) and Windows
+with the two test programs below, on macOS with the hotkey test and by typing
 into TextEdit, and on Wayland by typing and clicking into KWrite with
 hidctl.
 
