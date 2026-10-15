@@ -16,18 +16,18 @@ The repository has three parts:
 
 ## The components
 
-| Component | What it does |
-|---|---|
-| `THIDHotkey` | Registers a global shortcut, configured in the Object Inspector; fires `OnHotkey` from any application. |
-| `THIDKeyboard` | Types text - Unicode included - and sends keys with modifiers to the focused application. |
-| `THIDMouse` | Moves, clicks, and scrolls; coordinates can be screen, control, or window relative. |
-| `THIDWindow` | Finds windows by title, class, or process; waits for them, activates, moves, resizes. |
-| `THIDScreenshot` | Captures the desktop, a monitor, a window, a rectangle, or a drag selection. |
-| `THIDClipboardMonitor` | Fires `OnChanged` when the clipboard content changes, without reading it. |
-| `THIDPowerMonitor` | Sleep and wake notifications, power source, battery percentage, charging. |
-| `THIDSystemIdle` | Fires `OnIdle` and `OnActive` as session input stops and resumes. |
-| `THIDInputMonitor` | Reports key presses and mouse clicks anywhere on the system, for recording a task to play back. |
-| `THIDPermission` | Explains which permissions this desktop needs and requests them: the udev rule on Wayland through the system's password dialog, the Privacy & Security prompts on macOS. |
+| | Component | What it does |
+|---|---|---|
+| <img src="lazhidcontrol/design/resources/THIDHotkey_200.png" width="32" height="32" alt=""> | `THIDHotkey` | Registers a global shortcut, configured in the Object Inspector; fires `OnHotkey` from any application. |
+| <img src="lazhidcontrol/design/resources/THIDKeyboard_200.png" width="32" height="32" alt=""> | `THIDKeyboard` | Types text - Unicode included - and sends keys with modifiers to the focused application. |
+| <img src="lazhidcontrol/design/resources/THIDMouse_200.png" width="32" height="32" alt=""> | `THIDMouse` | Moves, clicks, and scrolls; coordinates can be screen, control, or window relative. |
+| <img src="lazhidcontrol/design/resources/THIDWindow_200.png" width="32" height="32" alt=""> | `THIDWindow` | Finds windows by title, class, or process; waits for them, activates, moves, resizes. |
+| <img src="lazhidcontrol/design/resources/THIDScreenshot_200.png" width="32" height="32" alt=""> | `THIDScreenshot` | Captures the desktop, a monitor, a window, a rectangle, or a drag selection. |
+| <img src="lazhidcontrol/design/resources/THIDClipboardMonitor_200.png" width="32" height="32" alt=""> | `THIDClipboardMonitor` | Fires `OnChanged` when the clipboard content changes, without reading it. |
+| <img src="lazhidcontrol/design/resources/THIDPowerMonitor_200.png" width="32" height="32" alt=""> | `THIDPowerMonitor` | Sleep and wake notifications, power source, battery percentage, charging. |
+| <img src="lazhidcontrol/design/resources/THIDSystemIdle_200.png" width="32" height="32" alt=""> | `THIDSystemIdle` | Fires `OnIdle` and `OnActive` as session input stops and resumes. |
+| <img src="lazhidcontrol/design/resources/THIDInputMonitor_200.png" width="32" height="32" alt=""> | `THIDInputMonitor` | Reports key presses and mouse clicks anywhere on the system, for recording a task to play back. |
+| <img src="lazhidcontrol/design/resources/THIDPermission_200.png" width="32" height="32" alt=""> | `THIDPermission` | Explains which permissions this desktop needs and requests them: the udev rule on Wayland through the system's password dialog, the Privacy & Security prompts on macOS. |
 
 Every component has palette icons and Object Inspector hints on every
 property, reports errors through `OnError` rather than dialogs, and does
@@ -123,9 +123,15 @@ other projects.
 | Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | ✅ keys and buttons from the kernel's input devices, once `THIDPermission` has installed its rule; no click positions |
 | hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
 
-Qt builds compile. Clipboard monitoring needs GTK. The X11 hotkey backend no
-longer does, but `THIDHotkey` enables it only on GTK2 and GTK3 until a Qt
-build has been tested.
+Qt builds compile. On X11, clipboard monitoring and the hotkey backend no
+longer depend on GTK, but no Qt build has been run yet, and `THIDHotkey`
+enables hotkeys only on GTK2 and GTK3 until one has.
+
+The keyboard, mouse and hotkey rows were checked again on 15 October 2026,
+after those units were rewritten: on Linux (GTK2 and GTK3) and Windows with
+the two test programs below, on macOS with the hotkey test and by typing
+into TextEdit, and on Wayland by typing and clicking into KWrite with
+hidctl.
 
 `tests/inputcheck` types into its own window and clicks, drags and scrolls on
 its own controls, then checks what arrived (29 checks); `tests/hotkeycheck`
