@@ -1,7 +1,7 @@
 unit HIDPermissionDialog;
 
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { The window THIDPermission.Ask shows: what is being allowed, the exact
   files it installs where there are any, and Allow or Not now. }

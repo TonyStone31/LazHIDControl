@@ -1,7 +1,7 @@
 unit WaylandIdle;
 
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { Idle time on Wayland from the ext-idle-notify protocol, which KWin and the
   wlroots compositors have.  A compositor will not say how long the session

@@ -1,7 +1,7 @@
 unit LinuxPortal;
 
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { Talking to org.freedesktop.portal.Desktop, which is how a Wayland session
   hands out what a program may not take for itself.  A portal call answers

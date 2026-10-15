@@ -1,6 +1,6 @@
 unit WinPowerInput;
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 interface
 
 uses Windows, LMessages, PowerInput;

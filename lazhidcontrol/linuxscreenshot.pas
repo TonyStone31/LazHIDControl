@@ -1,7 +1,7 @@
 unit LinuxScreenshot;
 
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { A picture of the desktop from org.freedesktop.portal.Screenshot - the way a
   Wayland session hands one out, since a program there cannot read the screen

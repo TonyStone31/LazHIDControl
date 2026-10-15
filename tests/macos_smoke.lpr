@@ -1,6 +1,6 @@
 program MacOSSmoke;
 {$mode objfpc}{$H+}{$codepage utf8}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 uses
   Interfaces,
   Forms,

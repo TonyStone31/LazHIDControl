@@ -1,4 +1,5 @@
 program hidctl;
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 (* hidctl - work a program the way a person does, from a shell.
 

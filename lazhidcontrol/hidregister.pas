@@ -1,6 +1,6 @@
 unit HIDRegister;
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 interface
 
 procedure Register;
@@ -11,7 +11,8 @@ uses LResources, Classes, HIDHotkey, HIDInput, HIDScreenshot, HIDWindow, HIDSyst
 
 procedure Register;
 begin
-  RegisterComponents('LazHIDControl', [THIDHotkey, THIDKeyboard, THIDMouse, THIDScreenshot, THIDWindow, THIDSystemIdle, THIDPowerMonitor, THIDClipboardMonitor, THIDInputMonitor, THIDPermission]);
+  RegisterComponents('LazHIDControl', [THIDHotkey, THIDKeyboard, THIDMouse, THIDScreenshot, THIDWindow, THIDSystemIdle, THIDPowerMonitor,
+    THIDClipboardMonitor, THIDInputMonitor, THIDPermission]);
 end;
 
 initialization

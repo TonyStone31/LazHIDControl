@@ -1,7 +1,7 @@
 unit EvdevMonitor;
 
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { Keys straight from the kernel's input devices, for a Wayland session,
   where the compositor shows a program nothing but its own.  Reading

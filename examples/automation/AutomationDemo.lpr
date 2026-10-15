@@ -1,5 +1,6 @@
 program AutomationDemo;
 {$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
 {$ifdef windows}{$apptype gui}{$endif}
 
 uses

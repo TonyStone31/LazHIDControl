@@ -1,7 +1,7 @@
 unit WaylandMouseAndKeyInput;
 
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { Keyboard and mouse for Wayland sessions, which give no program XTest's
   kind of access.  There are two roads.

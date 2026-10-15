@@ -1,7 +1,7 @@
 unit LinuxKeyCodes;
 
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { The kernel's key codes against the LCL's virtual keys, as a US keyboard is
   laid out.  uinput presses them and evdev reports them. }

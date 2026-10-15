@@ -1,4 +1,4 @@
-{ Copyright (C) 2026 Tony Stone. GPL-2.0-or-later. }
+// Copyright (c) 2026 Tony Stone. 0BSD.
 unit CocoaEventTap;
 
 {$mode objfpc}{$H+}

@@ -1,7 +1,7 @@
 unit HIDPermission;
 
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { What this desktop wants allowed before the program may type, click, watch
   the keyboard or capture the screen - and getting it allowed, with the user

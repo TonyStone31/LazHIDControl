@@ -1,6 +1,6 @@
 unit HIDMonitor;
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 interface
 
 uses Classes, SysUtils, Controls, GlobalKeyMonitor, GlobalMouseMonitor{$ifdef linux}, EvdevMonitor{$endif};

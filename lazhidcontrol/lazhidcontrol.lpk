@@ -20,7 +20,7 @@
       </Parsing>
     </CompilerOptions>
     <Description Value="Mouse/keyboard automation, global hotkeys, input monitoring and window management for Windows and X11, with an unfinished Wayland input backend."/>
-    <License Value="GPL-2.0-or-later; see source notices, COPYING.GPL2, and LICENSE"/>
+    <License Value="0BSD; see LICENSE"/>
     <Version Major="1" Minor="0"/>
     <Files>
       <Item>

@@ -188,18 +188,32 @@ The demo on macOS, listing the Mac's windows and showing its typing test sheet:
 
 ![The demo's Typing tab on macOS](images/macos/demo-typing.png)
 
-## License and credits
+## Where it started
 
-**GPL-2.0-or-later**; [COPYING.GPL2](COPYING.GPL2) holds version 2 and
-[LICENSE](LICENSE) version 3, an allowed later version. The keyboard, mouse
-and hotkey units are 0BSD, as their headers say.
+LazHIDControl began from LazMouseAndKeyInput, the package Tom Gregorovic
+wrote in 2008 that ships with Lazarus in `components/mouseandkeyinput`,
+with its Cocoa units by Sammarco Francesco. Global hotkeys adapted from the
+Codebot library by Anthony Walter were added to it. Much of what this
+package knows about sending input on each system was learned from reading
+their code.
 
-LazHIDControl began from Tom Gregorovic's MouseAndKeyInput (2008), with
-Cocoa input by Sammarco Francesco and hotkeys adapted from the Codebot
-library by Anthony Walter. Their work was the foundation of this package.
-Because that code was under the GPL, the keyboard, mouse and hotkey units
-were written new in October 2026 from a written specification by a writer
-who never saw the earlier code, so the package could be offered under a less
-restrictive license.
+It has come a long way since. What began as typing and clicking is now ten
+components, window control, screenshots, clipboard, power and idle
+monitoring, watching keys and clicks system-wide, Wayland through the
+desktop's portals and the kernel's input devices, and hidctl.
+
+In October 2026 the last of the borrowed code was replaced. The keyboard,
+mouse and hotkey units were written new from a written description of what
+they must do, by a writer who had not seen the earlier code. That was not
+because the old code was bad - it worked, and this package rests on what it
+taught. It was because that code was under the GPL, and this package is
+meant to be usable in any program. On the package's own tests the new units
+do at least as well as the old ones on every platform.
 
 Components, window management, hidctl, and everything since: Tony Stone.
+
+## License
+
+[0BSD](LICENSE): use it in anything, open or closed, with or without
+credit. Releases before October 2026 were GPL-2.0-or-later, and copies of
+those stay under it.

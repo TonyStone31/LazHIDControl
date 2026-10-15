@@ -1,6 +1,6 @@
 unit AutomationDemoMain;
 {$mode objfpc}{$H+}
-// Copyright (c) 2026 Tony Stone. GPL-2.0-or-later; see COPYING.GPL2.
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { Every LazHIDControl component at work, a tab for each job.  All the settings
   are on the components in the form; the code here is only what happens in

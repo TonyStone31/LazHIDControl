@@ -11,9 +11,8 @@
 - Homepage: https://github.com/TonyStone31/LazHIDControl
 - Description: Mouse/keyboard automation, global hotkeys, global input monitoring
   and window management for Windows, X11 and macOS, with partial Wayland support.
-- License: **GPL-2.0-or-later** in package source notices; full GPL v2 text in
-  `COPYING.GPL2`. Existing `LICENSE` contains GPL v3 (a permitted later version).
-  The keyboard, mouse and hotkey units are 0BSD.
+- License: **0BSD**, text in `LICENSE`; every source file says so in its
+  header. Releases before October 2026 were GPL-2.0-or-later.
 - Lazarus dependencies: `LCL`, `FCL` with declared minimum **1.0.0.0** for FCL.
 - External dependencies on Linux: FPC X11/D-Bus units, linkable X11, Xtst and
   D-Bus libraries, `libXi` for global monitoring on X11; usual LCL/widgetset libraries.
@@ -52,7 +51,7 @@ The package is `RunAndDesignTime`: install it for the palette components, or
 
 Select the **repository root** for OPM, preserving the package subdirectory.
 OPM stores `lazhidcontrol` as the relative package path; moving the `.lpk` to the
-root is unnecessary. Keep both license texts at the archive root, all package
+root is unnecessary. Keep `LICENSE` at the archive root, all package
 Pascal units, `lazhidcontrol/design/resources` palette assets, the root
 documentation (`README.md`, `MANUAL.md`), `lazhidcontrol/HOTKEY_USAGE.md`, and
 the complete `examples` and `hidctl` sources/forms/projects.

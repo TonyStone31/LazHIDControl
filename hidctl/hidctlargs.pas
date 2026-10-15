@@ -1,6 +1,7 @@
 unit hidctlargs;
 
 {$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
 
 { The command line as it was typed.  GTK takes --name, --class and --sync
   out of it while the widgetset starts, and xdotool's search wants them; so
