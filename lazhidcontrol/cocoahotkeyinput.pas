@@ -1,168 +1,153 @@
-{ CocoaHotkeyInput
-
-  Copyright (C) 2025 LazHIDControl Contributors
-
-  macOS/Cocoa implementation of global hotkey registration.
-
-  This source is free software; you can redistribute it and/or modify it under the terms of the
-  GNU General Public License as published by the Free Software Foundation; either version 2 of the
-  License, or (at your option) any later version.
-
-  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  A copy of the GNU General Public License is available on the World Wide Web at
-  <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
-}
 unit CocoaHotkeyInput;
 
 {$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
+
+{ Hotkeys on macOS through the Carbon event manager's RegisterEventHotKey,
+  which still hands out system-wide shortcuts and needs no Accessibility
+  permission.  One application event handler serves them all. }
 
 interface
 
 uses
-  Classes, SysUtils, LCLType, HotkeyInputIntf;
+  Classes, HotkeyInputIntf;
 
 type
-  { TCocoaHotkey - Carbon's RegisterEventHotKey, which is still how macOS
-    hands out a system-wide shortcut; it needs no Accessibility permission }
   TCocoaHotkey = class(THotkey)
   private
-    HotKeyRef: Pointer;
-    ID: longword;
+    Id: longword;
+    Ref: Pointer;
   protected
     procedure DoRegister; override;
     procedure DoUnregister; override;
   end;
 
-function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
-
 implementation
 
 uses
-  HIDCocoaKeyInput;
+  SysUtils, HIDCocoaKeyInput;
 
   {$linkframework Carbon}
 
 type
+  OSStatus = longint;
+
   TEventHotKeyID = record
-    signature, id: longword;
+    Signature: longword;
+    Id: longword;
   end;
 
   TEventTypeSpec = record
-    eventClass, eventKind: longword;
+    EventClass: longword;
+    EventKind: longword;
   end;
 
-  TEventHandler = function(HandlerCall, Event, UserData: Pointer): longint; cdecl;
-
-const
-  kEventClassKeyboard = $6B657962;      // 'keyb'
-  kEventHotKeyPressed = 5;
-  kEventParamDirectObject = $2D2D2D2D;  // '----'
-  typeEventHotKeyID = $686B6964;        // 'hkid'
-  eventNotHandledErr = -9874;
-  controlKey = 1 shl 12;
-  optionKey = 1 shl 11;
-  shiftKey = 1 shl 9;
-  Signature = $4C484944;                // 'LHID'
+  TEventHandlerProc = function(CallRef, Event, UserData: Pointer): OSStatus; cdecl;
 
 function GetApplicationEventTarget: Pointer; cdecl; external;
-function InstallEventHandler(Target: Pointer; Handler: TEventHandler; NumTypes: longword; EventTypes, UserData: Pointer; out HandlerRef: Pointer): longint; cdecl; external;
-function RemoveEventHandler(HandlerRef: Pointer): longint; cdecl; external;
-function RegisterEventHotKey(KeyCode, Modifiers: longword; HotKeyID: TEventHotKeyID; Target: Pointer; Options: longword; out HotKeyRef: Pointer): longint; cdecl; external;
-function UnregisterEventHotKey(HotKeyRef: Pointer): longint; cdecl; external;
-function GetEventParameter(Event: Pointer; Name, DesiredType: longword; ActualType: Pointer; BufferSize: longword; ActualSize, Data: Pointer): longint; cdecl; external;
+function InstallEventHandler(Target: Pointer; Handler: TEventHandlerProc; NumTypes: PtrUInt; List: Pointer; UserData: Pointer; OutRef: Pointer): OSStatus; cdecl; external;
+function GetEventParameter(Event: Pointer; Name, DesiredType: longword; ActualType: Pointer; BufferSize: PtrUInt; ActualSize: Pointer; Data: Pointer): OSStatus; cdecl; external;
+function RegisterEventHotKey(Code, Modifiers: longword; HotKeyID: TEventHotKeyID; Target: Pointer; Options: longword; out HotKeyRef: Pointer): OSStatus; cdecl; external;
+function UnregisterEventHotKey(HotKeyRef: Pointer): OSStatus; cdecl; external;
+
+const
+  NoErr = 0;
+  EventNotHandledErr = -9874;
+  EventHotKeyExistsErr = -9878;
+  EventClassKeyboard = $6B657962;    // 'keyb'
+  EventHotKeyPressed = 5;
+  ParamDirectObject = $2D2D2D2D;     // '----'
+  TypeEventHotKeyID = $686B6964;     // 'hkid'
+  ShiftKeyBit = $0200;
+  OptionKeyBit = $0800;
+  ControlKeyBit = $1000;
+  // marks our hotkeys among any others the application registers
+  OurSignature = $4C7A484B;          // 'LzHK'
 
 var
-  Hotkeys: TList = nil;      // registered TCocoaHotkey; nil while there are none
-  Handler: Pointer = nil;    // one event handler serves them all
-  LastID: longword = 0;
+  Hotkeys: TFPList;
+  HandlerInstalled: boolean;
+  LastId: longword;
 
-function HotkeyPressed(HandlerCall, Event, UserData: Pointer): longint; cdecl;
+function FindHotkey(AId: longword): TCocoaHotkey;
 var
-  Pressed: TEventHotKeyID;
   I: integer;
-  Hotkey: TCocoaHotkey;
 begin
-  Result := eventNotHandledErr;
-  if Hotkeys = nil then Exit;
-  if GetEventParameter(Event, kEventParamDirectObject, typeEventHotKeyID, nil, SizeOf(Pressed), nil, @Pressed) <> 0 then Exit;
-  for I := 0 to Hotkeys.Count - 1 do
-  begin
-    Hotkey := TCocoaHotkey(Hotkeys[I]);
-    if Hotkey.ID = Pressed.id then
-    begin
-      if Assigned(Hotkey.OnHotkeyEvent) then Hotkey.OnHotkeyEvent(Hotkey, Hotkey.KeyCode, Hotkey.ShiftState);
-      Exit(0);
-    end;
-  end;
+  Result := nil;
+  if Hotkeys <> nil then
+    for I := 0 to Hotkeys.Count - 1 do
+      if TCocoaHotkey(Hotkeys[I]).Id = AId then Exit(TCocoaHotkey(Hotkeys[I]));
 end;
 
-procedure DropHandlerIfUnused;
+function HotkeyEvent(CallRef, Event, UserData: Pointer): OSStatus; cdecl;
+var
+  HotKeyID: TEventHotKeyID;
+  H: TCocoaHotkey;
 begin
-  if (Hotkeys = nil) or (Hotkeys.Count > 0) then Exit;
-  if Handler <> nil then RemoveEventHandler(Handler);
-  Handler := nil;
-  FreeAndNil(Hotkeys);
+  Result := EventNotHandledErr;
+  HotKeyID := Default(TEventHotKeyID);
+  if GetEventParameter(Event, ParamDirectObject, TypeEventHotKeyID, nil, SizeOf(HotKeyID), nil, @HotKeyID) <> NoErr then Exit;
+  if HotKeyID.Signature <> OurSignature then Exit;
+  H := FindHotkey(HotKeyID.Id);
+  if H = nil then Exit;
+  H.PressedLater;
+  Result := NoErr;
 end;
-
-function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
-begin
-  Result := TCocoaHotkey.Create(AKey, AShift, AOnHotkey);
-end;
-
-{ TCocoaHotkey }
 
 procedure TCocoaHotkey.DoRegister;
 var
-  EventType: TEventTypeSpec;
+  Code: word;
+  Mods: longword;
   HotKeyID: TEventHotKeyID;
-  Modifiers: longword;
-  Status: longint;
+  Spec: TEventTypeSpec;
+  Status: OSStatus;
+  I: integer;
 begin
-  if VKToMacCode(KeyCode) = NoMacCode then
-    raise Exception.CreateFmt('Key %d cannot be a hotkey on macOS.', [KeyCode]);
+  if GetCurrentThreadId <> MainThreadID then raise EHotkeyError.Create('Hotkeys must be registered from the main thread.');
+  if Shift - [ssCtrl, ssAlt, ssShift] <> [] then raise EHotkeyError.Create('Only Ctrl, Alt and Shift can be part of a hotkey.');
+  Code := VKToMacCode(Key);
+  if Code = NoMacCode then raise EHotkeyError.CreateFmt('Key %d does not exist on a Mac keyboard.', [Key]);
+  // refused here, so the reason is the same whatever macOS would answer
+  for I := 0 to Hotkeys.Count - 1 do
+    if (TCocoaHotkey(Hotkeys[I]).Key = Key) and (TCocoaHotkey(Hotkeys[I]).Shift = Shift) then
+      raise EHotkeyError.Create('This combination is already registered in this program.');
 
-  if Hotkeys = nil then
+  if not HandlerInstalled then
   begin
-    Hotkeys := TList.Create;
-    EventType.eventClass := kEventClassKeyboard;
-    EventType.eventKind := kEventHotKeyPressed;
-    Status := InstallEventHandler(GetApplicationEventTarget, @HotkeyPressed, 1, @EventType, nil, Handler);
-    if Status <> 0 then
-    begin
-      DropHandlerIfUnused;
-      raise Exception.CreateFmt('Could not install the macOS hotkey handler (%d).', [Status]);
-    end;
+    Spec.EventClass := EventClassKeyboard;
+    Spec.EventKind := EventHotKeyPressed;
+    Status := InstallEventHandler(GetApplicationEventTarget, @HotkeyEvent, 1, @Spec, nil, nil);
+    if Status <> NoErr then raise EHotkeyError.CreateFmt('The hotkey event handler could not be installed (status %d).', [Status]);
+    HandlerInstalled := True;
   end;
 
-  Modifiers := 0;
-  if ssCtrl in ShiftState then Modifiers := Modifiers or controlKey;
-  if ssAlt in ShiftState then Modifiers := Modifiers or optionKey;
-  if ssShift in ShiftState then Modifiers := Modifiers or shiftKey;
-  Inc(LastID);
-  ID := LastID;
-  HotKeyID.signature := Signature;
-  HotKeyID.id := ID;
-  Status := RegisterEventHotKey(VKToMacCode(KeyCode), Modifiers, HotKeyID, GetApplicationEventTarget, 0, HotKeyRef);
-  if Status <> 0 then
-  begin
-    DropHandlerIfUnused;
-    raise Exception.CreateFmt('Could not register the macOS hotkey (%d).', [Status]);
-  end;
+  Mods := 0;
+  if ssCtrl in Shift then Mods := Mods or ControlKeyBit;
+  if ssAlt in Shift then Mods := Mods or OptionKeyBit;
+  if ssShift in Shift then Mods := Mods or ShiftKeyBit;
+  Inc(LastId);
+  Id := LastId;
+  HotKeyID.Signature := OurSignature;
+  HotKeyID.Id := Id;
+  Ref := nil;
+  Status := RegisterEventHotKey(Code, Mods, HotKeyID, GetApplicationEventTarget, 0, Ref);
+  if Status = EventHotKeyExistsErr then raise EHotkeyError.CreateFmt('This combination is already taken (status %d).', [Status]);
+  if Status <> NoErr then raise EHotkeyError.CreateFmt('macOS refused this combination (status %d).', [Status]);
   Hotkeys.Add(Self);
   Registered := True;
 end;
 
 procedure TCocoaHotkey.DoUnregister;
 begin
-  UnregisterEventHotKey(HotKeyRef);
-  HotKeyRef := nil;
-  Registered := False;
+  if Hotkeys = nil then Exit;
   Hotkeys.Remove(Self);
-  DropHandlerIfUnused;
+  if Ref <> nil then UnregisterEventHotKey(Ref);
+  Ref := nil;
 end;
 
+initialization
+  Hotkeys := TFPList.Create;
+
+finalization
+  FreeAndNil(Hotkeys);
 end.

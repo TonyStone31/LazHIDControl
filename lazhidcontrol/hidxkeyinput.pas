@@ -55,6 +55,7 @@ type
     function IsSpare(Code: integer): boolean;
     function KeycodeOf(Sym: TKeySym): TKeyCode;
     function KeycodeAt(const Place: string): TKeyCode;
+    function IsFunctionKeyPlace(Code: integer): boolean;
     function KeycodeFor(Key: word): TKeyCode;
     function FindChar(Sym: TKeySym; Group: integer; out Code: TKeyCode; out NeedShift: boolean): boolean;
     function Holds(Code: TKeyCode; Sym: TKeySym): boolean;
@@ -146,7 +147,8 @@ begin
 end;
 
 // The XKB name of the place a key has on a US keyboard, for the keys whose
-// symbol depends on the layout; empty for the rest.
+// symbol depends on the layout or keymap (F13 and up often carry media keys);
+// empty for the rest.
 function PlaceOf(Key: word): string;
 const
   // A to Z
@@ -168,6 +170,7 @@ begin
     VK_LCL_SLASH: Result := 'AB10';
     VK_LCL_TILDE: Result := 'TLDE';
     VK_OEM_102: Result := 'LSGT';
+    VK_F1..VK_F24: Result := Format('FK%.2d', [Key - VK_F1 + 1]);
     else
       Result := '';
   end;
@@ -345,6 +348,20 @@ begin
   end;
 end;
 
+// True when Code is one of the function keys <FK01>..<FK99>.
+function TXKeyInput.IsFunctionKeyPlace(Code: integer): boolean;
+var
+  Map: PXkbDescPtr;
+  Key: PXkbKeyNamePtr;
+begin
+  Result := False;
+  Map := Keymap;
+  if (Map = nil) or (Map^.names = nil) or (Map^.names^.keys = nil) then Exit;
+  if (Code < Map^.min_key_code) or (Code > Map^.max_key_code) then Exit;
+  Key := @Map^.names^.keys[Code];
+  Result := (Key^.Name[0] = 'F') and (Key^.Name[1] = 'K') and (Key^.Name[2] in ['0'..'9']) and (Key^.Name[3] in ['0'..'9']);
+end;
+
 // The key the layout has for the US symbol; failing that, the key at its US
 // place, so Ctrl+A is still Ctrl and the A key on a Russian layout.
 function TXKeyInput.KeycodeFor(Key: word): TKeyCode;
@@ -478,8 +495,10 @@ begin
   // keycodes no key uses first; then borrow from the top of the range
   for Code := Low to High do
     if (Length(Spares) < SpareCount) and Unused(Code) then Add(Code);
+  // never a function key: VK_F13 and up may need it at its place
   for Code := High downto Low do
-    if (Length(Spares) < SpareCount) and not Unused(Code) and not IsModifier(Code) then Add(Code);
+    if (Length(Spares) < SpareCount) and not Unused(Code) and not IsModifier(Code) and not IsFunctionKeyPlace(Code) then
+      Add(Code);
   if Mods <> nil then XFreeModifiermap(Mods);
   XFree(Map);
 end;

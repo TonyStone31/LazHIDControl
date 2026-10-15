@@ -1,79 +1,139 @@
-{ HotkeyInputIntf
-
-  Copyright (C) 2025 LazHIDControl Contributors
-
-  This source is free software; you can redistribute it and/or modify it under the terms of the
-  GNU General Public License as published by the Free Software Foundation; either version 2 of the
-  License, or (at your option) any later version.
-
-  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  A copy of the GNU General Public License is available on the World Wide Web at
-  <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
-}
 unit HotkeyInputIntf;
 
 {$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
+
+{ A system-wide hotkey: one LCL virtual key with Ctrl, Alt and Shift.  This
+  class registers nothing; each platform's backend overrides DoRegister and
+  DoUnregister and calls PressedLater when the combination comes in. }
 
 interface
 
 uses
-  Classes, SysUtils, LCLType;
+  Classes, SysUtils;
 
 type
   TKeyNotifyEvent = procedure(Sender: TObject; Key: word; Shift: TShiftState) of object;
 
-  { THotkey - Abstract base class for global hotkey registration }
+  EHotkeyError = class(Exception);
+
   THotkey = class
+  private
+    FKey: word;
+    FShift: TShiftState;
+    FOnHotkey: TKeyNotifyEvent;
+    FRegistered: boolean;
+    FSerial: PtrInt;
   protected
-    KeyCode: word;
-    ShiftState: TShiftState;
-    OnHotkeyEvent: TKeyNotifyEvent;
-    IsRegistered: boolean;
-    procedure DoRegister; virtual; abstract;
-    procedure DoUnregister; virtual; abstract;
+    // Take the combination and set Registered when that worked; may raise
+    // an EHotkeyError that says why it did not.
+    procedure DoRegister; virtual;
+    // Give the combination back.  Only called while Registered.
+    procedure DoUnregister; virtual;
+    // Runs the handler now.  The handler may free this object, so a caller
+    // must not touch it afterwards.
+    procedure Pressed;
+    // Runs the handler from the application's message loop, if this hotkey
+    // still exists and is registered by then.
+    procedure PressedLater;
   public
     constructor Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); virtual;
     destructor Destroy; override;
     procedure Register;
     procedure Unregister;
-    property Key: word read KeyCode;
-    property Shift: TShiftState read ShiftState;
-    property Registered: boolean read IsRegistered write IsRegistered;
+    property Key: word read FKey;
+    property Shift: TShiftState read FShift;
+    // Backends and test doubles set this.
+    property Registered: boolean read FRegistered write FRegistered;
   end;
 
 implementation
 
-{ THotkey }
+uses
+  Forms;
+
+type
+  TDelivery = class
+    procedure Deliver(Data: PtrInt);
+  end;
+
+var
+  // every hotkey alive, so a queued press can tell whether its hotkey still is
+  Live: TFPList;
+  LastSerial: PtrInt;
+  Delivery: TDelivery;
+
+procedure TDelivery.Deliver(Data: PtrInt);
+var
+  I: integer;
+  H: THotkey;
+begin
+  for I := 0 to Live.Count - 1 do
+  begin
+    H := THotkey(Live[I]);
+    if H.FSerial = Data then
+    begin
+      if H.Registered then H.Pressed;
+      Exit;
+    end;
+  end;
+end;
 
 constructor THotkey.Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
 begin
   inherited Create;
-  KeyCode := AKey;
-  ShiftState := AShift;
-  OnHotkeyEvent := AOnHotkey;
-  IsRegistered := False;
+  FKey := AKey;
+  FShift := AShift;
+  FOnHotkey := AOnHotkey;
+  Inc(LastSerial);
+  FSerial := LastSerial;
+  if Live <> nil then Live.Add(Self);
 end;
 
 destructor THotkey.Destroy;
 begin
   Unregister;
+  // forms are freed with the Application, after this unit's finalization
+  if Live <> nil then Live.Remove(Self);
   inherited Destroy;
+end;
+
+procedure THotkey.DoRegister;
+begin
+end;
+
+procedure THotkey.DoUnregister;
+begin
+end;
+
+procedure THotkey.Pressed;
+begin
+  if Assigned(FOnHotkey) then FOnHotkey(Self, FKey, FShift);
+end;
+
+procedure THotkey.PressedLater;
+begin
+  if Delivery <> nil then Application.QueueAsyncCall(@Delivery.Deliver, FSerial);
 end;
 
 procedure THotkey.Register;
 begin
-  if not IsRegistered then
-    DoRegister;
+  if not FRegistered then DoRegister;
 end;
 
 procedure THotkey.Unregister;
 begin
-  if IsRegistered then
-    DoUnregister;
+  if not FRegistered then Exit;
+  DoUnregister;
+  FRegistered := False;
 end;
 
+initialization
+  Live := TFPList.Create;
+  Delivery := TDelivery.Create;
+
+finalization
+  if Application <> nil then Application.RemoveAsyncCalls(Delivery);
+  FreeAndNil(Delivery);
+  FreeAndNil(Live);
 end.

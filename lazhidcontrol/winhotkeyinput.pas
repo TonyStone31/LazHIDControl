@@ -1,140 +1,130 @@
-{ WinHotkeyInput
-
-  Copyright (C) 2025 LazHIDControl Contributors
-
-  Windows implementation of global hotkey registration using RegisterHotKey API.
-
-  This source is free software; you can redistribute it and/or modify it under the terms of the
-  GNU General Public License as published by the Free Software Foundation; either version 2 of the
-  License, or (at your option) any later version.
-
-  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  A copy of the GNU General Public License is available on the World Wide Web at
-  <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
-}
 unit WinHotkeyInput;
 
 {$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
+
+{ Hotkeys on Windows: RegisterHotKey on a hidden message-only window of this
+  unit's own, made on the main thread at the first registration, so
+  WM_HOTKEY arrives through the application's message loop. }
 
 interface
 
 uses
-  Classes, SysUtils, LCLType, Windows, HotkeyInputIntf;
+  Classes, HotkeyInputIntf;
 
 type
-  { TWinHotkey }
   TWinHotkey = class(THotkey)
   private
-    AtomID: word;
-    WindowHandle: HWND;
+    Id: integer;
   protected
     procedure DoRegister; override;
     procedure DoUnregister; override;
-  public
-    constructor Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent); override;
   end;
-
-function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
 
 implementation
 
+uses
+  SysUtils, Windows;
+
 const
+  // Windows 7 and later: holding the combination does not repeat WM_HOTKEY
   MOD_NOREPEAT = $4000;
+  HWND_MESSAGE = HWND(-3);
+  // ids from $C000 up belong to shared DLLs
+  LastAppId = $BFFF;
+  WindowClassName: pwidechar = 'LazHIDControlHotkeys';
 
 var
-  GlobalHotkeys: TList = nil;
-  MessageWindow: HWND = 0;
+  Wnd: HWND;
+  Hotkeys: TFPList;
 
-function HotkeyWindowProc(hWnd: HWND; Msg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
+function FindHotkey(AId: integer): TWinHotkey;
 var
   I: integer;
-  Hotkey: TWinHotkey;
+begin
+  Result := nil;
+  if Hotkeys <> nil then
+    for I := 0 to Hotkeys.Count - 1 do
+      if TWinHotkey(Hotkeys[I]).Id = AId then Exit(TWinHotkey(Hotkeys[I]));
+end;
+
+function WindowProc(Window: HWND; Msg: UINT; WP: WPARAM; LP: LPARAM): LRESULT; stdcall;
+var
+  H: TWinHotkey;
 begin
   if Msg = WM_HOTKEY then
   begin
-    for I := 0 to GlobalHotkeys.Count - 1 do
-    begin
-      Hotkey := TWinHotkey(GlobalHotkeys[I]);
-      if Hotkey.AtomID = wParam then
-      begin
-        if Assigned(Hotkey.OnHotkeyEvent) then
-          Hotkey.OnHotkeyEvent(Hotkey, Hotkey.Key, Hotkey.Shift);
-        Exit(0);
-      end;
-    end;
-  end;
-  Result := DefWindowProc(hWnd, Msg, wParam, lParam);
+    H := FindHotkey(integer(WP));
+    if H <> nil then H.PressedLater;
+    Result := 0;
+  end
+  else
+    Result := DefWindowProcW(Window, Msg, WP, LP);
 end;
 
-function InitializeHotkey(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent): THotkey;
-begin
-  Result := TWinHotkey.Create(AKey, AShift, AOnHotkey);
-end;
-
-{ TWinHotkey }
-
-constructor TWinHotkey.Create(AKey: word; AShift: TShiftState; AOnHotkey: TKeyNotifyEvent);
+function HotkeyWindow: HWND;
 var
-  WndClass: TWNDCLASSA;
+  WC: TWndClassW;
 begin
-  inherited Create(AKey, AShift, AOnHotkey);
-  AtomID := 0;
-
-  if GlobalHotkeys = nil then
-    GlobalHotkeys := TList.Create;
-
-  if MessageWindow = 0 then
+  if Wnd = 0 then
   begin
-    FillChar(WndClass, SizeOf(WndClass), 0);
-    WndClass.lpfnWndProc := @HotkeyWindowProc;
-    WndClass.hInstance := HInstance;
-    WndClass.lpszClassName := 'HotkeyInputWindow';
-    RegisterClassA(WndClass);
-    MessageWindow := CreateWindowEx(0, 'HotkeyInputWindow', '', 0, 0, 0, 0, 0, 0, 0, HInstance, nil);
+    WC := Default(TWndClassW);
+    WC.lpfnWndProc := @WindowProc;
+    WC.hInstance := HInstance;
+    WC.lpszClassName := WindowClassName;
+    Windows.RegisterClassW(@WC);
+    Wnd := CreateWindowExW(0, WindowClassName, nil, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, HInstance, nil);
   end;
-
-  WindowHandle := MessageWindow;
+  Result := Wnd;
 end;
 
 procedure TWinHotkey.DoRegister;
 var
-  Modifiers: UINT;
+  Mods: UINT;
+  Err: DWORD;
   I: integer;
 begin
-  for I := 0 to GlobalHotkeys.Count - 1 do
-    if (TWinHotkey(GlobalHotkeys[I]).Key = Key) and (TWinHotkey(GlobalHotkeys[I]).Shift = Shift) then Exit;
-  Modifiers := MOD_NOREPEAT;
-  if ssShift in Shift then Modifiers := Modifiers or MOD_SHIFT;
-  if ssCtrl in Shift then Modifiers := Modifiers or MOD_CONTROL;
-  if ssAlt in Shift then Modifiers := Modifiers or MOD_ALT;
+  if GetCurrentThreadId <> MainThreadID then raise EHotkeyError.Create('Hotkeys must be registered from the main thread.');
+  if Shift - [ssCtrl, ssAlt, ssShift] <> [] then raise EHotkeyError.Create('Only Ctrl, Alt and Shift can be part of a hotkey.');
+  // LCL virtual keys below 255 are the Windows ones
+  if (Key = 0) or (Key > $FE) then raise EHotkeyError.CreateFmt('Key %d cannot be used as a hotkey.', [Key]);
+  // asked here, so the reason given says it is this program
+  for I := 0 to Hotkeys.Count - 1 do
+    if (TWinHotkey(Hotkeys[I]).Key = Key) and (TWinHotkey(Hotkeys[I]).Shift = Shift) then
+      raise EHotkeyError.Create('This combination is already registered in this program.');
+  if HotkeyWindow = 0 then raise EHotkeyError.Create(SysErrorMessage(GetLastError));
 
-  AtomID := GlobalAddAtom(PChar(Format('Hotkey_%d_%d', [Key, Modifiers])));
-  if RegisterHotKey(WindowHandle, AtomID, Modifiers, Key) then
+  Id := 1;
+  while (Id <= LastAppId) and (FindHotkey(Id) <> nil) do Inc(Id);
+  if Id > LastAppId then raise EHotkeyError.Create('Too many hotkeys.');
+
+  Mods := MOD_NOREPEAT;
+  if ssCtrl in Shift then Mods := Mods or MOD_CONTROL;
+  if ssAlt in Shift then Mods := Mods or MOD_ALT;
+  if ssShift in Shift then Mods := Mods or MOD_SHIFT;
+  if not RegisterHotKey(Wnd, Id, Mods, Key) then
   begin
-    GlobalHotkeys.Add(Self);
-    Registered := True;
-  end
-  else
-  begin
-    GlobalDeleteAtom(AtomID);
-    AtomID := 0;
+    Err := GetLastError;
+    if Err = ERROR_HOTKEY_ALREADY_REGISTERED then raise EHotkeyError.Create('Another program already uses this combination.');
+    raise EHotkeyError.Create(SysErrorMessage(Err));
   end;
+  Hotkeys.Add(Self);
+  Registered := True;
 end;
 
 procedure TWinHotkey.DoUnregister;
 begin
-  if not Registered then Exit;
-
-  UnregisterHotKey(WindowHandle, AtomID);
-  GlobalDeleteAtom(AtomID);
-  GlobalHotkeys.Remove(Self);
-
-  AtomID := 0;
-  Registered := False;
+  // the window is gone once this unit is finalized, and the hotkeys with it
+  if Hotkeys = nil then Exit;
+  UnregisterHotKey(Wnd, Id);
+  Hotkeys.Remove(Self);
 end;
 
+initialization
+  Hotkeys := TFPList.Create;
+
+finalization
+  if Wnd <> 0 then DestroyWindow(Wnd);
+  Windows.UnregisterClassW(WindowClassName, HInstance);
+  FreeAndNil(Hotkeys);
 end.
