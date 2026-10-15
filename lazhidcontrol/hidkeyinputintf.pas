@@ -85,18 +85,33 @@ begin
   Up(Key);
 end;
 
+type
+  TModifierKey = record
+    State: TShiftStateEnum;
+    Key: word;
+  end;
+
+const
+  { pressed in this order, let go in the reverse }
+  ModifierKeys: array[0..2] of TModifierKey = (
+    (State: ssCtrl; Key: VK_CONTROL),
+    (State: ssAlt; Key: VK_MENU),
+    (State: ssShift; Key: VK_SHIFT));
+
 procedure TKeyInput.Apply(Shift: TShiftState);
+var
+  I: integer;
 begin
-  if ssCtrl in Shift then Down(VK_CONTROL);
-  if ssAlt in Shift then Down(VK_MENU);
-  if ssShift in Shift then Down(VK_SHIFT);
+  for I := 0 to High(ModifierKeys) do
+    if ModifierKeys[I].State in Shift then Down(ModifierKeys[I].Key);
 end;
 
 procedure TKeyInput.Unapply(Shift: TShiftState);
+var
+  I: integer;
 begin
-  if ssShift in Shift then Up(VK_SHIFT);
-  if ssAlt in Shift then Up(VK_MENU);
-  if ssCtrl in Shift then Up(VK_CONTROL);
+  for I := High(ModifierKeys) downto 0 do
+    if ModifierKeys[I].State in Shift then Up(ModifierKeys[I].Key);
 end;
 
 // Typing is often started by a hotkey whose keys are still held down.

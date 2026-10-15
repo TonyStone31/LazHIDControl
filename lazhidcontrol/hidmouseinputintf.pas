@@ -55,6 +55,16 @@ implementation
 uses
   Forms, HIDMouseAndKeyInput;
 
+{ a point in Control's client area, turned into the same point on the screen }
+procedure ToScreen(Control: TControl; var X, Y: integer);
+var
+  Spot: TPoint;
+begin
+  Spot := Control.ClientToScreen(Point(X, Y));
+  X := Spot.X;
+  Y := Spot.Y;
+end;
+
 const
   // between the two clicks of a double click: a fast hand, well inside
   // any toolkit's double-click time
@@ -115,11 +125,9 @@ begin
 end;
 
 procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
-var
-  P: TPoint;
 begin
-  P := Control.ClientToScreen(Point(X, Y));
-  Down(Button, Shift, P.X, P.Y);
+  ToScreen(Control, X, Y);
+  Down(Button, Shift, X, Y);
 end;
 
 procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
@@ -147,11 +155,9 @@ begin
 end;
 
 procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
-var
-  P: TPoint;
 begin
-  P := Control.ClientToScreen(Point(X, Y));
-  Up(Button, Shift, P.X, P.Y);
+  ToScreen(Control, X, Y);
+  Up(Button, Shift, X, Y);
 end;
 
 procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
@@ -182,11 +188,9 @@ begin
 end;
 
 procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
-var
-  P: TPoint;
 begin
-  P := Control.ClientToScreen(Point(X, Y));
-  Click(Button, Shift, P.X, P.Y);
+  ToScreen(Control, X, Y);
+  Click(Button, Shift, X, Y);
 end;
 
 procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
@@ -221,11 +225,9 @@ begin
 end;
 
 procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
-var
-  P: TPoint;
 begin
-  P := Control.ClientToScreen(Point(X, Y));
-  DblClick(Button, Shift, P.X, P.Y);
+  ToScreen(Control, X, Y);
+  DblClick(Button, Shift, X, Y);
 end;
 
 procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
@@ -252,11 +254,9 @@ begin
 end;
 
 procedure TMouseInput.ScrollUp(Shift: TShiftState; Control: TControl; X, Y: integer);
-var
-  P: TPoint;
 begin
-  P := Control.ClientToScreen(Point(X, Y));
-  ScrollUp(Shift, P.X, P.Y);
+  ToScreen(Control, X, Y);
+  ScrollUp(Shift, X, Y);
 end;
 
 procedure TMouseInput.ScrollUp(Shift: TShiftState; ScreenX, ScreenY: integer);
@@ -284,11 +284,9 @@ begin
 end;
 
 procedure TMouseInput.ScrollDown(Shift: TShiftState; Control: TControl; X, Y: integer);
-var
-  P: TPoint;
 begin
-  P := Control.ClientToScreen(Point(X, Y));
-  ScrollDown(Shift, P.X, P.Y);
+  ToScreen(Control, X, Y);
+  ScrollDown(Shift, X, Y);
 end;
 
 procedure TMouseInput.ScrollDown(Shift: TShiftState; ScreenX, ScreenY: integer);
@@ -320,11 +318,9 @@ begin
 end;
 
 procedure TMouseInput.Move(Shift: TShiftState; Control: TControl; X, Y: integer; Duration: integer);
-var
-  P: TPoint;
 begin
-  P := Control.ClientToScreen(Point(X, Y));
-  Move(Shift, P.X, P.Y, Duration);
+  ToScreen(Control, X, Y);
+  Move(Shift, X, Y, Duration);
 end;
 
 procedure TMouseInput.MoveBy(Shift: TShiftState; DX, DY: integer; Duration: integer);
