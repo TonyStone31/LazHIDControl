@@ -157,6 +157,10 @@ var
     program with a hover of its own keeps up; a generated path of a hundred
     points wants it far shorter, and says so. }
   Dwell: integer = 120;
+  { Commands given on the command line keep their text exactly as the shell
+    passed it; a script line's text is trimmed, so stray spaces at its ends
+    are not typed. }
+  Exact: boolean = False;
 
 { The window in screen coordinates.  Every at/drag is relative to this, so a
   script does not care where the window landed. }
@@ -397,8 +401,17 @@ var
     Perm: THIDPermission;
     Seconds: double;
 
+  { The text after a word N characters long and the space that ends it. }
+    function After(const S: string; N: integer): string;
+    begin
+      if Exact then Result := Copy(S, N + 2, MaxInt)
+      else
+        Result := Trim(Copy(S, N + 1, MaxInt));
+    end;
+
     { A leading window id on the xdotool window commands: "windowmove 123 10 20"
       against "windowmove 10 20".  Extra is how many arguments follow it. }
+
     procedure TakeWindow(Extra: integer);
     begin
       if P.Count - 1 <= Extra then Exit;
@@ -417,7 +430,7 @@ var
       P.DelimitedText := Trim(Line);
       Cmd := LowerCase(P[0]);
       { everything after the first word, spaces kept - type and echo want it }
-      Rest := Trim(Copy(Trim(Line), Length(P[0]) + 1, MaxInt));
+      Rest := After(TrimLeft(Line), Length(P[0]));
 
       { xdotool's options: the few that mean something here are kept, the
         rest are dropped so its command lines still run }
@@ -427,14 +440,14 @@ var
       while (P.Count > 1) and (Pos(' ' + P[1] + ' ', Options) > 0) do
       begin
         Msg := Copy(P[1], 3, MaxInt);
-        Rest := Trim(Copy(Rest, Length(P[1]) + 1, MaxInt));
+        Rest := After(Rest, Length(P[1]));
         P.Delete(1);
         if (Msg = 'name') or (Msg = 'class') or (Msg = 'pid') then Kind := Msg
         else if ((Msg = 'delay') or (Msg = 'repeat') or (Msg = 'window')) and (P.Count > 1) then
         begin
           if Msg = 'delay' then Delay := StrToInt(P[1]);
           if Msg = 'repeat' then Times := StrToInt(P[1]);
-          Rest := Trim(Copy(Rest, Length(P[1]) + 1, MaxInt));
+          Rest := After(Rest, Length(P[1]));
           P.Delete(1);
         end;
       end;
@@ -795,7 +808,10 @@ begin
     else if FileExists(Arg) then
       Script.LoadFromFile(Arg)
     else if IsCommand(Arg) then
-      Chain(I, Script)
+    begin
+      Chain(I, Script);
+      Exact := True;
+    end
     else
     begin
       WriteLn('"', Arg, '" is neither a script file nor a command; hidctl --help lists the commands');
