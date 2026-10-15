@@ -1,84 +1,117 @@
-{ HIDMouseInputIntf
-
-  Copyright (C) 2008 Tom Gregorovic
-
-  This source is free software; you can redistribute it and/or modify it under the terms of the
-  GNU General Public License as published by the Free Software Foundation; either version 2 of the
-  License, or (at your option) any later version.
-
-  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  A copy of the GNU General Public License is available on the World Wide Web at
-  <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
-}
 unit HIDMouseInputIntf;
 
 {$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
+
+{ The mouse as the rest of the package sees it.  Every action that takes a
+  Shift holds those modifiers through KeyInput while it runs. }
 
 interface
 
 uses
-  Classes, SysUtils, Controls, Forms;
+  Classes, SysUtils, Types, Controls;
 
 type
-  { TMouseInput }
-
   TMouseInput = class
+  private
+    procedure Hold(Shift: TShiftState);
+    procedure Release(Shift: TShiftState);
+    procedure Glide(ScreenX, ScreenY, Duration: integer);
   protected
-    procedure DoDown(Button: TMouseButton); dynamic; abstract;
-    procedure DoMove(ScreenX, ScreenY: integer); dynamic; abstract;
-    procedure DoUp(Button: TMouseButton); dynamic; abstract;
-    procedure DoScrollUp; dynamic; abstract;
-    procedure DoScrollDown; dynamic; abstract;
+    procedure DoDown(Button: TMouseButton); virtual; abstract;
+    procedure DoUp(Button: TMouseButton); virtual; abstract;
+    procedure DoMove(ScreenX, ScreenY: integer); virtual; abstract;
+    procedure DoScrollUp; virtual; abstract;
+    procedure DoScrollDown; virtual; abstract;
+    // Where the pointer is now, in screen coordinates.
+    function CurrentPos: TPoint; virtual;
   public
-    procedure Down(Button: TMouseButton; Shift: TShiftState);
-    procedure Down(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
-    procedure Down(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
-
-    procedure Move(Shift: TShiftState; Control: TControl; X, Y: integer; Duration: integer = 0);
+    procedure Down(Button: TMouseButton; Shift: TShiftState); overload;
+    procedure Down(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer); overload;
+    procedure Down(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer); overload;
+    procedure Up(Button: TMouseButton; Shift: TShiftState); overload;
+    procedure Up(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer); overload;
+    procedure Up(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer); overload;
+    procedure Click(Button: TMouseButton; Shift: TShiftState); overload;
+    procedure Click(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer); overload;
+    procedure Click(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer); overload;
+    procedure DblClick(Button: TMouseButton; Shift: TShiftState); overload;
+    procedure DblClick(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer); overload;
+    procedure DblClick(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer); overload;
+    procedure ScrollUp(Shift: TShiftState); overload;
+    procedure ScrollUp(Shift: TShiftState; Control: TControl; X, Y: integer); overload;
+    procedure ScrollUp(Shift: TShiftState; ScreenX, ScreenY: integer); overload;
+    procedure ScrollDown(Shift: TShiftState); overload;
+    procedure ScrollDown(Shift: TShiftState; Control: TControl; X, Y: integer); overload;
+    procedure ScrollDown(Shift: TShiftState; ScreenX, ScreenY: integer); overload;
+    procedure Move(Shift: TShiftState; ScreenX, ScreenY: integer); overload;
+    procedure Move(Shift: TShiftState; ScreenX, ScreenY: integer; Duration: integer); overload;
+    procedure Move(Shift: TShiftState; Control: TControl; X, Y: integer; Duration: integer = 0); overload;
     procedure MoveBy(Shift: TShiftState; DX, DY: integer; Duration: integer = 0);
-    procedure Move(Shift: TShiftState; ScreenX, ScreenY: integer; Duration: integer);
-    procedure Move(Shift: TShiftState; ScreenX, ScreenY: integer);
-
-    procedure ScrollUp(Shift: TShiftState);
-    procedure ScrollUp(Shift: TShiftState; Control: TControl; X, Y: integer);
-    procedure ScrollUp(Shift: TShiftState; ScreenX, ScreenY: integer);
-    procedure ScrollDown(Shift: TShiftState);
-    procedure ScrollDown(Shift: TShiftState; Control: TControl; X, Y: integer);
-    procedure ScrollDown(Shift: TShiftState; ScreenX, ScreenY: integer);
-
-    procedure Up(Button: TMouseButton; Shift: TShiftState);
-    procedure Up(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
-    procedure Up(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
-
-    procedure Click(Button: TMouseButton; Shift: TShiftState);
-    procedure Click(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
-    procedure Click(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
-
-    procedure DblClick(Button: TMouseButton; Shift: TShiftState);
-    procedure DblClick(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
-    procedure DblClick(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
   end;
 
 implementation
 
 uses
-  Math, HIDMouseAndKeyInput;
+  Forms, HIDMouseAndKeyInput;
 
-  { TMouseInput }
+const
+  // between the two clicks of a double click: a fast hand, well inside
+  // any toolkit's double-click time
+  ClickGap = 30;
+
+function TMouseInput.CurrentPos: TPoint;
+begin
+  Result := Mouse.CursorPos;
+end;
+
+procedure TMouseInput.Hold(Shift: TShiftState);
+begin
+  if (Shift * [ssShift, ssCtrl, ssAlt] <> []) and Assigned(KeyInput) then KeyInput.Apply(Shift);
+end;
+
+procedure TMouseInput.Release(Shift: TShiftState);
+begin
+  if (Shift * [ssShift, ssCtrl, ssAlt] <> []) and Assigned(KeyInput) then KeyInput.Unapply(Shift);
+end;
+
+// Small steps in a straight line, on time, ending exactly on the point.
+procedure TMouseInput.Glide(ScreenX, ScreenY, Duration: integer);
+var
+  Start: TPoint;
+  Steps, I: integer;
+  T0, Due: QWord;
+begin
+  if Duration <= 0 then
+  begin
+    DoMove(ScreenX, ScreenY);
+    Application.ProcessMessages;
+    Exit;
+  end;
+  Start := CurrentPos;
+  Steps := Duration div 10;
+  if Steps < 1 then Steps := 1;
+  T0 := GetTickCount64;
+  for I := 1 to Steps do
+  begin
+    DoMove(Start.X + (ScreenX - Start.X) * I div Steps, Start.Y + (ScreenY - Start.Y) * I div Steps);
+    Due := T0 + QWord(Duration) * QWord(I) div QWord(Steps);
+    repeat
+      Application.ProcessMessages;
+      if GetTickCount64 < Due then Sleep(1);
+    until GetTickCount64 >= Due;
+  end;
+end;
 
 procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState);
 begin
-  KeyInput.Apply(Shift);
+  Hold(Shift);
   try
     DoDown(Button);
+    Application.ProcessMessages;
   finally
-    KeyInput.Unapply(Shift);
+    Release(Shift);
   end;
-  Application.ProcessMessages;
 end;
 
 procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
@@ -91,131 +124,26 @@ end;
 
 procedure TMouseInput.Down(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
-  KeyInput.Apply(Shift);
+  Hold(Shift);
   try
     DoMove(ScreenX, ScreenY);
+    Application.ProcessMessages;
     DoDown(Button);
+    Application.ProcessMessages;
   finally
-    KeyInput.Unapply(Shift);
+    Release(Shift);
   end;
-end;
-
-procedure TMouseInput.Move(Shift: TShiftState; Control: TControl; X, Y: integer; Duration: integer = 0);
-var
-  P: TPoint;
-begin
-  P := Control.ClientToScreen(Point(X, Y));
-  Move(Shift, P.X, P.Y, Duration);
-end;
-
-procedure TMouseInput.MoveBy(Shift: TShiftState; DX, DY: integer; Duration: integer = 0);
-var
-  P: TPoint;
-begin
-  P := Mouse.CursorPos;
-  Move(Shift, P.X + DX, P.Y + DY, Duration);
-end;
-
-procedure TMouseInput.Move(Shift: TShiftState; ScreenX, ScreenY: integer; Duration: integer);
-const
-  Interval = 20;
-var
-  TimeStep: integer;
-  X, Y: integer;
-  Start: TPoint;
-  S: QWord;
-begin
-  Start := Mouse.CursorPos;
-
-  while Duration > 0 do
-  begin
-    TimeStep := Min(Interval, Duration);
-
-    S := GetTickCount64;
-    while GetTickCount64 - S < TimeStep do
-      Application.ProcessMessages;
-
-    X := Start.X + ((ScreenX - Start.X) * TimeStep) div Duration;
-    Y := Start.Y + ((ScreenY - Start.Y) * TimeStep) div Duration;
-    Move(Shift, X, Y);
-
-    Duration := Duration - TimeStep;
-    Start := Point(X, Y);
-  end;
-
-  Move(Shift, ScreenX, ScreenY);
-end;
-
-procedure TMouseInput.Move(Shift: TShiftState; ScreenX, ScreenY: integer);
-begin
-  KeyInput.Apply(Shift);
-  try
-    DoMove(ScreenX, ScreenY);
-  finally
-    KeyInput.Unapply(Shift);
-  end;
-  Application.ProcessMessages;
-end;
-
-procedure TMouseInput.ScrollUp(Shift: TShiftState);
-begin
-  KeyInput.Apply(Shift);
-  try
-    DoScrollUp;
-  finally
-    KeyInput.Unapply(Shift);
-  end;
-  Application.ProcessMessages;
-end;
-
-procedure TMouseInput.ScrollUp(Shift: TShiftState; Control: TControl; X, Y: integer);
-var
-  P: TPoint;
-begin
-  P := Control.ClientToScreen(Point(X, Y));
-  ScrollUp(Shift, P.X, P.Y);
-end;
-
-procedure TMouseInput.ScrollUp(Shift: TShiftState; ScreenX, ScreenY: integer);
-begin
-  Move(Shift, ScreenX, ScreenY);
-  ScrollUp(Shift);
-end;
-
-procedure TMouseInput.ScrollDown(Shift: TShiftState);
-begin
-  KeyInput.Apply(Shift);
-  try
-    DoScrollDown;
-  finally
-    KeyInput.Unapply(Shift);
-  end;
-  Application.ProcessMessages;
-end;
-
-procedure TMouseInput.ScrollDown(Shift: TShiftState; Control: TControl; X, Y: integer);
-var
-  P: TPoint;
-begin
-  P := Control.ClientToScreen(Point(X, Y));
-  ScrollDown(Shift, P.X, P.Y);
-end;
-
-procedure TMouseInput.ScrollDown(Shift: TShiftState; ScreenX, ScreenY: integer);
-begin
-  Move(Shift, ScreenX, ScreenY);
-  ScrollDown(Shift);
 end;
 
 procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState);
 begin
-  KeyInput.Apply(Shift);
+  Hold(Shift);
   try
     DoUp(Button);
+    Application.ProcessMessages;
   finally
-    KeyInput.Unapply(Shift);
+    Release(Shift);
   end;
-  Application.ProcessMessages;
 end;
 
 procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
@@ -228,14 +156,29 @@ end;
 
 procedure TMouseInput.Up(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
-  Move(Shift, ScreenX, ScreenY);
-  Up(Button, Shift);
+  Hold(Shift);
+  try
+    DoMove(ScreenX, ScreenY);
+    Application.ProcessMessages;
+    DoUp(Button);
+    Application.ProcessMessages;
+  finally
+    Release(Shift);
+  end;
 end;
 
+// The press and release go out back to back.  A toolkit handed the press
+// before the release has been sent can miss the next click of a double click.
 procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState);
 begin
-  Down(Button, Shift);
-  Up(Button, Shift);
+  Hold(Shift);
+  try
+    DoDown(Button);
+    DoUp(Button);
+    Application.ProcessMessages;
+  finally
+    Release(Shift);
+  end;
 end;
 
 procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
@@ -248,14 +191,33 @@ end;
 
 procedure TMouseInput.Click(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
-  Move(Shift, ScreenX, ScreenY);
-  Click(Button, Shift);
+  Hold(Shift);
+  try
+    DoMove(ScreenX, ScreenY);
+    Application.ProcessMessages;
+    DoDown(Button);
+    DoUp(Button);
+    Application.ProcessMessages;
+  finally
+    Release(Shift);
+  end;
 end;
 
+// All four events go out before the application looks at any of them, so
+// both clicks land well inside the toolkit's double-click time.
 procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState);
 begin
-  Click(Button, Shift);
-  Click(Button, Shift);
+  Hold(Shift);
+  try
+    DoDown(Button);
+    DoUp(Button);
+    Sleep(ClickGap);
+    DoDown(Button);
+    DoUp(Button);
+    Application.ProcessMessages;
+  finally
+    Release(Shift);
+  end;
 end;
 
 procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState; Control: TControl; X, Y: integer);
@@ -268,8 +230,109 @@ end;
 
 procedure TMouseInput.DblClick(Button: TMouseButton; Shift: TShiftState; ScreenX, ScreenY: integer);
 begin
-  Move(Shift, ScreenX, ScreenY);
-  DblClick(Button, Shift);
+  Hold(Shift);
+  try
+    DoMove(ScreenX, ScreenY);
+    Application.ProcessMessages;
+    DblClick(Button, []);
+  finally
+    Release(Shift);
+  end;
+end;
+
+procedure TMouseInput.ScrollUp(Shift: TShiftState);
+begin
+  Hold(Shift);
+  try
+    DoScrollUp;
+    Application.ProcessMessages;
+  finally
+    Release(Shift);
+  end;
+end;
+
+procedure TMouseInput.ScrollUp(Shift: TShiftState; Control: TControl; X, Y: integer);
+var
+  P: TPoint;
+begin
+  P := Control.ClientToScreen(Point(X, Y));
+  ScrollUp(Shift, P.X, P.Y);
+end;
+
+procedure TMouseInput.ScrollUp(Shift: TShiftState; ScreenX, ScreenY: integer);
+begin
+  Hold(Shift);
+  try
+    DoMove(ScreenX, ScreenY);
+    Application.ProcessMessages;
+    DoScrollUp;
+    Application.ProcessMessages;
+  finally
+    Release(Shift);
+  end;
+end;
+
+procedure TMouseInput.ScrollDown(Shift: TShiftState);
+begin
+  Hold(Shift);
+  try
+    DoScrollDown;
+    Application.ProcessMessages;
+  finally
+    Release(Shift);
+  end;
+end;
+
+procedure TMouseInput.ScrollDown(Shift: TShiftState; Control: TControl; X, Y: integer);
+var
+  P: TPoint;
+begin
+  P := Control.ClientToScreen(Point(X, Y));
+  ScrollDown(Shift, P.X, P.Y);
+end;
+
+procedure TMouseInput.ScrollDown(Shift: TShiftState; ScreenX, ScreenY: integer);
+begin
+  Hold(Shift);
+  try
+    DoMove(ScreenX, ScreenY);
+    Application.ProcessMessages;
+    DoScrollDown;
+    Application.ProcessMessages;
+  finally
+    Release(Shift);
+  end;
+end;
+
+procedure TMouseInput.Move(Shift: TShiftState; ScreenX, ScreenY: integer);
+begin
+  Move(Shift, ScreenX, ScreenY, 0);
+end;
+
+procedure TMouseInput.Move(Shift: TShiftState; ScreenX, ScreenY: integer; Duration: integer);
+begin
+  Hold(Shift);
+  try
+    Glide(ScreenX, ScreenY, Duration);
+  finally
+    Release(Shift);
+  end;
+end;
+
+procedure TMouseInput.Move(Shift: TShiftState; Control: TControl; X, Y: integer; Duration: integer);
+var
+  P: TPoint;
+begin
+  P := Control.ClientToScreen(Point(X, Y));
+  Move(Shift, P.X, P.Y, Duration);
+end;
+
+procedure TMouseInput.MoveBy(Shift: TShiftState; DX, DY: integer; Duration: integer);
+var
+  P: TPoint;
+begin
+  P := CurrentPos;
+  Move(Shift, P.X + DX, P.Y + DY, Duration);
 end;
 
 end.

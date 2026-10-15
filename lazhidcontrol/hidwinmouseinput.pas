@@ -1,119 +1,102 @@
-{ HIDWinMouseInput
-
-  Copyright (C) 2008 Tom Gregorovic
-
-  This source is free software; you can redistribute it and/or modify it under the terms of the
-  GNU General Public License as published by the Free Software Foundation; either version 2 of the
-  License, or (at your option) any later version.
-
-  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  A copy of the GNU General Public License is available on the World Wide Web at
-  <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
-}
 unit HIDWinMouseInput;
 
 {$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
+
+{ The mouse on Windows, through SendInput.  Moves are absolute over the
+  whole virtual desktop, every monitor included. }
 
 interface
 
 uses
-  Classes, SysUtils, Controls, Forms,
-  Windows, JwaWinUser,
   HIDMouseInputIntf;
 
+function InitializeWinMouseInput: TMouseInput;
+
+implementation
+
+uses
+  Classes, SysUtils, Controls, Windows;
+
 type
-
-  { TWinMouseInput }
-
-  TWinMouseInput = class(TMouseInput)
+  // qualified: the Windows unit has a TMouseInput record of its own
+  TWinMouseInput = class(HIDMouseInputIntf.TMouseInput)
   protected
     procedure DoDown(Button: TMouseButton); override;
-    procedure DoMove(ScreenX, ScreenY: integer); override;
     procedure DoUp(Button: TMouseButton); override;
+    procedure DoMove(ScreenX, ScreenY: integer); override;
     procedure DoScrollUp; override;
     procedure DoScrollDown; override;
   end;
 
-function InitializeMouseInput: TMouseInput;
-
-implementation
-
-function InitializeMouseInput: TMouseInput;
+function InitializeWinMouseInput: HIDMouseInputIntf.TMouseInput;
 begin
   Result := TWinMouseInput.Create;
 end;
 
-procedure SendMouseInput(Flag: DWORD; MouseData: DWORD = 0);
+procedure Send(Flags, Data: DWORD; X, Y: LONG);
 var
   Input: TInput;
 begin
   Input := Default(TInput);
-  Input.type_ := INPUT_MOUSE;
-  Input.mi.mouseData := MouseData;
-  Input.mi.dwFlags := Flag;
-  SendInput(1, @Input, SizeOf(Input));
+  Input._Type := INPUT_MOUSE;
+  Input.mi.dx := X;
+  Input.mi.dy := Y;
+  Input.mi.MouseData := Data;
+  Input.mi.dwFlags := Flags;
+  SendInput(1, @Input, SizeOf(TInput));
 end;
 
-// Absolute coordinates run 0..65535 across the whole desktop, every monitor included.
-procedure SendMouseInput(Flag: DWORD; X, Y: integer);
-const
-  MOUSEEVENTF_VIRTUALDESK = $4000;
+// The middle of the pixel's share of 0..65535, so the pixel is hit whether
+// Windows rounds or truncates on the way back.
+function Normalized(Pixel, First, Size: integer): LONG;
 var
-  Input: TInput;
+  Value: int64;
 begin
-  Input := Default(TInput);
-  Input.type_ := INPUT_MOUSE;
-  Input.mi.dx := MulDiv(X - Screen.DesktopLeft, 65535, Screen.DesktopWidth - 1);
-  Input.mi.dy := MulDiv(Y - Screen.DesktopTop, 65535, Screen.DesktopHeight - 1);
-  Input.mi.dwFlags := Flag or MOUSEEVENTF_ABSOLUTE or MOUSEEVENTF_VIRTUALDESK;
-  SendInput(1, @Input, SizeOf(Input));
-end;
-
-{ TWinMouseInput }
-
-procedure TWinMouseInput.DoDown(Button: TMouseButton);
-var
-  Flag: DWORD;
-begin
-  case Button of
-    mbRight: Flag := MOUSEEVENTF_RIGHTDOWN;
-    mbMiddle: Flag := MOUSEEVENTF_MIDDLEDOWN;
-    else
-      Flag := MOUSEEVENTF_LEFTDOWN;
-  end;
-  SendMouseInput(Flag);
+  if Size < 1 then Size := 1;
+  Value := (int64(Pixel - First) * 2 + 1) * 65536 div (int64(Size) * 2);
+  if Value < 0 then Value := 0;
+  if Value > 65535 then Value := 65535;
+  Result := Value;
 end;
 
 procedure TWinMouseInput.DoMove(ScreenX, ScreenY: integer);
 begin
-  SendMouseInput(MOUSEEVENTF_MOVE, ScreenX, ScreenY);
+  Send(MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE or MOUSEEVENTF_VIRTUALDESK, 0,
+    Normalized(ScreenX, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_CXVIRTUALSCREEN)),
+    Normalized(ScreenY, GetSystemMetrics(SM_YVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN)));
+end;
+
+procedure TWinMouseInput.DoDown(Button: TMouseButton);
+begin
+  case Button of
+    mbLeft: Send(MOUSEEVENTF_LEFTDOWN, 0, 0, 0);
+    mbRight: Send(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0);
+    mbMiddle: Send(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0);
+    mbExtra1: Send(MOUSEEVENTF_XDOWN, XBUTTON1, 0, 0);
+    mbExtra2: Send(MOUSEEVENTF_XDOWN, XBUTTON2, 0, 0);
+  end;
 end;
 
 procedure TWinMouseInput.DoUp(Button: TMouseButton);
-var
-  Flag: DWORD;
 begin
   case Button of
-    mbRight: Flag := MOUSEEVENTF_RIGHTUP;
-    mbMiddle: Flag := MOUSEEVENTF_MIDDLEUP;
-    else
-      Flag := MOUSEEVENTF_LEFTUP;
+    mbLeft: Send(MOUSEEVENTF_LEFTUP, 0, 0, 0);
+    mbRight: Send(MOUSEEVENTF_RIGHTUP, 0, 0, 0);
+    mbMiddle: Send(MOUSEEVENTF_MIDDLEUP, 0, 0, 0);
+    mbExtra1: Send(MOUSEEVENTF_XUP, XBUTTON1, 0, 0);
+    mbExtra2: Send(MOUSEEVENTF_XUP, XBUTTON2, 0, 0);
   end;
-  SendMouseInput(Flag);
 end;
 
 procedure TWinMouseInput.DoScrollUp;
 begin
-  SendMouseInput(MOUSEEVENTF_WHEEL, WHEEL_DELTA);
+  Send(MOUSEEVENTF_WHEEL, DWORD(WHEEL_DELTA), 0, 0);
 end;
 
 procedure TWinMouseInput.DoScrollDown;
 begin
-  SendMouseInput(MOUSEEVENTF_WHEEL, DWORD(-WHEEL_DELTA));
+  Send(MOUSEEVENTF_WHEEL, DWORD(-WHEEL_DELTA), 0, 0);
 end;
 
 end.

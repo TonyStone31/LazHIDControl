@@ -1,66 +1,71 @@
-{ HIDKeyInputIntf
-
-  Copyright (C) 2008 Tom Gregorovic
-
-  This source is free software; you can redistribute it and/or modify it under the terms of the
-  GNU General Public License as published by the Free Software Foundation; either version 2 of the
-  License, or (at your option) any later version.
-
-  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  A copy of the GNU General Public License is available on the World Wide Web at
-  <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
-}
 unit HIDKeyInputIntf;
 
 {$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
+
+{ The keyboard as the rest of the package sees it.  A key is a place on the
+  keyboard, named by its LCL virtual key; what character it gives is up to
+  the user's layout.  PressString types characters, whatever the layout. }
 
 interface
 
 uses
-  Classes,
-  Forms,
-  LazUTF8,
-  LCLIntf, LCLType,
-  SysUtils;
+  Classes, SysUtils, LCLType;
 
 type
-  { TKeyInput }
-
   TKeyInput = class
   private
-    procedure UnapplyAllKeys;
+    FTyping: boolean;
+    FCapsAtStart: boolean;
+    procedure ReleaseHeldKeys;
   protected
-    CapsLockStateAtStringStart: boolean;
-    procedure DoDown(Key: word); dynamic; abstract;
-    procedure DoUp(Key: word); dynamic; abstract;
+    procedure DoDown(Key: word); virtual; abstract;
+    procedure DoUp(Key: word); virtual; abstract;
+    // Called after PressString has typed its last character, to put back
+    // anything the backend changed for the length of the string.
     procedure StringDone; virtual;
-    function CharToKeySym(ch: char): word;
-    function NeedsShift(ch: char): boolean;
-    function NeedsShiftWithCapsLock(ch: char): boolean;
+    // Waits Ms milliseconds while the application keeps processing messages.
+    procedure Pause(Ms: cardinal);
+    // True while PressString is running.
+    property Typing: boolean read FTyping;
+    // Whether Caps Lock was on when the running PressString began.
+    property CapsLockAtStart: boolean read FCapsAtStart;
   public
     procedure Down(Key: word);
     procedure Up(Key: word);
     procedure Press(Key: word);
-    procedure PressString(StringValue: string; Interval: cardinal = 0);
     procedure Apply(Shift: TShiftState);
     procedure Unapply(Shift: TShiftState);
-    procedure PressUnicodeChar(unicode: cardinal); virtual;
+    procedure PressString(StringValue: string; Interval: cardinal = 0);
     procedure PressASCIIChar(ch: char); virtual;
-    function GetCapsLockState: boolean; dynamic; abstract;
-    function GetNumLockState: boolean; dynamic; abstract;
-    function GetScrollLockState: boolean; dynamic; abstract;
-    procedure ToggleCapsLock; dynamic; abstract;
-    procedure ToggleNumLock; dynamic; abstract;
-    procedure ToggleScrollLock; dynamic; abstract;
+    procedure PressUnicodeChar(unicode: cardinal); virtual;
+    function GetCapsLockState: boolean; virtual; abstract;
+    function GetNumLockState: boolean; virtual; abstract;
+    function GetScrollLockState: boolean; virtual; abstract;
+    procedure ToggleCapsLock; virtual; abstract;
+    procedure ToggleNumLock; virtual; abstract;
+    procedure ToggleScrollLock; virtual; abstract;
   end;
 
 implementation
 
-{ TKeyInput }
+uses
+  Forms, LazUTF8;
+
+procedure TKeyInput.StringDone;
+begin
+end;
+
+procedure TKeyInput.Pause(Ms: cardinal);
+var
+  Deadline: QWord;
+begin
+  Deadline := GetTickCount64 + Ms;
+  repeat
+    Application.ProcessMessages;
+    if GetTickCount64 < Deadline then Sleep(1);
+  until GetTickCount64 >= Deadline;
+end;
 
 procedure TKeyInput.Down(Key: word);
 begin
@@ -72,7 +77,6 @@ procedure TKeyInput.Up(Key: word);
 begin
   DoUp(Key);
   Application.ProcessMessages;
-  sleep(8);
 end;
 
 procedure TKeyInput.Press(Key: word);
@@ -81,135 +85,159 @@ begin
   Up(Key);
 end;
 
-function TKeyInput.NeedsShift(ch: char): boolean;
-begin
-  Result := ch in ['A'..'Z', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '{', '}', '|', ':', '"', '<', '>', '?'];
-end;
-
-function TKeyInput.NeedsShiftWithCapsLock(ch: char): boolean;
-begin
-  // CapsLock turns the shift requirement around, for letters only
-  Result := NeedsShift(ch);
-  if CapsLockStateAtStringStart and (ch in ['A'..'Z', 'a'..'z']) then
-    Result := not Result;
-end;
-
-function TKeyInput.CharToKeySym(ch: char): word;
-begin
-  ch := UpCase(ch);
-  case ch of
-    'A'..'Z': Result := VK_A + (Ord(ch) - Ord('A'));
-    '0'..'9': Result := VK_0 + (Ord(ch) - Ord('0'));
-    '!': Result := VK_1;
-    '@': Result := VK_2;
-    '#': Result := VK_3;
-    '$': Result := VK_4;
-    '%': Result := VK_5;
-    '^': Result := VK_6;
-    '&': Result := VK_7;
-    '*': Result := VK_8;
-    '(': Result := VK_9;
-    ')': Result := VK_0;
-    '~', '`': Result := VK_LCL_TILDE;
-    '_', '-': Result := VK_LCL_MINUS;
-    '+', '=': Result := VK_LCL_EQUAL;
-    '{', '[': Result := VK_LCL_OPEN_BRACKET;
-    '}', ']': Result := VK_LCL_CLOSE_BRACKET;
-    '|', '\': Result := VK_LCL_BACKSLASH;
-    ':', ';': Result := VK_LCL_SEMI_COMMA;
-    '"', '''': Result := VK_LCL_QUOTE;
-    '<', ',': Result := VK_LCL_COMMA;
-    '>', '.': Result := VK_LCL_POINT;
-    '?', '/': Result := VK_LCL_SLASH;
-    #32: Result := VK_SPACE;
-    #9: Result := VK_TAB;
-    #10, #13: Result := VK_RETURN;
-    else
-      Result := VK_SPACE;
-  end;
-end;
-
-// Nothing here: a backend that can type beyond ASCII overrides this.
-procedure TKeyInput.PressUnicodeChar(unicode: cardinal);
-begin
-end;
-
-procedure TKeyInput.PressString(StringValue: string; Interval: cardinal);
-var
-  p: PChar;
-  unicode: cardinal;
-  CPLen: integer;
-begin
-  CapsLockStateAtStringStart := GetCapsLockState;
-  UnapplyAllKeys;
-
-  p := PChar(StringValue);
-  while p^ <> #0 do
-  begin
-    unicode := UTF8CodepointToUnicode(p, CPLen);
-    Inc(p, CPLen);
-    // CR, LF and CRLF are each one press of Enter
-    if (unicode = 13) and (p^ = #10) then
-      Inc(p);
-    if (unicode = 13) or (unicode = 10) then
-      Press(VK_RETURN)
-    else if unicode >= 128 then
-      PressUnicodeChar(unicode)
-    else if unicode > 0 then
-    begin
-      PressASCIIChar(char(unicode));
-      Sleep(5);
-    end;
-    if (Interval > 0) and (p^ <> #0) then
-      Sleep(Interval);
-  end;
-  StringDone;
-end;
-
-// After PressString's last key, for a backend that has something to put back.
-procedure TKeyInput.StringDone;
-begin
-end;
-
-// Typing often starts from a hotkey whose keys are still physically down.
-procedure TKeyInput.UnapplyAllKeys;
-var
-  Key: word;
-begin
-  DoUp(VK_SHIFT);
-  DoUp(VK_CONTROL);
-  DoUp(VK_MENU);
-  for Key := VK_0 to VK_9 do
-    DoUp(Key);
-  for Key := VK_A to VK_Z do
-    DoUp(Key);
-  for Key := VK_F1 to VK_F12 do
-    DoUp(Key);
-  Application.ProcessMessages;
-end;
-
 procedure TKeyInput.Apply(Shift: TShiftState);
 begin
-  if ssShift in Shift then Down(VK_SHIFT);
   if ssCtrl in Shift then Down(VK_CONTROL);
   if ssAlt in Shift then Down(VK_MENU);
+  if ssShift in Shift then Down(VK_SHIFT);
 end;
 
 procedure TKeyInput.Unapply(Shift: TShiftState);
 begin
   if ssShift in Shift then Up(VK_SHIFT);
-  if ssCtrl in Shift then Up(VK_CONTROL);
   if ssAlt in Shift then Up(VK_MENU);
+  if ssCtrl in Shift then Up(VK_CONTROL);
 end;
 
-procedure TKeyInput.PressASCIIChar(ch: char);
+// Typing is often started by a hotkey whose keys are still held down.
+procedure TKeyInput.ReleaseHeldKeys;
+const
+  Modifiers: array[0..5] of word = (VK_SHIFT, VK_RSHIFT, VK_CONTROL, VK_RCONTROL, VK_MENU, VK_RMENU);
 var
-  keySym: word;
+  Key: word;
 begin
-  keySym := CharToKeySym(ch);
-  if NeedsShift(ch) then Apply([ssShift]);
-  Press(keySym);
-  if NeedsShift(ch) then Unapply([ssShift]);
+  for Key in Modifiers do DoUp(Key);
+  for Key := VK_A to VK_Z do DoUp(Key);
+  for Key := VK_0 to VK_9 do DoUp(Key);
+  for Key := VK_F1 to VK_F12 do DoUp(Key);
+  Application.ProcessMessages;
+end;
+
+procedure TKeyInput.PressString(StringValue: string; Interval: cardinal);
+var
+  P, Stop: PChar;
+  Len: integer;
+  Code: cardinal;
+begin
+  if StringValue = '' then Exit;
+  ReleaseHeldKeys;
+  FCapsAtStart := GetCapsLockState;
+  FTyping := True;
+  try
+    P := PChar(StringValue);
+    Stop := P + Length(StringValue);
+    while P < Stop do
+    begin
+      if (Interval > 0) and (P > PChar(StringValue)) then Pause(Interval);
+      case P^ of
+        #13:
+        begin
+          Press(VK_RETURN);
+          Inc(P);
+          if (P < Stop) and (P^ = #10) then Inc(P);
+        end;
+        #10:
+        begin
+          Press(VK_RETURN);
+          Inc(P);
+        end;
+        #9:
+        begin
+          Press(VK_TAB);
+          Inc(P);
+        end;
+        #0..#8, #11..#12, #14..#127:
+        begin
+          PressASCIIChar(P^);
+          Inc(P);
+        end;
+        else
+        begin
+          Code := UTF8CodepointToUnicode(P, Len);
+          if Len < 1 then Len := 1;
+          PressUnicodeChar(Code);
+          Inc(P, Len);
+        end;
+      end;
+    end;
+  finally
+    FTyping := False;
+    StringDone;
+  end;
+end;
+
+// The character as a US keyboard types it, the way a backend that cannot
+// see the user's layout has to.
+procedure TKeyInput.PressASCIIChar(ch: char);
+const
+  Plain = '`-=[]\;'',./';
+  Shifted = '~_+{}|:"<>?';
+  PunctuationKeys: array[1..11] of word = (VK_LCL_TILDE, VK_LCL_MINUS, VK_LCL_EQUAL,
+    VK_LCL_OPEN_BRACKET, VK_LCL_CLOSE_BRACKET, VK_LCL_BACKSLASH, VK_LCL_SEMI_COMMA,
+    VK_LCL_QUOTE, VK_LCL_COMMA, VK_LCL_POINT, VK_LCL_SLASH);
+  // the shifted digits, from 0 to 9
+  OverDigits = ')!@#$%^&*(';
+var
+  Key: word;
+  NeedShift: boolean;
+  I: integer;
+begin
+  Key := 0;
+  NeedShift := False;
+  case ch of
+    'a'..'z':
+    begin
+      Key := VK_A + Ord(ch) - Ord('a');
+      NeedShift := GetCapsLockState;
+    end;
+    'A'..'Z':
+    begin
+      Key := VK_A + Ord(ch) - Ord('A');
+      NeedShift := not GetCapsLockState;
+    end;
+    '0'..'9': Key := VK_0 + Ord(ch) - Ord('0');
+    ' ': Key := VK_SPACE;
+    #8: Key := VK_BACK;
+    #9: Key := VK_TAB;
+    #10, #13: Key := VK_RETURN;
+    #27: Key := VK_ESCAPE;
+    else
+    begin
+      I := Pos(ch, Plain);
+      if I > 0 then Key := PunctuationKeys[I]
+      else
+      begin
+        I := Pos(ch, Shifted);
+        if I > 0 then
+        begin
+          Key := PunctuationKeys[I];
+          NeedShift := True;
+        end
+        else
+        begin
+          I := Pos(ch, OverDigits);
+          if I > 0 then
+          begin
+            Key := VK_0 + I - 1;
+            NeedShift := True;
+          end;
+        end;
+      end;
+    end;
+  end;
+  if Key = 0 then Exit;
+  if NeedShift then Down(VK_SHIFT);
+  try
+    Press(Key);
+  finally
+    if NeedShift then Up(VK_SHIFT);
+  end;
+end;
+
+// Nothing to do here: a key cannot type what the layout lacks.  Backends
+// that can send any character override this.
+procedure TKeyInput.PressUnicodeChar(unicode: cardinal);
+begin
 end;
 
 end.

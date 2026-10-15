@@ -1,40 +1,15 @@
-{ HIDMouseAndKeyInput
-
-  Copyright (C) 2008 Tom Gregorovic
-
-  This source is free software; you can redistribute it and/or modify it under the terms of the
-  GNU General Public License as published by the Free Software Foundation; either version 2 of the
-  License, or (at your option) any later version.
-
-  This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
-  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  A copy of the GNU General Public License is available on the World Wide Web at
-  <http://www.gnu.org/copyleft/gpl.html>. You can also obtain it by writing to the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
-}
 unit HIDMouseAndKeyInput;
+
+{$mode objfpc}{$H+}
+// Copyright (c) 2026 Tony Stone. 0BSD.
+
+{ The two objects that send keys and mouse events, made for the system the
+  program runs on. }
 
 interface
 
 uses
-  HIDMouseInputIntf,
-  HIDKeyInputIntf,
-  {$IFDEF WINDOWS}
-  HIDWinMouseInput,
-  HIDWinKeyInput,
-  {$ENDIF}
-  {$IFDEF DARWIN}
-  HIDCocoaMouseInput,
-  HIDCocoaKeyInput,
-  {$ENDIF}
-  {$IF DEFINED(UNIX) AND NOT DEFINED(DARWIN)}
-  WaylandMouseAndKeyInput,
-  HIDXMouseInput,
-  HIDXKeyInput,
-  {$ENDIF}
-  Classes, SysUtils;
+  HIDKeyInputIntf, HIDMouseInputIntf;
 
 var
   MouseInput: TMouseInput;
@@ -42,24 +17,47 @@ var
 
 implementation
 
-initialization
+uses
+  SysUtils
+  {$if defined(windows)}
+  , HIDWinKeyInput, HIDWinMouseInput
+  {$elseif defined(darwin)}
+  , HIDCocoaKeyInput, HIDCocoaMouseInput
+  {$elseif defined(linux)}
+  , HIDXKeyInput, HIDXMouseInput, WaylandMouseAndKeyInput
+  {$elseif defined(unix)}
+  , HIDXKeyInput, HIDXMouseInput
+  {$endif};
 
-  {$IF DEFINED(UNIX) AND NOT DEFINED(DARWIN)}
+procedure CreateInputs;
+begin
+  {$if defined(windows)}
+  MouseInput := InitializeWinMouseInput;
+  KeyInput := InitializeWinKeyInput;
+  {$elseif defined(darwin)}
+  MouseInput := InitializeCocoaMouseInput;
+  KeyInput := InitializeCocoaKeyInput;
+  {$elseif defined(linux)}
   if GetEnvironmentVariable('WAYLAND_DISPLAY') <> '' then
   begin
     MouseInput := InitializeWaylandMouseInput;
     KeyInput := InitializeWaylandKeyInput;
   end
   else
-  {$ENDIF}
   begin
-    MouseInput := InitializeMouseInput;
-    KeyInput := InitializeKeyInput;
+    MouseInput := InitializeXMouseInput;
+    KeyInput := InitializeXKeyInput;
   end;
+  {$elseif defined(unix)}
+  MouseInput := InitializeXMouseInput;
+  KeyInput := InitializeXKeyInput;
+  {$endif}
+end;
+
+initialization
+  CreateInputs;
 
 finalization
-
   FreeAndNil(MouseInput);
   FreeAndNil(KeyInput);
-
 end.
