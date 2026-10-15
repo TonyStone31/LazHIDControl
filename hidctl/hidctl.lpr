@@ -34,7 +34,7 @@ uses
   HIDPermission;
 
 const
-  Help: array[0..78] of string = (
+  Help: array[0..79] of string = (
     'hidctl - drive the mouse, keyboard and windows from a shell',
     '',
     '  hidctl [--window <title>] <script>     run a script, one command a line',
@@ -103,6 +103,7 @@ const
     '  return enter escape esc tab space backspace back delete insert',
     '  up down left right home end pgup page_up prior pgdn page_down next',
     '  f1..f12 ctrl shift alt capslock numlock',
+    '  super cmd command win (one key: Command on a Mac, Windows on Windows)',
     '  minus equal comma period semicolon apostrophe grave backslash',
     '  bracketleft bracketright slash (the keypad one)',
     '  or one letter or digit.  Names ignore case.',
@@ -115,7 +116,7 @@ const
     '',
     'https://github.com/TonyStone31/LazHIDControl');
 
-  KeyNames: array[0..38] of record
+  KeyNames: array[0..42] of record
       Name: string;
       Key: word;
       end
@@ -132,6 +133,9 @@ const
     (Name: 'pgdn'; Key: VK_NEXT), (Name: 'page_down'; Key: VK_NEXT), (Name: 'next'; Key: VK_NEXT),
     (Name: 'ctrl'; Key: VK_CONTROL), (Name: 'control'; Key: VK_CONTROL),
     (Name: 'shift'; Key: VK_SHIFT), (Name: 'alt'; Key: VK_MENU),
+    { Command on a Mac, the Windows key on Windows, Super on Linux }
+    (Name: 'super'; Key: VK_LWIN), (Name: 'cmd'; Key: VK_LWIN),
+    (Name: 'command'; Key: VK_LWIN), (Name: 'win'; Key: VK_LWIN),
     (Name: 'capslock'; Key: VK_CAPITAL), (Name: 'numlock'; Key: VK_NUMLOCK),
     (Name: 'slash'; Key: VK_DIVIDE), (Name: 'minus'; Key: VK_LCL_MINUS),
     (Name: 'equal'; Key: VK_LCL_EQUAL), (Name: 'comma'; Key: VK_LCL_COMMA),

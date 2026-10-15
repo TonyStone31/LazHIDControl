@@ -94,7 +94,7 @@ above work in a script too.
 | `press` / `release [l\|r\|m]` | hold a button down, let it go |
 | `drag x1 y1 x2 y2 [l\|r\|m] [ms]` | press, move, release - over that many milliseconds if given |
 | `scroll up\|down [n]` | |
-| `key <name>` | `return` `escape` `tab` `space` `back` `delete` `up` `down` `left` `right` `pgup` `pgdn` `home` `end` `f1`..`f12`, one letter or digit, or a combination like `ctrl+shift+t`; `hidctl --help` has the whole list |
+| `key <name>` | `return` `escape` `tab` `space` `back` `delete` `up` `down` `left` `right` `pgup` `pgdn` `home` `end` `f1`..`f12`, one letter or digit, or a combination like `ctrl+shift+t`; `super`, `cmd` and `win` are one key - Command on a Mac (`cmd+s`), the Windows key on Windows, Super on Linux; `hidctl --help` has the whole list |
 | `hold <name>` / `let <name>` | `ctrl` `shift` `alt` |
 | `type <text>` | typed as if on the keyboard |
 | `wait <ms>` | |
