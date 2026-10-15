@@ -34,6 +34,50 @@ const
   KeymapAge = 1000;
 
 type
+  { The parts of XKB's client keymap read here, laid out as XKBstr.h has
+    them.  The XKB unit of FPC 3.2 gets some of them wrong (a one-byte
+    "active", a one-byte "offset"), so they are not taken from it. }
+  {$push}{$packrecords c}
+  TKbMods = record
+    mask, real_mods: byte;
+    vmods: word;
+  end;
+
+  TKbMapEntry = record
+    active: TBool;
+    level: byte;
+    mods: TKbMods;
+  end;
+  PKbMapEntry = ^TKbMapEntry;
+
+  TKbKeyType = record
+    mods: TKbMods;
+    num_levels, map_count: byte;
+    map: PKbMapEntry;
+    preserve: Pointer;
+    Name: TAtom;
+    level_names: Pointer;
+  end;
+  PKbKeyType = ^TKbKeyType;
+
+  TKbSymMap = record
+    kt_index: array[0..XkbNumKbdGroups - 1] of byte;
+    group_info, Width: byte;
+    offset: word;
+  end;
+  PKbSymMap = ^TKbSymMap;
+
+  TKbClientMap = record
+    size_types, num_types: byte;
+    types: PKbKeyType;
+    size_syms, num_syms: word;
+    syms: PKeySym;
+    key_sym_map: PKbSymMap;
+    modmap: pbyte;
+  end;
+  PKbClientMap = ^TKbClientMap;
+  {$pop}
+
   TSpareKey = record
     Code: TKeyCode;
     Saved: array of TKeySym;
@@ -198,7 +242,7 @@ begin
 end;
 
 // True when Shift alone selects the second level of keys of this type.
-function ShiftGivesLevel2(Kind: PXkbKeyTypePtr): boolean;
+function ShiftGivesLevel2(Kind: PKbKeyType): boolean;
 var
   I: integer;
 begin
@@ -260,18 +304,20 @@ end;
 function TXKeyInput.KeycodeOf(Sym: TKeySym): TKeyCode;
 var
   Map: PXkbDescPtr;
+  Client: PKbClientMap;
   Group, Level, Code: integer;
-  Entry: PXkbSymMapPtr;
+  Entry: PKbSymMap;
 begin
   Result := 0;
   Map := Keymap;
   if (Map = nil) or (Sym = NoSymbol) then Exit;
+  Client := PKbClientMap(Map^.map);
   for Group := 0 to XkbNumKbdGroups - 1 do
     for Level := 0 to 1 do
       for Code := Map^.min_key_code to Map^.max_key_code do
       begin
-        Entry := @Map^.map^.key_sym_map[Code];
-        if (Group < Entry^.group_info and $0F) and (Level < Entry^.Width) and (Map^.map^.syms[Entry^.offset + Group * Entry^.Width + Level] = Sym) and
+        Entry := @Client^.key_sym_map[Code];
+        if (Group < Entry^.group_info and $0F) and (Level < Entry^.Width) and (Client^.syms[Entry^.offset + Group * Entry^.Width + Level] = Sym) and
           not IsSpare(Code) then
           Exit(Code);
       end;
@@ -282,28 +328,30 @@ end;
 function TXKeyInput.FindChar(Sym: TKeySym; Group: integer; out Code: TKeyCode; out NeedShift: boolean): boolean;
 var
   Map: PXkbDescPtr;
+  Client: PKbClientMap;
   K, G, Base: integer;
-  Entry: PXkbSymMapPtr;
-  Kind: PXkbKeyTypePtr;
+  Entry: PKbSymMap;
+  Kind: PKbKeyType;
 begin
   Result := False;
   Code := 0;
   NeedShift := False;
   Map := Keymap;
   if Map = nil then Exit;
+  Client := PKbClientMap(Map^.map);
   for K := Map^.min_key_code to Map^.max_key_code do
   begin
-    Entry := @Map^.map^.key_sym_map[K];
+    Entry := @Client^.key_sym_map[K];
     if (Entry^.group_info and $0F = 0) or IsSpare(K) then Continue;
     G := KeyGroup(Entry^.group_info, Group);
-    Kind := @Map^.map^.types[Entry^.kt_index[G]];
+    Kind := @Client^.types[Entry^.kt_index[G]];
     Base := Entry^.offset + G * Entry^.Width;
-    if Map^.map^.syms[Base] = Sym then
+    if Client^.syms[Base] = Sym then
     begin
       Code := K;
       Exit(True);
     end;
-    if (Kind^.num_levels > 1) and (Map^.map^.syms[Base + 1] = Sym) and ShiftGivesLevel2(Kind) then
+    if (Kind^.num_levels > 1) and (Client^.syms[Base + 1] = Sym) and ShiftGivesLevel2(Kind) then
     begin
       Code := K;
       NeedShift := True;
