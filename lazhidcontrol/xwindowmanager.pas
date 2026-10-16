@@ -36,6 +36,7 @@ type
     AtomNetWMStateMaximizedVert: TAtom;
     AtomNetWMStateMaximizedHorz: TAtom;
     AtomNetCloseWindow: TAtom;
+    AtomNetFrameExtents: TAtom;
     AtomNetMoveResizeWindow: TAtom;
     AtomNetSupportingWMCheck: TAtom;
 
@@ -60,6 +61,7 @@ type
     function GetWindowClass(AHandle: TWindowHandle): string; override;
     function GetWindowPID(AHandle: TWindowHandle): longword; override;
     function GetWindowRect(AHandle: TWindowHandle): TRect; override;
+    function GetVisibleRect(AHandle: TWindowHandle): TRect; override;
     function EnumerateWindows: TList; override;
     function GetWindowChildren(AHandle: TWindowHandle): TList; override;
 
@@ -155,6 +157,7 @@ begin
   AtomNetWMStateMaximizedVert := XInternAtom(XDisplayHandle, '_NET_WM_STATE_MAXIMIZED_VERT', False);
   AtomNetWMStateMaximizedHorz := XInternAtom(XDisplayHandle, '_NET_WM_STATE_MAXIMIZED_HORZ', False);
   AtomNetCloseWindow := XInternAtom(XDisplayHandle, '_NET_CLOSE_WINDOW', False);
+  AtomNetFrameExtents := XInternAtom(XDisplayHandle, '_NET_FRAME_EXTENTS', False);
 
   // ICCCM atoms
   AtomWMName := XInternAtom(XDisplayHandle, 'WM_NAME', False);
@@ -333,6 +336,28 @@ begin
   Result.Top := RootY;
   Result.Right := RootX + Attrs.Width;
   Result.Bottom := RootY + Attrs.Height;
+end;
+
+{ With the frame the window manager draws round it - title bar and borders -
+  so a picture looks as it does on Windows and macOS. }
+function TXWindowManager.GetVisibleRect(AHandle: TWindowHandle): TRect;
+var
+  Data: Pointer;
+  Count: culong;
+  Frame: PCLong;
+begin
+  Result := GetWindowRect(AHandle);
+  GetWindowProperty(TWindow(AHandle), AtomNetFrameExtents, Data, Count);
+  // left, right, top, bottom; Xlib hands 32-bit items over as C longs
+  if Count >= 4 then
+  begin
+    Frame := PCLong(Data);
+    Dec(Result.Left, Frame[0]);
+    Inc(Result.Right, Frame[1]);
+    Dec(Result.Top, Frame[2]);
+    Inc(Result.Bottom, Frame[3]);
+  end;
+  if Data <> nil then XFree(Data);
 end;
 
 function TXWindowManager.GetWindowClass(AHandle: TWindowHandle): string;

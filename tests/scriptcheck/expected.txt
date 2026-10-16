@@ -1,0 +1,11 @@
+name: Hello from one script - Grüße é
+replace: replaced
+tick: checked
+count: 2
+list: Three
+shortcut: ctrl+shift+k
+left click: 100,250
+right click: 200,260
+double click: 300,300
+drag: 260,230 to 420,320
+wheel: up 1, down 3

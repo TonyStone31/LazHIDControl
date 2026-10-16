@@ -2,6 +2,7 @@
 unit CocoaWindowManager;
 
 {$mode objfpc}{$H+}
+{$modeswitch objectivec1}
 
 interface
 
@@ -33,6 +34,7 @@ type
     function GetWindowClass(AHandle: TWindowHandle): string; override;
     function GetWindowPID(AHandle: TWindowHandle): longword; override;
     function GetWindowRect(AHandle: TWindowHandle): TRect; override;
+    function GetClientRect(AHandle: TWindowHandle): TRect; override;
     function EnumerateWindows: TList; override;
     function GetWindowChildren(AHandle: TWindowHandle): TList; override;
     function ActivateWindow(AHandle: TWindowHandle): boolean; override;
@@ -62,7 +64,7 @@ function InitializeWindowManager: TWindowManager;
 implementation
 
 uses
-  CocoaCapture;
+  CocoaAll, CocoaCapture;
 
 function InitializeWindowManager: TWindowManager;
 begin
@@ -335,6 +337,19 @@ begin
   Item := Entry(AHandle, List);
   if Item <> nil then Result := Bounds(Item);
   if List <> nil then CFRelease(List);
+end;
+
+{ Another program's window gives only its frame, so the title bar is taken
+  off at the height AppKit gives every ordinary titled window. }
+function TCocoaWindowManager.GetClientRect(AHandle: TWindowHandle): TRect;
+var
+  Inside, Outside: NSRect;
+begin
+  Result := GetWindowRect(AHandle);
+  Inside := NSMakeRect(0, 0, 100, 100);
+  Outside := NSWindow.frameRectForContentRect_styleMask(Inside, NSTitledWindowMask);
+  if Result.Height > Round(Outside.size.Height - Inside.size.Height) then
+    Inc(Result.Top, Round(Outside.size.Height - Inside.size.Height));
 end;
 
 function TCocoaWindowManager.EnumerateWindows: TList;

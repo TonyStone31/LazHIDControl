@@ -53,6 +53,12 @@ type
     function GetWindowClass(AHandle: TWindowHandle): string; virtual; abstract;
     function GetWindowPID(AHandle: TWindowHandle): longword; virtual; abstract;
     function GetWindowRect(AHandle: TWindowHandle): TRect; virtual; abstract;
+    // The inside of the window, below the title bar and within the borders,
+    // on the screen.  Window-relative pointer positions count from its corner.
+    function GetClientRect(AHandle: TWindowHandle): TRect; virtual;
+    // The window as a person sees it, for pictures; Windows 10 and later
+    // count invisible resize borders into GetWindowRect.
+    function GetVisibleRect(AHandle: TWindowHandle): TRect; virtual;
 
     // The first window whose title or class contains the text, any case.
     function FindWindow(const ATitle: string): TWindowHandle;
@@ -144,6 +150,17 @@ begin
   end;
 end;
 
+// On X11 a program's window is already its inside; the frame is the window manager's.
+function TWindowManager.GetClientRect(AHandle: TWindowHandle): TRect;
+begin
+  Result := GetWindowRect(AHandle);
+end;
+
+function TWindowManager.GetVisibleRect(AHandle: TWindowHandle): TRect;
+begin
+  Result := GetWindowRect(AHandle);
+end;
+
 { The screen, cut down to the window.
 
   Deliberately not asking the window for its own contents.  Under a compositor
@@ -178,7 +195,7 @@ begin
     if AHandle = 0 then
       R := Rect(0, 0, Screen.Width, Screen.Height)
     else
-      R := GetWindowRect(AHandle);
+      R := GetVisibleRect(AHandle);
 
     { a window half off the screen still gives a picture of the half that
       is on it, rather than nothing at all }

@@ -1,0 +1,61 @@
+# One script, every system: Linux (X11), Windows and macOS run it unchanged
+# against scriptcheck, which writes down what arrived; run.sh compares that
+# with expected.txt.  Coordinates count from the corner of the window's
+# inside, and "scale lcl" makes them the same numbers as Left and Top in
+# scriptcheckmain.lfm, whatever size the LCL scaled the form to on this
+# screen.
+#
+# What it avoids, because it is not the same everywhere: the End key alone
+# (a Mac text field does not move the caret for it), a list item picked by
+# where it is drawn (row heights differ), Ctrl+A (a Mac keeps it for "line
+# start").  A click past the end of the text and the arrow keys are the
+# same on every system.
+
+waitfor 10000 HID Script Check
+scale lcl
+activate
+wait 500
+shot 1-start.png
+
+at 150 32
+click
+type Hello from one script - Grüße é
+
+at 300 76
+click
+hold shift
+key home
+let shift
+type replaced
+
+at 40 120
+click
+
+at 90 160
+click
+wait 700
+click
+
+at 400 30
+click
+key down
+key down
+key ctrl+shift+k
+
+at 100 250
+click
+at 200 260
+click r
+wait 700
+at 300 300
+dblclick
+wait 700
+drag 260 230 420 320
+at 150 300
+scroll down 3
+scroll up 1
+wait 300
+
+shot 2-filled.png
+at 400 160
+click

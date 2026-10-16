@@ -70,3 +70,4 @@ hidctl/*.lps
 /tests/inputcheck
 /tests/hotkeycheck
 /tests/results/
+/tests/scriptcheck/scriptcheck

@@ -27,6 +27,8 @@ type
     function GetWindowClass(AHandle: TWindowHandle): string; override;
     function GetWindowPID(AHandle: TWindowHandle): longword; override;
     function GetWindowRect(AHandle: TWindowHandle): TRect; override;
+    function GetClientRect(AHandle: TWindowHandle): TRect; override;
+    function GetVisibleRect(AHandle: TWindowHandle): TRect; override;
     function EnumerateWindows: TList; override;
     function GetWindowChildren(AHandle: TWindowHandle): TList; override;
 
@@ -161,6 +163,29 @@ function TWinWindowManager.GetWindowRect(AHandle: TWindowHandle): TRect;
 begin
   Result := Default(TRect);
   Windows.GetWindowRect(HWND(AHandle), Result);
+end;
+
+const
+  DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+
+function DwmGetWindowAttribute(Wnd: HWND; Attribute: DWORD; Value: Pointer; Size: DWORD): HRESULT; stdcall; external 'dwmapi.dll';
+
+// The frame without the invisible borders the desktop window manager adds.
+function TWinWindowManager.GetVisibleRect(AHandle: TWindowHandle): TRect;
+begin
+  if DwmGetWindowAttribute(HWND(AHandle), DWMWA_EXTENDED_FRAME_BOUNDS, @Result, SizeOf(Result)) <> S_OK then
+    Result := GetWindowRect(AHandle);
+end;
+
+// Below the title bar and the menu bar, inside the borders.
+function TWinWindowManager.GetClientRect(AHandle: TWindowHandle): TRect;
+var
+  Corner: TPoint;
+begin
+  Result := Default(TRect);
+  Corner := Types.Point(0, 0);
+  if not Windows.GetClientRect(HWND(AHandle), Result) or not ClientToScreen(HWND(AHandle), Corner) then Exit;
+  Result.Offset(Corner.X, Corner.Y);
 end;
 
 // Visible top-level windows only.

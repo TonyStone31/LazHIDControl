@@ -212,13 +212,15 @@ end;
 procedure THIDMouse.MoveToWindow(Window: TWindowHandle; X, Y: integer);
 var
   Info: TWindowInfo;
+  Inside: TRect;
 begin
   CheckAvailable(Self, Modifiers);
   EnsureWindowManager;
   if (WindowMgr = nil) or (Window = 0) then raise EInvalidOperation.Create('Window control is unavailable.');
   if not WindowMgr.GetWindowInfo(Window, Info) or not Info.IsVisible then
     raise EInvalidOperation.Create('The target window is unavailable or hidden.');
-  MouseInput.Move(Modifiers, Info.Rect.Left + X, Info.Rect.Top + Y, MovementDuration);
+  Inside := WindowMgr.GetClientRect(Window);
+  MouseInput.Move(Modifiers, Inside.Left + X, Inside.Top + Y, MovementDuration);
 end;
 
 procedure THIDMouse.Click(Button: TMouseButton);

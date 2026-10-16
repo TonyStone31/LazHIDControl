@@ -1,0 +1,82 @@
+object CheckForm: TCheckForm
+  Left = 10
+  Height = 360
+  Top = 10
+  Width = 480
+  BorderStyle = bsSingle
+  Caption = 'HID Script Check'
+  ClientHeight = 360
+  ClientWidth = 480
+  KeyPreview = True
+  Position = poDesigned
+  OnKeyDown = FormKeyDown
+  object NameEdit: TEdit
+    Left = 20
+    Height = 28
+    Top = 20
+    Width = 300
+    TabOrder = 0
+  end
+  object ReplaceEdit: TEdit
+    Left = 20
+    Height = 28
+    Top = 64
+    Width = 300
+    TabOrder = 1
+    Text = 'replace me'
+  end
+  object TickBox: TCheckBox
+    Left = 20
+    Height = 24
+    Top = 108
+    Width = 160
+    Caption = 'Tick me'
+    TabOrder = 2
+  end
+  object CountButton: TButton
+    Left = 20
+    Height = 32
+    Top = 144
+    Width = 140
+    Caption = 'Count'
+    TabOrder = 3
+    OnClick = CountButtonClick
+  end
+  object Choices: TListBox
+    Left = 340
+    Height = 112
+    Top = 20
+    Width = 120
+    Items.Strings = (
+      'One'
+      'Two'
+      'Three'
+      'Four'
+      'Five'
+      'Six'
+    )
+    TabOrder = 4
+  end
+  object DoneButton: TButton
+    Left = 340
+    Height = 32
+    Top = 144
+    Width = 120
+    Caption = 'Done'
+    TabOrder = 5
+    OnClick = DoneButtonClick
+  end
+  object Pad: TPanel
+    Left = 20
+    Height = 148
+    Top = 192
+    Width = 440
+    BevelOuter = bvLowered
+    Caption = 'click, drag and scroll here'
+    TabOrder = 6
+    OnDblClick = PadDblClick
+    OnMouseDown = PadMouseDown
+    OnMouseUp = PadMouseUp
+    OnMouseWheel = PadMouseWheel
+  end
+end

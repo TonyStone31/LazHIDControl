@@ -69,6 +69,9 @@ const
   // between the two clicks of a double click: a fast hand, well inside
   // any toolkit's double-click time
   ClickGap = 30;
+  // how long a click holds the button; pressed and let go in the same
+  // instant, a GTK3 text box keeps the pointer and eats the next click
+  ClickHold = 30;
 
 function TMouseInput.CurrentPos: TPoint;
 begin
@@ -180,6 +183,7 @@ begin
   Hold(Shift);
   try
     DoDown(Button);
+    Sleep(ClickHold);
     DoUp(Button);
     Application.ProcessMessages;
   finally
@@ -200,6 +204,7 @@ begin
     DoMove(ScreenX, ScreenY);
     Application.ProcessMessages;
     DoDown(Button);
+    Sleep(ClickHold);
     DoUp(Button);
     Application.ProcessMessages;
   finally
@@ -214,9 +219,11 @@ begin
   Hold(Shift);
   try
     DoDown(Button);
+    Sleep(ClickHold);
     DoUp(Button);
     Sleep(ClickGap);
     DoDown(Button);
+    Sleep(ClickHold);
     DoUp(Button);
     Application.ProcessMessages;
   finally

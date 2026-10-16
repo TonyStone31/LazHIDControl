@@ -34,7 +34,7 @@ uses
   HIDPermission;
 
 const
-  Help: array[0..79] of string = (
+  Help: array[0..81] of string = (
     'hidctl - drive the mouse, keyboard and windows from a shell',
     '',
     '  hidctl [--window <title>] <script>     run a script, one command a line',
@@ -82,6 +82,8 @@ const
     '  minimize                     restore',
     '  at x y [ms]                  move the pointer; with ms, walk it there',
     '  dwell <ms>                   rest after each "at" (default 120)',
+    '  scale lcl|<percent>|off      read window coordinates as the Lazarus',
+    '                               designer''s, grown as the LCL grows the form',
     '  click [l|r|m]                dblclick [l|r|m]',
     '  press [l|r|m]                release [l|r|m]',
     '  drag x1 y1 x2 y2 [l|r|m] [ms]',
@@ -146,7 +148,7 @@ const
 
   { Every command word, so a chain on the command line knows where one
     command's arguments stop and the next command starts. }
-  Commands = ' find waitfor title activate geometry minimize restore at dwell click dblclick press release drag scroll key hold let type ' +
+  Commands = ' find waitfor title activate geometry minimize restore at scale dwell click dblclick press release drag scroll key hold let type ' +
     'wait shot shotdesk shotarea clipset clipget idle power permissions grant revoke echo search getactivewindow getwindowfocus getwindowname getwindowpid ' +
     'getwindowgeometry windowactivate windowfocus windowraise windowmove windowsize windowminimize windowclose windowmap windowunmap ' +
     'mousemove mousemove_relative mousedown mouseup getmouselocation getdisplaygeometry keydown keyup sleep get_num_desktops ' + 'get_desktop set_desktop ';
@@ -165,13 +167,25 @@ var
     passed it; a script line's text is trimmed, so stray spaces at its ends
     are not typed. }
   Exact: boolean = False;
+  { "scale lcl": window coordinates are the Lazarus designer's, made at 96
+    pixels an inch, and grow with the screen the way the LCL grows the form.
+    0 is off: coordinates are pixels. }
+  ScalePPI: integer = 0;
 
-{ The window in screen coordinates.  Every at/drag is relative to this, so a
-  script does not care where the window landed. }
+{ The inside of the window in screen coordinates.  Every at/drag is relative
+  to its corner, so a script does not care where the window landed, nor how
+  tall this system's title bar is. }
   procedure Refresh;
   begin
     if Win = 0 then Exit;
-    Client := WindowMgr.GetWindowRect(Win);
+    Client := WindowMgr.GetClientRect(Win);
+  end;
+
+  { A window coordinate from a script, in pixels. }
+  function Px(const S: string): integer;
+  begin
+    Result := StrToInt(S);
+    if ScalePPI > 0 then Result := MulDiv(Result, ScalePPI, 96);
   end;
 
   function Btn(const S: string): TMouseButton;
@@ -235,16 +249,30 @@ var
     end;
   end;
 
+  { The whole window, title bar and all, as a person sees it. }
   procedure Shot(const FileName: string);
+  var
+    Bmp: TBitmap;
+    Png: TPortableNetworkGraphic;
   begin
     Refresh;
-    if WindowMgr.CaptureWindowToFile(Win, FileName) then
-      WriteLn('shot ', FileName, ' ',
-        Client.Right - Client.Left, 'x', Client.Bottom - Client.Top)
-    else
-    begin
-      WriteLn('could not capture the window');
-      Failed := True;
+    Bmp := TBitmap.Create;
+    Png := TPortableNetworkGraphic.Create;
+    try
+      if WindowMgr.CaptureWindow(Win, Bmp) then
+      begin
+        Png.Assign(Bmp);
+        Png.SaveToFile(FileName);
+        WriteLn('shot ', FileName, ' ', Bmp.Width, 'x', Bmp.Height);
+      end
+      else
+      begin
+        WriteLn('could not capture the window');
+        Failed := True;
+      end;
+    finally
+      Png.Free;
+      Bmp.Free;
     end;
   end;
 
@@ -566,10 +594,10 @@ var
           recording, or a hover that only starts once the pointer has
           arrived the slow way }
         if P.Count > 3 then
-          MouseInput.Move([], Client.Left + StrToInt(P[1]),
-            Client.Top + StrToInt(P[2]), Max(0, StrToInt(P[3])))
+          MouseInput.Move([], Client.Left + Px(P[1]),
+            Client.Top + Px(P[2]), Max(0, StrToInt(P[3])))
         else
-          MouseInput.Move([], Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]));
+          MouseInput.Move([], Client.Left + Px(P[1]), Client.Top + Px(P[2]));
         Settle(Dwell);
       end
       else if Cmd = 'mousemove' then
@@ -581,6 +609,17 @@ var
           GetWindowAtPoint(Mouse.CursorPos.X, Mouse.CursorPos.Y))
       else if Cmd = 'getdisplaygeometry' then
         WriteLn(Screen.DesktopWidth, ' ', Screen.DesktopHeight)
+      else if Cmd = 'scale' then
+      begin
+        Msg := LowerCase(P[1]);
+        if Msg = 'lcl' then ScalePPI := Screen.PixelsPerInch
+        else if (Msg = 'off') or (Msg = 'none') then ScalePPI := 0
+        else
+          ScalePPI := MulDiv(96, StrToInt(Msg), 100);
+        if ScalePPI = 0 then WriteLn('scale off')
+        else
+          WriteLn('scale ', MulDiv(100, ScalePPI, 96), '%');
+      end
       else if Cmd = 'dwell' then
         Dwell := Max(0, StrToInt(P[1]))
       else if Cmd = 'scroll' then
@@ -641,7 +680,7 @@ var
           Ms := 0;
           if P.Count > 6 then TryStrToInt(P[6], Ms);
         end;
-        Drag(StrToInt(P[1]), StrToInt(P[2]), StrToInt(P[3]), StrToInt(P[4]), Btm, Ms);
+        Drag(Px(P[1]), Px(P[2]), Px(P[3]), Px(P[4]), Btm, Ms);
       end
       else if Cmd = 'key' then
         for I := 1 to P.Count - 1 do
@@ -680,8 +719,7 @@ var
       else if Cmd = 'shotarea' then
       begin
         Refresh;
-        AreaShot(P[5], Rect(Client.Left + StrToInt(P[1]), Client.Top + StrToInt(P[2]), Client.Left + StrToInt(P[1]) + StrToInt(P[3]),
-          Client.Top + StrToInt(P[2]) + StrToInt(P[4])), False);
+        AreaShot(P[5], Bounds(Client.Left + Px(P[1]), Client.Top + Px(P[2]), Px(P[3]), Px(P[4])), False);
       end
       else if Cmd = 'clipset' then
       begin

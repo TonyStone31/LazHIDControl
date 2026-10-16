@@ -283,7 +283,7 @@ begin
   // picture; the window comes to the front first and gets a beat to paint.
   WindowMgr.ActivateWindow(Handle);
   Sleep(200);
-  Result := CaptureArea(WindowMgr.GetWindowRect(Handle));
+  Result := CaptureArea(WindowMgr.GetVisibleRect(Handle));
 end;
 
 function THIDScreenshot.Capture: boolean;
