@@ -14,6 +14,91 @@ The repository has three parts:
 | [`lazhidcontrol/`](lazhidcontrol/) | The package: components, input backends, window management. |
 | [`examples/`](examples/) | The demo program, with a tab for each area. |
 
+## One script, every desktop
+
+The same hidctl script file drives the same program on Linux, Windows and
+macOS and gets the same result. [`tests/scriptcheck`](tests/scriptcheck/)
+checks it: [check.hid](tests/scriptcheck/check.hid) types Unicode text,
+selects with Shift, ticks a box, clicks a button twice, picks a list item
+with the arrow keys, presses Ctrl+Shift+K, clicks, right-clicks,
+double-clicks, drags and scrolls. The program writes down what reached it,
+and that has to match [expected.txt](tests/scriptcheck/expected.txt) line
+for line. On 16 October 2026 it did, with the script unchanged, on Linux
+(GTK2 and GTK3 on X11), Windows 10 and macOS 15. These are the window at
+the end of the script, one run on each:
+
+| Linux, GTK3 | Windows 10 | macOS 15 |
+|---|---|---|
+| ![](images/same-script/linux-gtk3.png) | ![](images/same-script/windows.png) | ![](images/same-script/macos.png) |
+
+What makes that work:
+
+- **Coordinates count from the inside of the window**, below the title bar,
+  on every system. Each system draws a different frame; none of them moves
+  a click.
+- **`scale lcl`** reads the script's coordinates as the Lazarus designer's
+  numbers - the `Left` and `Top` in the `.lfm` - and grows them the way the
+  LCL grows the form on a 125% screen. It is opt-in, in hidctl only; without
+  it coordinates are plain pixels, as in xdotool.
+- **`type` sends characters, not key positions**, so the text comes out
+  right on any keyboard layout.
+
+That makes it a tool for documentation as much as for testing. One script
+walks a program through its screens and `shot` saves a picture at each
+step under the name the script gives it; run it on each system and the
+manual has a matching set of pictures from each, retaken in minutes after
+every change to the program.
+
+What does not carry from one system to another, and a portable script
+avoids:
+
+- shortcuts that differ by system: Ctrl+A is "start of line" in a Mac text
+  field, and the Mac's own shortcuts use Command;
+- the End key on its own in a Mac text field, which scrolls rather than
+  moving the caret; click past the end of the text instead;
+- things placed by their size: list rows and menu items are different
+  heights on each widget set, so choose them with the arrow keys;
+- a form with a main menu: on Linux the menu bar is inside the window, so
+  there a click counts from the top of the menu bar;
+- Wayland: no program is told where windows are, so window-relative
+  commands cannot work there; keys and screen coordinates do.
+
+A drive script can be written three ways, all running the same code
+underneath:
+
+- **a hidctl script**, plain text, one command a line - [hidctl](#hidctl);
+- **a Pascal program** using the package, built once for each system -
+  [`tests/inputcheck.lpr`](tests/inputcheck.lpr) is one;
+- **an instantfpc script**: Pascal run straight from its source, like a
+  shell script. Point instantfpc at the compiled units once
+  (`INSTANTFPCOPTIONS="-Fu<lazarus>/lcl/units/x86_64-linux
+  -Fu<lazarus>/lcl/units/x86_64-linux/gtk2
+  -Fu<lazarus>/components/lazutils/lib/x86_64-linux
+  -Fu<this package>/lazhidcontrol/lib/x86_64-linux/gtk2 -dLCL -dLCLgtk2"`)
+  and a file like this runs with `./drive.pas`. Tried on Linux only.
+
+```pascal
+#!/usr/bin/env instantfpc
+program drive;
+{$mode objfpc}{$H+}
+uses
+  cthreads, Interfaces, Types, Forms, Controls,
+  HIDMouseAndKeyInput, WindowManager, WindowManagerIntf;
+var
+  W: TWindowHandle;
+  Inside: TRect;
+begin
+  Application.Initialize;
+  EnsureWindowManager;
+  W := WindowMgr.FindWindow('HID Script Check');
+  WindowMgr.ActivateWindow(W);
+  Inside := WindowMgr.GetClientRect(W);
+  MouseInput.Move([], Inside.Left + 150, Inside.Top + 32);
+  MouseInput.Click(mbLeft, []);
+  KeyInput.PressString('typed by a Pascal script');
+end.
+```
+
 ## The components
 
 | | Component | What it does |
@@ -104,6 +189,89 @@ and power status. `hidctl --help` prints every command;
 [hidctl/README.md](hidctl/README.md) lists which xdotool commands it supports. We use it, against a nested X server, to drive the GUI tests of our
 other projects.
 
+## Build your own automation tool
+
+The components are the parts of a desktop automation program of the
+AutoHotkey kind, ready to drop on a form:
+
+| The tool needs to | Component |
+|---|---|
+| start something on a key combination, from any program | `THIDHotkey` |
+| type text and press keys | `THIDKeyboard` |
+| move, click, drag and scroll | `THIDMouse` |
+| find the program to work on, bring it forward, place it | `THIDWindow` |
+| record what the user does, to play it back | `THIDInputMonitor`, then `THIDKeyboard` and `THIDMouse` |
+| keep pictures for a log or a bug report | `THIDScreenshot` |
+| keep a clipboard history | `THIDClipboardMonitor` |
+| run jobs while the user is away | `THIDSystemIdle` |
+| hold off on battery, carry on after sleep | `THIDPowerMonitor` |
+| ask macOS or a Wayland desktop for permission, once | `THIDPermission` |
+
+A text expander, whole: a `THIDHotkey` with `ShortCut` Ctrl+Alt+D and
+`Enabled` ticked, a `THIDKeyboard` beside it, and
+
+```pascal
+procedure TForm1.HIDHotkey1Hotkey(Sender: TObject);
+begin
+  HIDKeyboard1.TypeText(FormatDateTime('yyyy-mm-dd', Date));
+end;
+```
+
+The date is typed into whatever program has the focus. The keyboard lets go
+of Ctrl and Alt first, though the user is still holding them.
+
+hidctl itself is the larger example: one Pascal program of about 850 lines
+over the same library, and its script reader is the start of a scripting
+language for anyone who wants to build one.
+
+## Compared with other tools
+
+What each one documents, as of October 2026. Corrections are welcome.
+
+| | Runs on | Wayland | Other programs' windows | Global hotkeys | Screenshots | Types any Unicode text | The user installs |
+|---|---|---|---|---|---|---|---|
+| **LazHIDControl / hidctl** | Linux, Windows, macOS | typing, mouse, screenshots, watching keys (KDE tested) | X11, Windows, macOS | X11, Windows, macOS | yes | yes, on any layout | nothing: one binary, or built into your program |
+| xdotool | Linux and BSD, X11 | no | yes | no | no | yes | the xdotool package |
+| ydotool | Linux | typing, mouse | no | no | no | no, US layout key codes | a daemon with access to `/dev/uinput` |
+| AutoHotkey | Windows | - | yes | yes | finds pixels and pictures; no saving | yes | AutoHotkey, or a compiled script |
+| AutoIt | Windows | - | yes | yes | yes | yes | AutoIt, or a compiled script |
+| PyAutoGUI | Windows, macOS, Linux X11 | no | Windows only | no | yes, and finds pictures | no, keys it can name | Python and its packages |
+
+Many of the gaps in that table are the systems' rules rather than the
+tools' faults, and they bind every tool the same way:
+
+- **Wayland** tells no program where windows are, offers global hotkeys only
+  to installed applications through its portal, and lets a program watch
+  the keyboard only with a rule from the administrator. Every tool on
+  Wayland goes through the same doors: the desktop's portals, or the
+  kernel's `/dev/uinput` with permission. This package uses both, asks
+  through the system's own dialogs, and goes as far as those doors allow.
+- **macOS** makes the user allow each program under Privacy & Security
+  before it may type, click, watch keys or read the screen. No tool gets
+  round that.
+- **Windows** stops a program from sending input to one running as
+  administrator unless it is running as administrator too.
+
+Where other tools are ahead, plainly:
+
+- **Reading the program back.** AutoIt, AutoHotkey and pywinauto read
+  controls on Windows - a button by its name, an edit box's text - so a
+  script can check what happened and find a button that moved. hidctl
+  clicks positions and cannot read anything back; `tests/scriptcheck` can
+  check its results only because the program under test writes them down.
+  The systems' accessibility interfaces (UI Automation, macOS Accessibility,
+  AT-SPI) are the way to that; it is not built.
+- **Seeing the screen.** SikuliX, PyAutoGUI and AutoHotkey find a picture on
+  the screen and click it. hidctl takes pictures but does not look at them.
+- **Waiting for a thing instead of a time.** Browser tools such as
+  Playwright wait until a button is ready. hidctl waits for a window to
+  appear (`waitfor`), and otherwise for a fixed time.
+- **A language.** AutoHotkey has variables, loops and functions. A hidctl
+  script is a list of commands; loops and sums come from the shell that
+  writes it, or the script is a Pascal program instead.
+- **A recorder.** `THIDInputMonitor` hears every key and click, but there is
+  no program yet that turns a recording into a script.
+
 ## What is tested, what is not
 
 | | Linux / X11 | Windows | macOS | Linux / Wayland |
@@ -122,6 +290,7 @@ other projects.
 | Sleep and wake events | ✅ | not tried | not tried | not tried |
 | Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | ✅ keys and buttons from the kernel's input devices, once `THIDPermission` has installed its rule; no click positions |
 | hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
+| One hidctl script, unchanged, same result (`tests/scriptcheck`) | ✅ GTK2 and GTK3 | ✅ | ✅ | not possible: no window positions |
 
 Qt5 builds pass the same input, hotkey and clipboard checks as GTK2 on
 X11. Qt6 has not been tried.
@@ -134,8 +303,11 @@ hidctl.
 
 `tests/inputcheck` types into its own window and clicks, drags and scrolls on
 its own controls, then checks what arrived (29 checks); `tests/hotkeycheck`
-registers global hotkeys and presses them (23). Both take over the keyboard
-and mouse, so run them in a nested X server or a virtual machine.
+registers global hotkeys and presses them (23); `tests/scriptcheck/run.sh`
+(`run-windows.ps1` on Windows) drives a small program with one hidctl script
+and compares what arrived (11 lines). All take over the keyboard and mouse,
+so run them in a nested X server or a virtual machine; `run.sh` starts its
+own nested X server on Linux.
 
 **On a Mac the user has to allow it.** macOS asks before a program may do
 any of this to other programs, under System Settings > Privacy & Security:

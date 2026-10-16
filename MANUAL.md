@@ -407,9 +407,9 @@ box displays copied text when available.
 
 Set **THIDMouse.RelativeWindow** to a **THIDWindow** component in the Object
 Inspector. Call that window's `Find`, then `Mouse.MoveTo(X, Y)`. The window
-reference takes precedence over **RelativeTo**. Coordinates use its reported
-screen rectangle, including native borders; they are not external child-control
-coordinates. The demo has a separate configured mouse component for this, and
+reference takes precedence over **RelativeTo**. Coordinates count from the
+inside of that window, below its title bar and within its borders, on every
+system; they are not external child-control coordinates. The demo has a separate configured mouse component for this, and
 its **Move pointer to window offset X, Y** button moves without clicking.
 
 ## The demos

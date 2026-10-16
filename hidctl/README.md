@@ -56,8 +56,11 @@ manager:
 } | hidctl --window "Some App" -
 ```
 
-Coordinates are relative to the target window's client area, so a window that
-opens two pixels lower than last time does not move every click in the test.
+Coordinates are relative to the inside of the target window - below the title
+bar, within the borders - on Linux, Windows and macOS alike, so a window that
+opens two pixels lower than last time does not move every click in the test,
+and the same script works on all three.  `scale lcl` makes them the Lazarus
+designer's numbers, grown as the LCL grows the form on a large-print screen.
 
 ### Moving rather than jumping
 
@@ -89,6 +92,7 @@ above work in a script too.
 | `at x y` | the pointer, in the window's coordinates |
 | `at x y <ms>` | walk it there over that many milliseconds instead of jumping |
 | `dwell <ms>` | how long to rest after each move (default 120) |
+| `scale lcl` | read window coordinates as the Lazarus designer's (the `.lfm`'s `Left` and `Top`, made at 96 pixels an inch) and grow them as the LCL grows the form on this screen; `scale 125` gives the factor by hand, `scale off` goes back to pixels |
 | `click [l\|r\|m]` | press and release where the pointer is |
 | `dblclick [l\|r\|m]` | |
 | `press` / `release [l\|r\|m]` | hold a button down, let it go |
@@ -98,7 +102,7 @@ above work in a script too.
 | `hold <name>` / `let <name>` | `ctrl` `shift` `alt` |
 | `type <text>` | typed as if on the keyboard |
 | `wait <ms>` | |
-| `shot <file>` | a PNG of the window |
+| `shot <file>` | a PNG of the window, title bar and frame included |
 | `shotdesk <file>` | a PNG of the whole desktop |
 | `shotarea x y w h <file>` | a PNG of that part of the window |
 | `clipset <text>` | put text on the clipboard (held while hidctl runs, unless a clipboard manager keeps it) |
