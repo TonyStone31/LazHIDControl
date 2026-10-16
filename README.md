@@ -290,7 +290,7 @@ Where other tools are ahead, plainly:
 | Sleep and wake events | ✅ | not tried | not tried | not tried |
 | Watching keys and clicks system-wide, for recording a task to replay | ✅ | ✅ | ✅ | ✅ keys and buttons from the kernel's input devices, once `THIDPermission` has installed its rule; no click positions |
 | hidctl | ✅ | ✅ | ✅ | ✅ for what the rows above allow |
-| One hidctl script, unchanged, same result (`tests/scriptcheck`) | ✅ GTK2 and GTK3 | ✅ | ✅ | not possible: no window positions |
+| One hidctl script, unchanged, same result (`tests/scriptcheck`) | ✅ GTK2 and GTK3; Qt5 all but the double-click, which a Qt5 Lazarus program on a slow machine misses: the LCL times the two presses when it gets round to them, not when they happened | ✅ | ✅ | not possible: no window positions |
 
 Qt5 builds pass the same input, hotkey and clipboard checks as GTK2 on
 X11. Qt6 has not been tried.
