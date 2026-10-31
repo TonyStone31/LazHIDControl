@@ -34,7 +34,7 @@ uses
   HIDPermission;
 
 const
-  Help: array[0..81] of string = (
+  Help: array[0..85] of string = (
     'hidctl - drive the mouse, keyboard and windows from a shell',
     '',
     '  hidctl [--window <title>] <script>     run a script, one command a line',
@@ -69,6 +69,10 @@ const
     '  key <key> [<key> ...]        a key or a combination: Return, ctrl+c, alt+F4',
     '  keydown <key>                keyup <key>',
     '  type [--delay <ms>] <text>   typed as if on the keyboard, any Unicode',
+    '  type --human <text>          the same at a person''s uneven pace: a',
+    '                               different pause after every key, longer',
+    '                               after spaces and punctuation, a breath now',
+    '                               and then',
     '  sleep <seconds>',
     '  get_num_desktops  get_desktop  set_desktop <n>',
     '',
@@ -153,7 +157,7 @@ const
     'getwindowgeometry windowactivate windowfocus windowraise windowmove windowsize windowminimize windowclose windowmap windowunmap ' +
     'mousemove mousemove_relative mousedown mouseup getmouselocation getdisplaygeometry keydown keyup sleep get_num_desktops ' + 'get_desktop set_desktop ';
 
-  Options = ' --name --class --pid --delay --repeat --window --clearmodifiers --sync --onlyvisible ';
+  Options = ' --name --class --pid --delay --repeat --window --clearmodifiers --sync --onlyvisible --human ';
 
 var
   Win: TWindowHandle = 0;
@@ -175,6 +179,41 @@ var
 { The inside of the window in screen coordinates.  Every at/drag is relative
   to its corner, so a script does not care where the window landed, nor how
   tall this system's title bar is. }
+  { Types Text one character at a time with the pauses a person makes: a
+    different wait after every key, longer after a space or punctuation,
+    and every so often a longer one.  For sites that watch how text arrives. }
+  procedure TypeLikeAPerson(const Text: string);
+  var
+    P, Stop: PChar;
+    Len, Since: integer;
+    Ch: string;
+  begin
+    P := PChar(Text);
+    Stop := P + Length(Text);
+    Since := 0;
+    while P < Stop do
+    begin
+      { one UTF-8 character }
+      Len := 1;
+      if (Ord(P^) and $E0) = $C0 then Len := 2
+      else if (Ord(P^) and $F0) = $E0 then Len := 3
+      else if (Ord(P^) and $F8) = $F0 then Len := 4;
+      SetString(Ch, P, Len);
+      KeyInput.PressString(Ch, 0);
+      Inc(P, Len);
+      Inc(Since);
+      if P >= Stop then Break;
+      Sleep(55 + Random(115));
+      if Ch = ' ' then Sleep(60 + Random(140))
+      else if Pos(Ch, '.,;:/?&=-_@') > 0 then Sleep(120 + Random(230));
+      if (Since > 10) and (Random(8) = 0) then
+      begin
+        Sleep(250 + Random(450));
+        Since := 0;
+      end;
+    end;
+  end;
+
   procedure Refresh;
   begin
     if Win = 0 then Exit;
@@ -428,6 +467,7 @@ var
     Cmd, Rest, Msg, Kind: string;
     K: word;
     I, Ms, Delay, Times: integer;
+    Human: boolean;
     Btm: TMouseButton;
     Q: QWord;
     Perm: THIDPermission;
@@ -468,13 +508,15 @@ var
         rest are dropped so its command lines still run }
       Delay := 0;
       Times := 1;
+      Human := False;
       Kind := 'name';
       while (P.Count > 1) and (Pos(' ' + P[1] + ' ', Options) > 0) do
       begin
         Msg := Copy(P[1], 3, MaxInt);
         Rest := After(Rest, Length(P[1]));
         P.Delete(1);
-        if (Msg = 'name') or (Msg = 'class') or (Msg = 'pid') then Kind := Msg
+        if Msg = 'human' then Human := True
+        else if (Msg = 'name') or (Msg = 'class') or (Msg = 'pid') then Kind := Msg
         else if ((Msg = 'delay') or (Msg = 'repeat') or (Msg = 'window')) and (P.Count > 1) then
         begin
           if Msg = 'delay' then Delay := StrToInt(P[1]);
@@ -702,7 +744,9 @@ var
       end
       else if Cmd = 'type' then
       begin
-        KeyInput.PressString(Rest, Delay);
+        if Human then TypeLikeAPerson(Rest)
+        else
+          KeyInput.PressString(Rest, Delay);
         Settle(150);
       end
       else if Cmd = 'wait' then
@@ -824,6 +868,7 @@ var
   I: integer;
   Arg, WantTitle: string;
 begin
+  Randomize;
   I := 1;
   WantTitle := '';
   if (Length(Args) > 2) and (Args[1] = '--window') then
