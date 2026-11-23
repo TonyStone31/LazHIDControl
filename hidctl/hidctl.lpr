@@ -915,6 +915,9 @@ begin
       try
         Run(Script[I]);
       except
+        { standard output went away, as in "hidctl search ... | head -1":
+          end quietly, the way ls | head ends ls }
+        on EInOutError do Halt(1);
         on E: Exception do
         begin
           WriteLn('bad command "', Script[I], '": ', E.Message);

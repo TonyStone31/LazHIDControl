@@ -78,13 +78,3 @@ designed size, so every click landed short. hidctl reads
 
 **The fix.** Take the PPI of the monitor the found window is on, the
 number the LCL used for that form. Found 17 Oct 2026.
-
-## hidctl: a closed pipe ends it quietly
-
-`hidctl search --name x | head -3` prints three window ids, `head` closes
-the pipe, and hidctl's next write fails. Free Pascal reports that as
-runtime error 101, "Disk Full", and since hidctl is a Lazarus program the
-LCL shows its "Press OK to ignore" dialog and waits, so the shell script
-hangs. A command-line tool should stop without a word when the reader
-goes away (as `ls | head` does): catch the failed write of standard
-output, or turn I/O checking off for it, and exit.
